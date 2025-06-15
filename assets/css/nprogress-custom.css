@@ -1,0 +1,9 @@
+#nprogress .spinner {
+  display: none; /* or style it if you want */
+}
+
+#nprogress .bar {
+  background: linear-gradient(to right, #8b5cf6, #005ff7); /* Purple to Blue */
+  height: 3px;
+  border-radius: 2px;
+}
