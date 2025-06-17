@@ -22,7 +22,7 @@
         v-for="link in links"
         :key="link.to"
         :to="link.to"
-        class="w-full h-full rounded-md text-center p-1 hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white hover:font-bold"
+        class="w-full h-full text-center p-1 rounded-md hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white hover:font-bold"
         :class="{
           'bg-secondary dark:bg-secondary-600 text-white font-bold':
             link.to === route.path,
@@ -64,7 +64,7 @@ const links = [
 ];
 
 const wrraperLinksClasses = computed(() => {
-  return `grid grid-cols-4 gap-1 p-1 bg-gradient-to-l from-blue-300 to-purple-200 dark:from-gray-900 dark:to-gray-800 mt-2 mb-8 rounded-sm`;
+  return `grid grid-cols-4 gap-1 p-1 bg-secondary-50 border border-secondary-200 rounded-sm mt-2 mb-8 `;
 });
 
 onMounted(() => {

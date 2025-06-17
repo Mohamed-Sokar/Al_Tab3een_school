@@ -53,17 +53,22 @@
 </template>
 
 <script setup lang="ts">
-import { payments, students, teachers } from "~/constants";
+import { students } from "~/constants";
 import type { Payment } from "~/types";
+import { useTeacherStore } from "@/stores/teachers";
+import { usePaymentsStore } from "@/stores/paymnets";
+
+const { teachersData } = useTeacherStore();
+const { paymentsData } = usePaymentsStore();
 
 const totalStudents = computed(() => students.length);
-const totalTeachers = computed(() => teachers.length);
+const totalTeachers = computed(() => teachersData.length);
 const totalPayments = computed(() =>
-  payments.reduce((sum: any, payment: Payment) => {
+  paymentsData.value.reduce((sum: any, payment: Payment) => {
     if (payment.type === "دخل") {
-      return (sum += payment.value);
+      return (sum += payment.amount);
     } else {
-      return (sum -= payment.value ?? 0);
+      return (sum -= payment.amount ?? 0);
     }
   }, 0)
 );

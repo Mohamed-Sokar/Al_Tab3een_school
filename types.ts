@@ -22,9 +22,10 @@ interface Teacher {
   phone_number: string | undefined;
   birth_date: string | undefined;
   courses: string[] | undefined;
-  ubsent_days_count: number | undefined;
-  has_behavioral_issues: string | undefined;
-  loans: number;
+  upsent_reports_count: number | undefined;
+  behavioral_issues_count: number | undefined;
+  loans_count: number | undefined;
+  loans_amount: number | undefined;
 }
 
 interface Payment {
@@ -32,7 +33,7 @@ interface Payment {
   type: string | undefined;
   description: string | undefined;
   date: string | undefined;
-  value: number | undefined;
+  amount: number | undefined;
 }
 
 interface BehavioralIssue {
@@ -58,7 +59,7 @@ interface TeacherLoan {
   teacher_name: string | undefined;
   teacher_id: string | number | undefined;
   date: string | undefined | Date;
-  loanValue: number | undefined;
+  amount: number | undefined;
 }
 
 interface TeacherUpsentReport {
@@ -66,6 +67,7 @@ interface TeacherUpsentReport {
   teacher_id: number | undefined;
   teacher_name: string | undefined;
   date: string | undefined;
+  // reason: string | undefined;
 }
 
 interface GradesReport {

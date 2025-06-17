@@ -7,10 +7,10 @@
       class="grid grid-cols-1 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="قيمة السلفة" name="loan">
+      <UFormField label="قيمة السلفة" name="amount">
         <UInput
           type="number"
-          v-model.number="state.loan"
+          v-model.number="state.amount"
           placeholder="أدخل قيمة السلفة"
           label="إضافة سلفة"
           class="w-full mt-2"
@@ -39,8 +39,12 @@
 </template>
 
 <script setup lang="ts">
-import { object, string } from "yup";
-import { behavioralIssuesTeacher, teachersLoans } from "~/constants";
+import { number, object, string } from "yup";
+import { teachersLoans } from "~/constants";
+import { useTeacherStore } from "@/stores/teachers";
+
+const { getSpesificTeacherLoan, getSpesificTeacherLoanIndex, editTeacherLoan } =
+  useTeacherStore();
 
 const { toastSuccess } = useAppToast();
 const route = useRoute();
@@ -48,28 +52,21 @@ const isLoading = ref(false);
 const form = ref();
 
 const schema = object({
-  loan: string().required("قيمة السلفة مطلوبة"),
+  amount: number().required("قيمة السلفة مطلوبة"),
 });
 
-const targetedLoan = teachersLoans.find(
-  (loan) => loan.id?.toString() === route.params.id.toString()
-);
+const loanId = route.params.id;
+const targetedLoan = getSpesificTeacherLoan(loanId);
 
-const state = ref({
-  loan: targetedLoan?.loanValue,
+const state = reactive({
+  amount: targetedLoan?.amount,
 });
 
 const onSubmit = () => {
   // add issue to database
   isLoading.value = true;
-  const loanIndex = teachersLoans.findIndex(
-    (loan) => loan.id?.toString() === route.params.id.toString()
-  );
 
-  teachersLoans[loanIndex] = {
-    ...teachersLoans[loanIndex],
-    loanValue: state.value.loan,
-  };
+  editTeacherLoan(loanId, state.amount);
 
   setTimeout(() => {
     isLoading.value = false;

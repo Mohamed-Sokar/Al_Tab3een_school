@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import { type Payment } from "~/types";
-import { months, payments } from "~/constants";
+import { months } from "~/constants";
+import { usePaymentsStore } from "@/stores/paymnets";
+
+const { paymentsData, deletePayment } = usePaymentsStore();
 
 const UBadge = resolveComponent("UBadge");
 // const table = useTemplateRef("table");
 const globalFilter = ref("");
-const paymentsData = ref<Payment[]>(payments);
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
@@ -45,7 +47,7 @@ const columns: TableColumn<Payment>[] = [
     header: "وصف الدفعة",
   },
   {
-    accessorKey: "value",
+    accessorKey: "amount",
     header: "القيمة",
   },
   {
@@ -68,7 +70,7 @@ function getDropdownActions(payment: Payment): DropdownMenuItem[] {
       icon: "i-lucide-trash",
       color: "error",
       onSelect: () => {
-        deletePayment(payment.id);
+        deletePayment(payment.id ?? 0);
       },
     },
   ];
@@ -78,8 +80,9 @@ const filteredPayments = computed(() => {
   tableKey.value = Math.random();
   return paymentsData.value.filter(
     (payment) =>
-      payment.date === selectedDate.value &&
-      new Date(payment.date).getMonth() === months.indexOf(selectedMonth.value)
+      // payment.date === selectedDate.value &&
+      new Date(payment.date ?? new Date()).getMonth() ===
+      months.indexOf(selectedMonth.value)
   );
 });
 
@@ -93,21 +96,16 @@ const numberedPayments = computed(() =>
 const total = computed(() =>
   numberedPayments.value.reduce((sum: any, payment: Payment) => {
     if (payment.type === "دخل") {
-      return (sum += payment.value);
+      return (sum += payment.amount);
     } else {
-      return (sum -= payment.value ?? 0);
+      return (sum -= payment.amount ?? 0);
     }
   }, 0)
 );
 
-const deletePayment = (id: any) => {
-  const studentIndex = paymentsData.value.findIndex(
-    (student) => student.id === id
-  );
-
-  paymentsData.value.splice(studentIndex, 1);
-  tableKey.value = Math.random();
-};
+//   paymentsData.value.splice(studentIndex, 1);
+//   tableKey.value = Math.random();
+// };
 </script>
 
 <template>

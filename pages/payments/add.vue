@@ -1,3 +1,44 @@
+<script setup lang="ts">
+import { number, object, string } from "yup";
+import { payment_type_options, payments } from "~/constants";
+import { type Payment } from "~/types";
+import { usePaymentsStore } from "@/stores/paymnets";
+
+const { addPayment } = usePaymentsStore();
+
+const schema = object({
+  type: string().required("نوع الدفعة مطلوب"),
+  description: string().required("وصف الدفعة مطلوب"),
+  date: string().required("تاريخ الدفعة مطلوب"),
+  amount: number().required("القيمة مطلوبة"),
+});
+
+const state = reactive<Payment>({
+  id: undefined,
+  type: undefined,
+  description: undefined,
+  date: undefined,
+  amount: undefined,
+});
+
+const { toastSuccess } = useAppToast();
+const isLoading = ref(false);
+const form = ref();
+
+const onSubmit = async () => {
+  isLoading.value = true;
+  addPayment({ ...state });
+
+  setTimeout(() => {
+    isLoading.value = false;
+    toastSuccess({
+      title: "تم إضافة الدفعة بنجاح",
+    });
+    navigateTo("/payments");
+  }, 500);
+};
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -5,7 +46,7 @@
       :schema="schema"
       :state="state"
       class="grid grid-cols-2 gap-4"
-      @submit="addPayment"
+      @submit="onSubmit"
     >
       <UFormField label="نوع الدفعة" name="type">
         <USelect
@@ -36,10 +77,10 @@
         />
       </UFormField>
 
-      <UFormField label="القيمة" name="value">
+      <UFormField label="القيمة" name="amount">
         <UInput
           type="number"
-          v-model.number="state.value"
+          v-model.number="state.amount"
           placeholder="القيمة"
           label="القيمة"
           class="w-full"
@@ -65,46 +106,5 @@
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { number, object, string } from "yup";
-import { payment_type_options, payments } from "~/constants";
-import { type Payment } from "~/types";
-
-const schema = object({
-  type: string().required("نوع الدفعة مطلوب"),
-  description: string().required("وصف الدفعة مطلوب"),
-  date: string().required("تاريخ الدفعة مطلوب"),
-  value: number().required("القيمة مطلوبة"),
-});
-
-const state = reactive<Payment>({
-  id: undefined,
-  type: undefined,
-  description: undefined,
-  date: undefined,
-  value: undefined,
-});
-
-const { toastSuccess } = useAppToast();
-const isLoading = ref(false);
-const form = ref();
-
-const addPayment = async () => {
-  isLoading.value = true;
-  payments.unshift({
-    ...state,
-    id: Math.random(),
-  });
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم إضافة الدفعة بنجاح",
-    });
-    navigateTo("/payments");
-  }, 500);
-};
-</script>
 
 <style scoped></style>

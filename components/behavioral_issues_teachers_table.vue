@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import { type BehavioralIssueTeacher } from "~/types";
-import { behavioralIssuesTeacher, months } from "~/constants";
+import { months } from "~/constants";
+import { useTeacherStore } from "@/stores/teachers";
+const { behavioralIssuesTeacherData: issues, deleteTeacherBehavioralIssue } =
+  useTeacherStore();
 
 const globalFilter = ref("");
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
-const issues = ref(behavioralIssuesTeacher);
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
@@ -51,7 +53,7 @@ function getDropdownActions(issue: BehavioralIssueTeacher): DropdownMenuItem[] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteIssue(issue.id);
+          deleteTeacherBehavioralIssue(issue.id);
         },
       },
     ],
@@ -60,7 +62,7 @@ function getDropdownActions(issue: BehavioralIssueTeacher): DropdownMenuItem[] {
 
 const filteredIssues = computed(() => {
   tableKey.value = Math.random();
-  return issues.value.filter(
+  return issues.filter(
     (issue) =>
       issue.date === selectedDate.value &&
       new Date(issue.date).getMonth() === months.indexOf(selectedMonth.value)
@@ -73,17 +75,6 @@ const numberedIssues = computed(() =>
     rowNumber: index + 1,
   }))
 );
-
-const deleteIssue = (id: any) => {
-  const issueIndex = behavioralIssuesTeacher.findIndex(
-    (issue) => issue.id === id
-  );
-
-  if (issueIndex === -1) return;
-
-  issues.value.splice(issueIndex, 1);
-  tableKey.value = Math.random();
-};
 </script>
 
 <template>
@@ -126,7 +117,7 @@ const deleteIssue = (id: any) => {
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ behavioralIssuesTeacher.length }})</span>
+        <span>({{ issues.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -137,7 +128,7 @@ const deleteIssue = (id: any) => {
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ behavioralIssuesTeacher.length }})</span>
+        <span>({{ issues.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>

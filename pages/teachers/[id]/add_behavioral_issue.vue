@@ -39,8 +39,10 @@
 
 <script setup lang="ts">
 import { object, string } from "yup";
-import { behavioralIssuesTeacher, teachers } from "~/constants";
+import { useTeacherStore } from "@/stores/teachers";
 
+const { teachersData, addTeacherBehavioralIssue, getSpesificTeacher } =
+  useTeacherStore();
 const { toastSuccess } = useAppToast();
 const route = useRoute();
 const isLoading = ref(false);
@@ -54,24 +56,11 @@ const state = reactive({
   description: undefined,
 });
 
-console.log(route);
-
-// get student based on his id
-const targetedTeacher = teachers.find(
-  (teacher) => teacher.id.toString() === route.params.id.toString()
-);
-
 const onSubmit = () => {
   // add issue to database
   isLoading.value = true;
-
-  behavioralIssuesTeacher.unshift({
-    id: Math.random(),
-    teacher_name: targetedTeacher?.full_name,
-    teacher_id: targetedTeacher?.id,
-    date: new Date().toISOString().split("T")[0],
-    description: state.description,
-  });
+  const teacher_id = route.params.id;
+  addTeacherBehavioralIssue(teacher_id, state);
 
   setTimeout(() => {
     isLoading.value = false;

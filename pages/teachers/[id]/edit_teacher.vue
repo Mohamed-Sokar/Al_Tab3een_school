@@ -73,8 +73,11 @@
 
 <script setup lang="ts">
 import { array, object, string } from "yup";
-import { courses_options, teachers } from "~/constants";
+import { courses_options } from "~/constants";
 import { type Teacher } from "~/types";
+import { useTeacherStore } from "@/stores/teachers";
+
+const { teachersData, getSpesificTeacher } = useTeacherStore();
 
 const schema = object({
   full_name: string().required("الاسم مطلوب"),
@@ -95,6 +98,9 @@ const state = reactive<Teacher>({
   phone_number: undefined,
   birth_date: undefined,
   courses: undefined,
+  has_behavioral_issues: undefined,
+  ubsent_days_count: undefined,
+  loans: undefined,
 });
 
 const route = useRoute();
@@ -102,26 +108,17 @@ const { toastSuccess } = useAppToast();
 const isLoading = ref(false);
 const form = ref();
 
-const targetedTeacher = teachers.find(
-  (student) => student.id.toString() === route.params.id.toString()
-);
+const targetedTeacher = getSpesificTeacher(route.params.id);
 
 Object.assign(state, targetedTeacher);
 
 const updateTeacher = async () => {
   isLoading.value = true;
-  const teacherIndex = teachers.findIndex(
+  const teacherIndex = teachersData.findIndex(
     (teacher) => teacher.id.toString() === route.params.id.toString()
   );
 
-  teachers[teacherIndex] = state ?? {
-    id: 0,
-    identity_number: "123456789",
-    full_name: "",
-    phone_number: "1234567891",
-    birth_date: new Date().toISOString(),
-    courses: [],
-  };
+  teachersData[teacherIndex] = state;
 
   setTimeout(() => {
     isLoading.value = false;

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { TeacherUpsentReport } from "~/types";
-import { months, teachersUpsentReports } from "~/constants";
+import { months } from "~/constants";
+import { useTeacherStore } from "@/stores/teachers";
+const { teachersUpsentReportsData, deleteTeacherUpsentReport } =
+  useTeacherStore();
 
 const globalFilter = ref("");
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
-const teachersUpsentReportsData = ref(teachersUpsentReports);
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
@@ -33,20 +35,12 @@ const columns: TableColumn<TeacherUpsentReport>[] = [
 function getDropdownActions(report: TeacherUpsentReport): DropdownMenuItem[] {
   return [
     [
-      //   {
-      //     label: "Edit",
-      //     icon: "i-lucide-edit",
-      //     onSelect: () => {
-      //       // console.log("Edit action for user:", student);
-      //       navigateTo(`/teachers/${loan.id}/edit_loan`);
-      //     },
-      //   },
       {
         label: "Delete",
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteReport(report.id);
+          deleteTeacherUpsentReport(report.id);
         },
       },
     ],
@@ -55,7 +49,7 @@ function getDropdownActions(report: TeacherUpsentReport): DropdownMenuItem[] {
 
 const filteredUpsentReports = computed(() => {
   tableKey.value = Math.random();
-  return teachersUpsentReportsData.value.filter(
+  return teachersUpsentReportsData.filter(
     (report) =>
       report.date === selectedDate.value &&
       new Date(report.date).getMonth() === months.indexOf(selectedMonth.value)
@@ -68,17 +62,6 @@ const numberedUpsentReports = computed(() =>
     rowNumber: index + 1,
   }))
 );
-
-const deleteReport = (id: any) => {
-  const reportIndex = teachersUpsentReports.findIndex(
-    (report) => report.id === id
-  );
-
-  if (reportIndex === -1) return;
-
-  teachersUpsentReportsData.value.splice(reportIndex, 1);
-  tableKey.value = Math.random();
-};
 </script>
 
 <template>

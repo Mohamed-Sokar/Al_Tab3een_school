@@ -72,11 +72,13 @@
 </template>
 
 <script setup lang="ts">
-import { array, object, string } from "yup";
+import { array, boolean, object, string } from "yup";
 import { courses_options, teachers } from "~/constants";
 import { type Teacher } from "~/types";
+import { useTeacherStore } from "@/stores/teachers";
+const { addTeacher } = useTeacherStore();
 
-const { toastSuccess, toastError } = useAppToast();
+const { toastSuccess } = useAppToast();
 const isLoading = ref(false);
 const form = ref();
 
@@ -99,6 +101,9 @@ const state = reactive<Teacher>({
   phone_number: undefined,
   birth_date: undefined,
   courses: undefined,
+  has_behavioral_issues: undefined,
+  ubsent_days_count: undefined,
+  loans: undefined,
 });
 
 const createTeacher = async () => {
@@ -111,9 +116,12 @@ const createTeacher = async () => {
     phone_number: state?.phone_number,
     birth_date: state?.birth_date,
     courses: state?.courses,
+    ubsent_days_count: 0,
+    has_behavioral_issues: false,
+    loans: 0,
   };
 
-  teachers.unshift({ ...teacher });
+  addTeacher(teacher);
 
   setTimeout(() => {
     isLoading.value = false;

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { TeacherLoan } from "~/types";
-import { months, teachersLoans } from "~/constants";
+import { months } from "~/constants";
+import { useTeacherStore } from "@/stores/teachers";
+
+const { teachersLoansData, deleteTeacherLoan } = useTeacherStore();
 
 const globalFilter = ref("");
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
-const loans = ref(teachersLoans);
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
@@ -27,7 +29,7 @@ const columns: TableColumn<TeacherLoan>[] = [
     header: "تاريخ السلفة",
   },
   {
-    accessorKey: "loanValue",
+    accessorKey: "amount",
     header: "قيمة السلفة",
   },
   {
@@ -51,7 +53,7 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteLoan(loan.id);
+          deleteTeacherLoan(loan.id);
         },
       },
     ],
@@ -60,7 +62,7 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
 
 const filteredLoans = computed(() => {
   tableKey.value = Math.random();
-  return loans.value.filter(
+  return teachersLoansData.filter(
     (loan) =>
       loan.date === selectedDate.value &&
       new Date(loan.date).getMonth() === months.indexOf(selectedMonth.value)
@@ -73,15 +75,6 @@ const numberedLoans = computed(() =>
     rowNumber: index + 1,
   }))
 );
-
-const deleteLoan = (id: any) => {
-  const loanIndex = teachersLoans.findIndex((loan) => loan.id === id);
-
-  if (loanIndex === -1) return;
-
-  loans.value.splice(loanIndex, 1);
-  tableKey.value = Math.random();
-};
 </script>
 
 <template>
@@ -124,7 +117,7 @@ const deleteLoan = (id: any) => {
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ teachersLoans.length }})</span>
+        <span>({{ teachersLoansData.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -135,7 +128,7 @@ const deleteLoan = (id: any) => {
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ teachersLoans.length }})</span>
+        <span>({{ teachersLoansData.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>

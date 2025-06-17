@@ -7,10 +7,10 @@
       class="grid grid-cols-1 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="قيمة السلفة" name="loan">
+      <UFormField label="قيمة السلفة" name="amount">
         <UInput
           type="number"
-          v-model.number="state.loan"
+          v-model.number="state.amount"
           placeholder="أدخل قيمة السلفة"
           label="إضافة سلفة"
           class="w-full mt-2"
@@ -40,7 +40,9 @@
 
 <script setup lang="ts">
 import { object, string } from "yup";
-import { teachers, teachersLoans } from "~/constants";
+import { useTeacherStore } from "@/stores/teachers";
+
+const { addTeacherLoan } = useTeacherStore();
 
 const { toastSuccess } = useAppToast();
 const route = useRoute();
@@ -48,34 +50,23 @@ const isLoading = ref(false);
 const form = ref();
 
 const schema = object({
-  loan: string().required("قيمة السلفة مطلوبة"),
+  amount: string().required("قيمة السلفة مطلوبة"),
 });
 
 const state = reactive({
-  loan: undefined,
+  amount: undefined,
 });
 
-// get student based on his id
-const targetedTeacher = teachers.find(
-  (teacher) => teacher.id.toString() === route.params.id.toString()
-);
-
 const onSubmit = () => {
-  // add issue to database
+  const teacher_id = route.params.id;
   isLoading.value = true;
 
-  teachersLoans.unshift({
-    id: Math.random(),
-    teacher_name: targetedTeacher?.full_name,
-    teacher_id: targetedTeacher?.id,
-    date: new Date().toISOString().split("T")[0],
-    loanValue: state.loan,
-  });
+  addTeacherLoan(teacher_id, state.amount);
 
   setTimeout(() => {
     isLoading.value = false;
     toastSuccess({
-      title: "تم إضافة المخالفة السلوكية",
+      title: "تم إضافة السلفة بنجاح",
     });
     navigateTo("/teachers/view/loans");
   }, 500);

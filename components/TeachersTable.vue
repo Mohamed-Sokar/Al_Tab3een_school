@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { Teacher, TeacherUpsentReport } from "~/types";
-import {
-  behavioralIssuesTeacher,
-  teachers,
-  teachersUpsentReports,
-} from "~/constants";
+import { useTeacherStore } from "@/stores/teachers";
+
+const {
+  teachersData,
+  teachersUpsentReportsData,
+  deleteTeacher,
+  toggleTeacherUpsentReport,
+  getSpesificTeacher,
+} = useTeacherStore();
 
 const globalFilter = ref("");
-const teachersData = ref<Teacher[]>(teachers);
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
 const UBadge = resolveComponent("UBadge");
-const isClicked = ref(false);
+
+// onMounted(() => {
+// tableKey.value = Math.random();
+// });
 
 const columns: TableColumn<Teacher>[] = [
   {
@@ -39,34 +45,30 @@ const columns: TableColumn<Teacher>[] = [
     accessorKey: "courses",
     header: "المواد التي يتم تدريسها",
   },
-  // {
-  //   accessorKey: "has_behavioral_issue",
-  //   header: "المخالفات",
-  // },
   {
-    accessorKey: "has_behavioral_issue",
+    accessorKey: "behavioral_issues_count",
     header: "المخالفات",
     cell: ({ row }) => {
-      const status = row.original.has_behavioral_issues ?? "لا يوجد";
+      const behavioral_issues_count = row.original.behavioral_issues_count ?? 0;
 
       return h(
         UBadge,
         {
           class: `capitalize ${
-            status === "يوجد" ? "font-bold" : "font-normal"
+            behavioral_issues_count > 0 ? "font-bold" : "font-normal"
           } `,
-          variant: `${status === "يوجد" ? "subtle" : "soft"}`,
-          color: `${status === "يوجد" ? "error" : "neutral"}`,
+          variant: `${behavioral_issues_count > 0 ? "subtle" : "soft"}`,
+          color: `${behavioral_issues_count > 0 ? "error" : "success"}`,
         },
-        () => status
+        () => behavioral_issues_count
       );
     },
   },
   {
-    accessorKey: "ubsent_days_count",
+    accessorKey: "upsent_reports_count",
     header: "عدد أيام الغياب",
     cell: ({ row }) => {
-      const days_count = row.original.ubsent_days_count ?? 0;
+      const days_count = row.original.upsent_reports_count ?? 0;
 
       return h(
         UBadge,
@@ -79,7 +81,7 @@ const columns: TableColumn<Teacher>[] = [
               ? "warning"
               : days_count >= 3
               ? "error"
-              : "neutral"
+              : "success"
           }`,
         },
         () => days_count
@@ -87,18 +89,34 @@ const columns: TableColumn<Teacher>[] = [
     },
   },
   {
-    accessorKey: "loans",
-    header: "قيمة السلف",
+    accessorKey: "loans_count",
+    header: "عدد السلف",
     cell: ({ row }) => {
-      const loans = row.original.loans ?? 0;
+      const loansCount = row.original.loans_count ?? 0;
       return h(
         UBadge,
         {
-          class: `capitalize ${loans ? "font-bold" : "font-normal"}`,
-          variant: `${loans ? "subtle" : "soft"}`,
-          color: `${loans ? "error" : "neutral"}`,
+          class: `capitalize ${loansCount ? "font-bold" : "font-normal"}`,
+          variant: `${loansCount ? "subtle" : "soft"}`,
+          color: `${loansCount ? "error" : "success"}`,
         },
-        () => loans
+        () => loansCount
+      );
+    },
+  },
+  {
+    accessorKey: "loans_amount",
+    header: "مجموع السلف",
+    cell: ({ row }) => {
+      const loansAmount = row.original.loans_amount ?? 0;
+      return h(
+        UBadge,
+        {
+          class: `capitalize ${loansAmount ? "font-bold" : "font-normal"}`,
+          variant: `${loansAmount ? "subtle" : "soft"}`,
+          color: `${loansAmount ? "error" : "success"}`,
+        },
+        () => loansAmount
       );
     },
   },
@@ -139,6 +157,7 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
         color: "error",
         onSelect: () => {
           deleteTeacher(teacher.id);
+          tableKey.value = Math.random();
         },
       },
     ],
@@ -174,75 +193,47 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
 
 // Fetch students data when the component is mounted
 // students.value = await fetchStudents();
+// teachersData.map((teacher, index) => {
+//   console.log(hasBehavioralIssuesReports(teacher.id));
+//   console.log(teacher);
+// });
 
-const has_behavioral_issue = (id: number) => {
-  return !!behavioralIssuesTeacher.find((issue) => id === issue.teacher_id)
-    ? "يوجد"
-    : "لا يوجد";
-};
-
-const numberedTeachers = computed(() =>
-  teachersData.value.map((teacher, index) => ({
+const numberedTeachers = computed(() => {
+  return teachersData.map((teacher, index) => ({
     ...teacher,
-    has_behavioral_issue: has_behavioral_issue(teacher.id),
     rowNumber: index + 1,
-  }))
-);
+  }));
+});
 
-const deleteTeacher = (id: any) => {
-  const teacherIndex = teachersData.value.findIndex(
-    (student) => student.id === id
-  );
+const updateAbsenceStatus = (teacher_id: number) => {
+  const targetedTeacher = getSpesificTeacher(teacher_id);
 
-  teachersData.value.splice(teacherIndex, 1);
-  tableKey.value = Math.random();
-};
+  const report = {
+    id: Math.random(),
+    teacher_id: teacher_id,
+    teacher_name: targetedTeacher?.full_name,
+    date: new Date().toISOString().split("T")[0],
+  };
 
-const deleteReport = (teacher_id: any) => {
-  const reportIndex = teachersUpsentReports.findIndex(
-    (report) => report.teacher_id === teacher_id
-  );
+  toggleTeacherUpsentReport(teacher_id, report);
 
-  if (reportIndex === -1) return;
-
-  teachersUpsentReports.splice(reportIndex, 1);
-  tableKey.value = Math.random();
-};
-
-const teacherReportIsExsist = (teacher_id: number) => {
-  const reportIndex = teachersUpsentReports.findIndex(
-    (report: TeacherUpsentReport) => report.teacher_id === teacher_id
-  );
-  if (reportIndex === -1) return false;
-  return true;
-};
-
-const updateUpsentStatus = (teacher_id: number, teacher_name: string) => {
-  teacherReportIsExsist(teacher_id)
-    ? deleteReport(teacher_id)
-    : teachersUpsentReports.unshift({
-        id: Math.random(),
-        teacher_id: teacher_id,
-        teacher_name: teacher_name,
-        date: new Date().toISOString().split("T")[0],
-      });
   setTimeout(() => {
     navigateTo("/teachers/view/ubsent");
   }, 100);
 };
 
-const IsTeacherAssignUbsentReport = (teacher_id: number) => {
-  const reportIndex = teachersUpsentReports.findIndex(
-    (report) => report.teacher_id === teacher_id
+const IsTeacherHasAbsenceReport = (teacher_id: number) => {
+  const reportIndex = teachersUpsentReportsData.findIndex(
+    (report) => report.teacher_id?.toString() === teacher_id.toString()
   );
 
   if (reportIndex === -1) return false;
   return true;
 };
 
-const badgeUbsentVariant = computed(
+const buttonAbsenceVariant = computed(
   () => (teacherId: number) =>
-    IsTeacherAssignUbsentReport(teacherId) ? "solid" : "outline"
+    IsTeacherHasAbsenceReport(teacherId) ? "solid" : "outline"
 );
 </script>
 
@@ -299,12 +290,14 @@ const badgeUbsentVariant = computed(
     >
       <template #action-cell="{ row }">
         <div class="flex gap-2 items-center">
-          <UBadge
+          <UButton
             color="error"
-            :variant="badgeUbsentVariant(row.original.id)"
+            icon="i-lucide-user-minus"
+            :variant="buttonAbsenceVariant(row.original.id ?? 0)"
             label="غياب"
-            class="rounded-lg hover:cursor-pointer hover:bg-error-300"
-            @click="updateUpsentStatus(row.original.id, row.original.full_name)"
+            size="xs"
+            class="rounded-md hover:cursor-pointer text-xs"
+            @click="updateAbsenceStatus(row.original.id ?? 0)"
           />
 
           <UDropdownMenu :items="getDropdownActions(row.original)">

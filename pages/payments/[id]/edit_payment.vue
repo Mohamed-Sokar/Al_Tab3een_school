@@ -5,7 +5,7 @@
       :schema="schema"
       :state="state"
       class="grid grid-cols-2 gap-4"
-      @submit="updatePayment"
+      @submit="onSubmit"
     >
       <UFormField label="نوع الدفعة" name="type">
         <USelect
@@ -30,7 +30,7 @@
       <UFormField label="القيمة" name="value">
         <UInput
           type="number"
-          v-model.number="state.value"
+          v-model.number="state.amount"
           placeholder="القيمة"
           label="القيمة"
           class="w-full"
@@ -71,11 +71,15 @@ import { number, object, string } from "yup";
 import { payment_type_options, payments } from "~/constants";
 import { type Payment } from "~/types";
 
+import { usePaymentsStore } from "@/stores/paymnets";
+
+const { updatePayment, getSpecificPayment } = usePaymentsStore();
+
 const schema = object({
   type: string().required("نوع الدفعة مطلوب"),
   description: string().required("وصف الدفعة مطلوب"),
   date: string().required("تاريخ الدفعة مطلوب"),
-  value: number().required("القيمة مطلوبة"),
+  amount: number().required("القيمة مطلوبة"),
 });
 
 const state = reactive<Payment>({
@@ -83,7 +87,7 @@ const state = reactive<Payment>({
   type: undefined,
   description: undefined,
   date: undefined,
-  value: undefined,
+  amount: undefined,
 });
 
 const route = useRoute();
@@ -91,20 +95,13 @@ const { toastSuccess } = useAppToast();
 const isLoading = ref(false);
 const form = ref();
 
-const targetedPayment = payments.find(
-  (payment) => payment.id.toString() === route.params.id.toString()
-);
+const targetedPayment = getSpecificPayment(+route.params.id);
 
 Object.assign(state, targetedPayment);
 
-const updatePayment = async () => {
+const onSubmit = async () => {
   isLoading.value = true;
-  const paymentIndex = payments.findIndex(
-    (payment) => payment.id.toString() === route.params.id.toString()
-  );
-  payments[paymentIndex] = {
-    ...state,
-  };
+  updatePayment(+route.params.id, state);
 
   setTimeout(() => {
     isLoading.value = false;
