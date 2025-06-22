@@ -1,78 +1,52 @@
 <template>
-  <div>
-    <page-header
-      title="لوحة التحكم"
-      description="مرحباً بك في نظام إدارة المدرسة"
+  <BaseHeader
+    title="لوحة التحكم"
+    description="مرحباً بك في نظام إدارة المدرسة"
+  />
+  <div
+    class="justify-start items-center flex w-50 mt-3 p-[3px] gap-2 mb-4 bg-secondary-50 border border-secondary-200 dark:bg-secondary-950 dark:border-secondary-500 rounded-sm text-sm"
+  >
+    <div
+      class="w-[50%] text-center rounded-sm hover:bg-secondary py-1 hover:text-white hover: cursor-pointer"
+      :class="{
+        'bg-secondary text-white': isOverview,
+      }"
+      @click="componentIsActive = component.overview"
     >
-    </page-header>
-
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10 mt-8">
-      <HomeCard
-        to="/students/view"
-        title="إجمالي الطلاب"
-        :value="totalStudents"
-      />
-      <HomeCard
-        to="/teachers/view"
-        title="إجمالي المعلمين"
-        :value="totalTeachers"
-      />
-      <HomeCard
-        to="/payments"
-        title="إجمالي الصادر والوارد"
-        :value="totalPayments"
-      />
-      <HomeCard to="/levels" title="إجمالي المستويات" :value="10" />
-      <HomeCard
-        to="/students/view/grades"
-        title="معدل درجات جميع الطلاب"
-        :value="studentsGradeAvarage"
-      />
-      <HomeCard
-        to="/students/view/behavioral_issues"
-        title="مجموع المخالفات السلوكية للطلاب"
-        :value="5"
-      />
-      <HomeCard
-        to="/teachers/view/behavioral_issues"
-        title="مجموع المخالفات الإدارية للمعلمين"
-        :value="2"
-      />
-      <HomeCard
-        to="/teachers/view/loans"
-        title="مجموع سلف المدرسين"
-        :value="1300"
-      />
-      <HomeCard
-        to="/teachers/view/ubsent"
-        title="مجموع أيام غياب المدرسين"
-        :value="10"
-      />
+      نظرة عامة
+    </div>
+    <div
+      class="w-[50%] text-center rounded-sm hover:bg-secondary py-1 hover:text-white hover: cursor-pointer"
+      :class="{ 'bg-secondary text-white': isStatistics }"
+      @click="componentIsActive = component.statistics"
+    >
+      إحصائيات
     </div>
   </div>
+
+  <BaseFadeTransition>
+    <KeepAlive>
+      <component :is="componentIsActive" class="w-full" />
+    </KeepAlive>
+  </BaseFadeTransition>
 </template>
 
 <script setup lang="ts">
-import { students } from "~/constants";
-import type { Payment } from "~/types";
-import { useTeacherStore } from "@/stores/teachers";
-import { usePaymentsStore } from "@/stores/paymnets";
+import overview from "~/components/home/overview.vue";
+import statistics from "~/components/home/statistics.vue";
 
-const { teachersData } = useTeacherStore();
-const { paymentsData } = usePaymentsStore();
+const component = {
+  overview,
+  statistics,
+};
+const componentIsActive = shallowRef(component.overview);
 
-const totalStudents = computed(() => students.length);
-const totalTeachers = computed(() => teachersData.length);
-const totalPayments = computed(() =>
-  paymentsData.value.reduce((sum: any, payment: Payment) => {
-    if (payment.type === "دخل") {
-      return (sum += payment.amount);
-    } else {
-      return (sum -= payment.amount ?? 0);
-    }
-  }, 0)
+const isOverview = computed(
+  () => componentIsActive.value === component.overview
 );
-const studentsGradeAvarage = computed(() => "91.5%");
+const isStatistics = computed(
+  () => componentIsActive.value === component.statistics
+);
 </script>
 
 <style scoped></style>

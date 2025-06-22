@@ -2,17 +2,18 @@ interface Student {
   id: number | undefined;
   full_name: string | undefined;
   identity_number: string | undefined;
+  father_identity_number: string | undefined;
   phone_number: string | undefined;
   birth_date: string | undefined;
+  address: string | undefined;
+  masjed: string | undefined;
   level: string | undefined;
-  memorization_status: string | undefined;
-  // memorization_status: "حافظ قوي" | "حافظ ضعيف" | "غير حافظ" | undefined;
-  // payments_status: Record<string, "مدفوعة" | "غير مدفوعة"> | undefined;
+  section: string | undefined;
   memorized_juz: string | undefined;
+  memorization_status: "غير حافظ" | "حافظ قوي" | "حافظ ضعيف" | undefined;
   daily_recitation: string | undefined;
   academic_level: string | undefined;
-  behavioral_issues: string | undefined;
-  section: string | undefined;
+  behavioral_issues_count: number | undefined;
 }
 
 interface Teacher {
@@ -39,7 +40,7 @@ interface Payment {
 interface BehavioralIssue {
   id: number | undefined;
   student_name: string | undefined;
-  student_id: string | number | undefined;
+  student_id: number | undefined;
   level: string | undefined;
   section: string | undefined;
   date: string | undefined | Date;
@@ -49,7 +50,7 @@ interface BehavioralIssue {
 interface BehavioralIssueTeacher {
   id: number | undefined;
   teacher_name: string | undefined;
-  teacher_id: string | number | undefined;
+  teacher_id: number | undefined;
   date: string | undefined | Date;
   description: string | undefined;
 }
@@ -57,9 +58,9 @@ interface BehavioralIssueTeacher {
 interface TeacherLoan {
   id: number | undefined;
   teacher_name: string | undefined;
-  teacher_id: string | number | undefined;
+  teacher_id: number | undefined;
   date: string | undefined | Date;
-  amount: number | undefined;
+  amount: number;
 }
 
 interface TeacherUpsentReport {
@@ -87,6 +88,14 @@ interface GradesReport {
   type: string | undefined;
 }
 
+interface Level {
+  id: number | undefined;
+  title: string | undefined;
+  studentsCount: number | undefined;
+  fees: number | undefined;
+  maximumCapacity: number | undefined;
+}
+
 export type {
   Student,
   BehavioralIssue,
@@ -96,4 +105,5 @@ export type {
   Teacher,
   TeacherLoan,
   TeacherUpsentReport,
+  Level,
 };

@@ -1,21 +1,17 @@
 <template>
   <div>
     <div class="mb-4">
-      <UFormField
-        label="Current avatar"
-        class="w-full"
-        help="This would be blank by default"
-      >
-        <UAvatar size="3xl" class="w-40 h-40 border" />
+      <UFormField label="الصورة الشخصية الحالية" class="w-full">
+        <UAvatar :src="avatarUrl" class="w-30 h-30 border" />
       </UFormField>
     </div>
 
     <div class="mb-4">
       <UFormField
-        label="New avatar"
+        label="اختر صورة جديدة"
         class="w-full"
         name="avatar"
-        help="After choosing an image click Save to actually upload the new avatar"
+        help="بعد اختيارك للصورة اضغط على زر حفظ ليتم حفظ الصورة الجديدة"
       >
         <!-- there is a bug with using UInput -->
         <!-- <UInput type="file" ref="fileInput" /> -->
@@ -30,8 +26,9 @@
 
     <UButton
       type="submit"
+      color="secondary"
       variant="solid"
-      label="Save"
+      label="حفظ"
       :loading="uploading"
       :disabled="uploading"
       @click="saveAvatar"
@@ -49,7 +46,8 @@ const uploading = ref(false);
 const fileInput = ref(); // Reference to an input with ref="fileInput" attribute
 
 //const { url } = useAvatarUrl();
-const avatarUrl = computed(() => url ?? "/images/avatar.jpg");
+// const avatarUrl = computed(() => url ?? "/images/avatar.png");
+const avatarUrl = computed(() => "/images/avatar.png");
 
 const saveAvatar = async () => {
   // 1. Get the uploaded file

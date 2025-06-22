@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import type { TeacherLoan } from "~/types";
+import { type BehavioralIssueTeacher } from "~/types";
 import { months } from "~/constants";
 import { useTeacherStore } from "@/stores/teachers";
-
-const { teachersLoansData, deleteTeacherLoan } = useTeacherStore();
+const { behavioralIssuesTeacherData: issues, deleteTeacherBehavioralIssue } =
+  useTeacherStore();
 
 const globalFilter = ref("");
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
-const selectedDate = ref(new Date().toISOString().split("T")[0]);
 
-const columns: TableColumn<TeacherLoan>[] = [
+const columns: TableColumn<BehavioralIssueTeacher>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
@@ -26,18 +25,18 @@ const columns: TableColumn<TeacherLoan>[] = [
 
   {
     accessorKey: "date",
-    header: "تاريخ السلفة",
+    header: "تاريخ المخالفة",
   },
   {
-    accessorKey: "amount",
-    header: "قيمة السلفة",
+    accessorKey: "description",
+    header: "الوصف",
   },
   {
     id: "action",
   },
 ];
 
-function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
+function getDropdownActions(issue: BehavioralIssueTeacher): DropdownMenuItem[] {
   return [
     [
       {
@@ -45,7 +44,7 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
         icon: "i-lucide-edit",
         onSelect: () => {
           // console.log("Edit action for user:", student);
-          navigateTo(`/teachers/${loan.id}/edit_loan`);
+          navigateTo(`/teachers/${issue.id}/edit_behavioral_issue`);
         },
       },
       {
@@ -53,25 +52,27 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteTeacherLoan(loan.id);
+          deleteTeacherBehavioralIssue(
+            typeof issue.id === "number" ? issue.id : 0
+          );
         },
       },
     ],
   ];
 }
 
-const filteredLoans = computed(() => {
+const filteredIssues = computed(() => {
   tableKey.value = Math.random();
-  return teachersLoansData.filter(
-    (loan) =>
-      loan.date === selectedDate.value &&
-      new Date(loan.date).getMonth() === months.indexOf(selectedMonth.value)
+  return issues.filter(
+    (issue) =>
+      new Date(issue.date ?? new Date()).getMonth() ===
+      months.indexOf(selectedMonth.value)
   );
 });
 
-const numberedLoans = computed(() =>
-  filteredLoans.value.map((loan, index) => ({
-    ...loan,
+const numberedIssues = computed(() =>
+  filteredIssues.value.map((issue, index) => ({
+    ...issue,
     rowNumber: index + 1,
   }))
 );
@@ -90,13 +91,7 @@ const numberedLoans = computed(() =>
         placeholder="البحث عن معلم..."
         class="w-full md:col-span-4"
       />
-      <UInput
-        v-model="selectedDate"
-        type="date"
-        size="lg"
-        color="secondary"
-        class="w-full"
-      />
+
       <USelect
         v-model="selectedMonth"
         :items="months"
@@ -117,7 +112,7 @@ const numberedLoans = computed(() =>
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ teachersLoansData.length }})</span>
+        <span>({{ issues.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -128,7 +123,7 @@ const numberedLoans = computed(() =>
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ teachersLoansData.length }})</span>
+        <span>({{ issues.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>
@@ -139,7 +134,7 @@ const numberedLoans = computed(() =>
       :key="tableKey"
       v-model:global-filter="globalFilter"
       ref="table"
-      :data="numberedLoans"
+      :data="numberedIssues"
       :columns="columns"
     >
       <template #action-cell="{ row }">

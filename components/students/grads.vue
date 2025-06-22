@@ -11,7 +11,7 @@ const tableKey = ref(Math.random());
 
 const new_grades_level_options = ["الكل", ...grades_level_options];
 
-const columns: TableColumn<Student>[] = [
+const columns: TableColumn<GradesReport>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",

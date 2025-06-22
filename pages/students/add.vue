@@ -1,3 +1,105 @@
+<script setup lang="ts">
+import { object, string } from "yup";
+import {
+  memorization_status_options,
+  level_options,
+  academic_level_options,
+} from "~/constants";
+import type { Student } from "~/types";
+import { useStudentStore } from "@/stores/students";
+
+const { addStudent } = useStudentStore();
+
+// const supabase = useSupabaseClient();
+const route = useRoute();
+const { toastSuccess, toastError } = useAppToast();
+const isLoading = ref(false);
+const form = ref();
+
+const schema = object({
+  full_name: string().required("الاسم مطلوب"),
+  identity_number: string()
+    .required("رقم الهوية مطلوب")
+    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+  phone_number: string()
+    .required("رقم الجوال مطلوب")
+    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
+  birth_date: string().required("تاريخ الميلاد مطلوب"),
+  level: string().required("الصف الدراسي مطلوب"),
+  memorization_status: string().required("حالة الحفظ مطلوبة"),
+  //   payments_status: Object(),
+  memorized_juz: string().required("الأجزاء المحفوظة مطلوبة"),
+  daily_recitation: string().required("التسميع اليومي مطلوب"),
+  // academic_level: string(),
+  // behavioral_issues: string(),
+  section: string().required("الشعبة مطلوبة"),
+});
+
+// const initialState = {
+//   id: undefined,
+//   full_name: undefined,
+//   identity_number: undefined,
+//   phone_number: undefined,
+//   birth_date: undefined,
+//   level: undefined,
+//   memorization_status: undefined,
+//   payments_status: undefined,
+//   memorized_juz: undefined,
+//   daily_recitation: undefined,
+//   //   academic_level: undefined,
+//   //   behavioral_issues: undefined,
+//   section: undefined,
+// };
+
+const newStudentState = reactive<Student>({
+  id: undefined,
+  full_name: undefined,
+  identity_number: undefined,
+  phone_number: undefined,
+  birth_date: undefined,
+  level: undefined,
+  memorization_status: undefined,
+  // payments_status: undefined,
+  memorized_juz: undefined,
+  daily_recitation: undefined,
+  academic_level: undefined,
+  behavioral_issues_count: undefined,
+  section: undefined,
+});
+
+const createStudent = async () => {
+  addStudent({ ...newStudentState, id: Math.random() });
+  setTimeout(() => {
+    navigateTo("/students/view");
+  }, 500);
+  // resetForm();
+  // try {
+  //   const { error } = await supabase.from("students").insert({
+  //     ...newStudentState,
+  //   });
+  //   if (error) throw error;
+  //   toastSuccess({
+  //     title: "تم إضافة الطالب بنجاح",
+  //   });
+  //   // إعادة ضبط النموذج
+  //   Object.keys(newStudentState).forEach((key) => {
+  //     newStudentState[key] = key === "payments_status" ? {} : undefined;
+  //   });
+  // } catch (err) {
+  //   toastError({
+  //     title: "حدث خطأ أثناء إضافة الطالب",
+  //     description: err.message,
+  //   });
+  // }
+};
+
+// const resetForm = () => {
+//   Object.assign(newStudentState, initialState);
+//   isLoading.value = false;
+//   form.value.clear(); // clear the errors from the form
+// };
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -78,7 +180,7 @@
           class="w-full"
         />
       </UFormField>
-      <UFormField label="المستوى الأكاديمي العام" name="academic_level">
+      <!-- <UFormField label="المستوى الأكاديمي العام" name="academic_level">
         <USelect
           disabled
           v-model="newStudentState.academic_level"
@@ -87,8 +189,8 @@
           label="المستوى الأكاديمي العام"
           class="w-full"
         />
-      </UFormField>
-      <UFormField label="المخالفات السلوكية" name="behavioral_issues">
+      </UFormField> -->
+      <!-- <UFormField label="المخالفات السلوكية" name="behavioral_issues">
         <UInput
           disabled
           v-model="newStudentState.behavioral_issues"
@@ -96,7 +198,7 @@
           label="المخالفات السلوكية"
           class="w-full"
         />
-      </UFormField>
+      </UFormField> -->
       <UFormField label="الشعبة" name="section">
         <UInput
           v-model="newStudentState.section"
@@ -123,102 +225,5 @@
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { object, string } from "yup";
-import {
-  memorization_status_options,
-  level_options,
-  academic_level_options,
-} from "~/constants";
-import { type Student } from "~/types";
-
-const supabase = useSupabaseClient();
-const route = useRoute();
-const { toastSuccess, toastError } = useAppToast();
-const isLoading = ref(false);
-const form = ref();
-
-const schema = object({
-  full_name: string().required("الاسم مطلوب"),
-  identity_number: string()
-    .required("رقم الهوية مطلوب")
-    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
-  phone_number: string()
-    .required("رقم الجوال مطلوب")
-    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
-  birth_date: string().required("تاريخ الميلاد مطلوب"),
-  level: string().required("الصف الدراسي مطلوب"),
-  memorization_status: string().required("حالة الحفظ مطلوبة"),
-  //   payments_status: Object(),
-  memorized_juz: string().required("الأجزاء المحفوظة مطلوبة"),
-  daily_recitation: string().required("التسميع اليومي مطلوب"),
-  // academic_level: string(),
-  // behavioral_issues: string(),
-  section: string().required("الشعبة مطلوبة"),
-});
-
-const initialState = {
-  id: undefined,
-  full_name: undefined,
-  identity_number: undefined,
-  phone_number: undefined,
-  birth_date: undefined,
-  level: undefined,
-  memorization_status: undefined,
-  payments_status: undefined,
-  memorized_juz: undefined,
-  daily_recitation: undefined,
-  //   academic_level: undefined,
-  //   behavioral_issues: undefined,
-  section: undefined,
-};
-
-const newStudentState = reactive<Student>({
-  id: undefined,
-  full_name: undefined,
-  identity_number: undefined,
-  phone_number: undefined,
-  birth_date: undefined,
-  level: undefined,
-  memorization_status: undefined,
-  // payments_status: undefined,
-  memorized_juz: undefined,
-  daily_recitation: undefined,
-  academic_level: undefined,
-  behavioral_issues: undefined,
-  section: undefined,
-});
-
-console.log(route);
-
-const createStudent = async () => {
-  resetForm();
-  try {
-    const { error } = await supabase.from("students").insert({
-      ...newStudentState,
-    });
-    if (error) throw error;
-    toastSuccess({
-      title: "تم إضافة الطالب بنجاح",
-    });
-    // إعادة ضبط النموذج
-    Object.keys(newStudentState).forEach((key) => {
-      newStudentState[key] = key === "payments_status" ? {} : undefined;
-    });
-  } catch (err) {
-    toastError({
-      title: "حدث خطأ أثناء إضافة الطالب",
-      description: err.message,
-    });
-  }
-};
-
-const resetForm = () => {
-  Object.assign(newStudentState, initialState);
-  isLoading.value = false;
-  form.value.clear(); // clear the errors from the form
-};
-</script>
 
 <style scoped></style>

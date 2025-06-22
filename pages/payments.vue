@@ -1,7 +1,7 @@
 <template>
-  <FadeTransition>
+  <BaseFadeTransition>
     <NuxtPage />
-  </FadeTransition>
+  </BaseFadeTransition>
 </template>
 
 <script setup lang="ts"></script>

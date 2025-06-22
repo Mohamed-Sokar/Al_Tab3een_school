@@ -1,29 +1,35 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import { type BehavioralIssueTeacher } from "~/types";
+import type { BehavioralIssue } from "~/types";
 import { months } from "~/constants";
-import { useTeacherStore } from "@/stores/teachers";
-const { behavioralIssuesTeacherData: issues, deleteTeacherBehavioralIssue } =
-  useTeacherStore();
+import { useStudentStore } from "@/stores/students";
 
+const { behavioralIssuesStudentData, deleteStudentBehavioralIssue } =
+  useStudentStore();
+
+const { toastSuccess } = useAppToast();
 const globalFilter = ref("");
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
-const currentMonthIndex = new Date().getMonth();
-const selectedMonth = ref(months[currentMonthIndex]);
-const selectedDate = ref(new Date().toISOString().split("T")[0]);
 
-const columns: TableColumn<BehavioralIssueTeacher>[] = [
+const columns: TableColumn<BehavioralIssue>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
   },
 
   {
-    accessorKey: "teacher_name",
-    header: "اسم المعلم",
+    accessorKey: "student_name",
+    header: "اسم الطالب",
   },
-
+  {
+    accessorKey: "level",
+    header: "الصف",
+  },
+  {
+    accessorKey: "section",
+    header: "الشعبة",
+  },
   {
     accessorKey: "date",
     header: "تاريخ المخالفة",
@@ -37,15 +43,14 @@ const columns: TableColumn<BehavioralIssueTeacher>[] = [
   },
 ];
 
-function getDropdownActions(issue: BehavioralIssueTeacher): DropdownMenuItem[] {
+function getDropdownActions(issue: BehavioralIssue): DropdownMenuItem[][] {
   return [
     [
       {
         label: "Edit",
         icon: "i-lucide-edit",
         onSelect: () => {
-          // console.log("Edit action for user:", student);
-          navigateTo(`/teachers/${issue.id}/edit_behavioral_issue`);
+          navigateTo(`/students/${issue.id}/edit_behavioral_issue`);
         },
       },
       {
@@ -53,24 +58,19 @@ function getDropdownActions(issue: BehavioralIssueTeacher): DropdownMenuItem[] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteTeacherBehavioralIssue(issue.id);
+          deleteStudentBehavioralIssue(issue.id || 1);
+          tableKey.value = Math.random();
         },
       },
     ],
   ];
 }
 
-const filteredIssues = computed(() => {
-  tableKey.value = Math.random();
-  return issues.filter(
-    (issue) =>
-      issue.date === selectedDate.value &&
-      new Date(issue.date).getMonth() === months.indexOf(selectedMonth.value)
-  );
-});
+const currentMonthIndex = new Date().getMonth();
+const selectedMonth = ref(months[currentMonthIndex]);
 
 const numberedIssues = computed(() =>
-  filteredIssues.value.map((issue, index) => ({
+  behavioralIssuesStudentData.map((issue, index) => ({
     ...issue,
     rowNumber: index + 1,
   }))
@@ -87,15 +87,8 @@ const numberedIssues = computed(() =>
         color="secondary"
         variant="outline"
         v-model="globalFilter"
-        placeholder="البحث عن معلم..."
+        placeholder="البحث عن طالب..."
         class="w-full md:col-span-4"
-      />
-      <UInput
-        v-model="selectedDate"
-        type="date"
-        size="lg"
-        color="secondary"
-        class="w-full"
       />
       <USelect
         v-model="selectedMonth"
@@ -117,7 +110,7 @@ const numberedIssues = computed(() =>
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ issues.length }})</span>
+        <span>({{ behavioralIssuesStudentData.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -128,7 +121,7 @@ const numberedIssues = computed(() =>
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ issues.length }})</span>
+        <span>({{ behavioralIssuesStudentData.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>

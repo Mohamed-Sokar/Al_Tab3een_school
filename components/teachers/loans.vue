@@ -1,68 +1,50 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import { type BehavioralIssue, type GradesReport, type Student } from "~/types";
-import { months, behavioralIssues, gradesReports } from "~/constants";
+import type { TeacherLoan } from "~/types";
+import { months } from "~/constants";
+import { useTeacherStore } from "@/stores/teachers";
 
-const toast = useToast();
+const { teachersLoansData, deleteTeacherLoan } = useTeacherStore();
+
 const globalFilter = ref("");
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
-const issues = ref(behavioralIssues);
+const currentMonthIndex = new Date().getMonth();
+const selectedMonth = ref(months[currentMonthIndex]);
 
-const columns: TableColumn<BehavioralIssue>[] = [
+const columns: TableColumn<TeacherLoan>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
   },
 
   {
-    accessorKey: "student_name",
-    header: "اسم الطالب",
+    accessorKey: "teacher_name",
+    header: "اسم المعلم",
   },
-  {
-    accessorKey: "level",
-    header: "الصف",
-  },
-  {
-    accessorKey: "section",
-    header: "الشعبة",
-  },
+
   {
     accessorKey: "date",
-    header: "تاريخ المخالفة",
+    header: "تاريخ السلفة",
   },
   {
-    accessorKey: "description",
-    header: "الوصف",
+    accessorKey: "amount",
+    header: "قيمة السلفة",
   },
   {
     id: "action",
   },
 ];
 
-function getDropdownActions(issue: GradesReport): DropdownMenuItem[][] {
+function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
   return [
-    [
-      // {
-      //   label: "Copy user Id",
-      //   icon: "i-lucide-copy",
-      //   onSelect: () => {
-      //     navigator.clipboard.writeText(issue.id.toString());
-      //     toast.add({
-      //       title: "User ID copied to clipboard!",
-      //       color: "success",
-      //       icon: "i-lucide-circle-check",
-      //     });
-      //   },
-      // },
-    ],
     [
       {
         label: "Edit",
         icon: "i-lucide-edit",
         onSelect: () => {
           // console.log("Edit action for user:", student);
-          navigateTo(`/students/${issue.id}/edit_behavioral_issue`);
+          navigateTo(`/teachers/${loan.id}/edit_loan`);
         },
       },
       {
@@ -70,31 +52,28 @@ function getDropdownActions(issue: GradesReport): DropdownMenuItem[][] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteIssue(issue.id);
+          deleteTeacherLoan(typeof loan.id === "number" ? loan.id : 0);
         },
       },
     ],
   ];
 }
 
-const currentMonthIndex = new Date().getMonth();
-const selectedMonth = ref(months[currentMonthIndex]);
+const filteredLoans = computed(() => {
+  tableKey.value = Math.random();
+  return teachersLoansData.filter(
+    (loan) =>
+      new Date(loan.date || new Date()).getMonth() ===
+      months.indexOf(selectedMonth.value)
+  );
+});
 
-const numberedIssues = computed(() =>
-  issues.value.map((issue, index) => ({
-    ...issue,
+const numberedLoans = computed(() =>
+  filteredLoans.value.map((loan, index) => ({
+    ...loan,
     rowNumber: index + 1,
   }))
 );
-
-const deleteIssue = (id: any) => {
-  const issueIndex = behavioralIssues.findIndex((issue) => issue.id === id);
-
-  if (issueIndex === -1) return;
-
-  issues.value.splice(issueIndex, 1);
-  tableKey.value = Math.random();
-};
 </script>
 
 <template>
@@ -107,7 +86,7 @@ const deleteIssue = (id: any) => {
         color="secondary"
         variant="outline"
         v-model="globalFilter"
-        placeholder="البحث عن طالب..."
+        placeholder="البحث عن معلم..."
         class="w-full md:col-span-4"
       />
       <USelect
@@ -130,7 +109,7 @@ const deleteIssue = (id: any) => {
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ behavioralIssues.length }})</span>
+        <span>({{ teachersLoansData.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -141,7 +120,7 @@ const deleteIssue = (id: any) => {
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ behavioralIssues.length }})</span>
+        <span>({{ teachersLoansData.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>
@@ -152,7 +131,7 @@ const deleteIssue = (id: any) => {
       :key="tableKey"
       v-model:global-filter="globalFilter"
       ref="table"
-      :data="numberedIssues"
+      :data="numberedLoans"
       :columns="columns"
     >
       <template #action-cell="{ row }">

@@ -13,7 +13,7 @@ const isLoading = ref(false);
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
-const selectedDate = ref(new Date().toISOString().split("T")[0]);
+// const selectedDate = ref(new Date().toISOString().split("T")[0]);
 
 const columns: TableColumn<Payment>[] = [
   {
@@ -78,7 +78,7 @@ function getDropdownActions(payment: Payment): DropdownMenuItem[] {
 
 const filteredPayments = computed(() => {
   tableKey.value = Math.random();
-  return paymentsData.value.filter(
+  return paymentsData.filter(
     (payment) =>
       // payment.date === selectedDate.value &&
       new Date(payment.date ?? new Date()).getMonth() ===
@@ -102,10 +102,6 @@ const total = computed(() =>
     }
   }, 0)
 );
-
-//   paymentsData.value.splice(studentIndex, 1);
-//   tableKey.value = Math.random();
-// };
 </script>
 
 <template>
@@ -121,13 +117,13 @@ const total = computed(() =>
         placeholder="البحث عن دفعة..."
         class="w-full md:col-span-4"
       />
-      <UInput
+      <!-- <UInput
         v-model="selectedDate"
         type="date"
         size="lg"
         color="secondary"
         class="w-full"
-      />
+      /> -->
       <USelect
         v-model="selectedMonth"
         :items="months"

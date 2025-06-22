@@ -1,29 +1,55 @@
+<script setup lang="ts">
+const props = defineProps<{
+  color: string;
+  to: string;
+  title: string;
+  value: number | string;
+  iconName: string;
+}>();
+// const props = defineProps({
+//   color: {
+//     type: String,
+//     default: "primary",
+//   },
+//   to: String,
+//   title: String,
+//   value: Number | String,
+//   iconName: String,
+// });
+</script>
+
 <template>
   <NuxtLink class="hover:translate-y-1 transition-all" :to="to">
-    <u-card class="relative pb-15 h-full">
-      <div
-        class="absolute -top-1.5 right-[2.5%] w-[95%] h-1.5 rounded-tl-full rounded-tr-full bg-gradient-to-l from-blue-800 to-purple-500 dark:from-gray-900 dark:to-gray-800"
-      ></div>
-
-      <div class="flex justify-between">
+    <u-card class="h-full border-t-4" :class="`border-${color || 'secondary'}`">
+      <div class="flex justify-between mb-3">
         <div class="flex gap-2 items-center">
-          <u-icon name="i-lucide-users" size="lg" />
-          <div>
+          <div class="font-bold">
             {{ props.title }}
           </div>
         </div>
-        <div class="font-bold text-lg">{{ value }}</div>
+        <div class="font-bold text-lg">
+          <UIcon
+            :name="iconName || 'i-lucide-lightbulb'"
+            class="size-7"
+            :class="`text-${color ? color : 'primary'}`"
+          />
+        </div>
+      </div>
+
+      <div
+        class="font-bold text-2xl border w-30 p-1 rounded-md flex justify-center items-center"
+        :class="`text-${
+          typeof value === 'number' && value < 0
+            ? 'error'
+            : color
+            ? color
+            : 'secondary'
+        }`"
+      >
+        {{ value }}
       </div>
     </u-card>
   </NuxtLink>
 </template>
-
-<script setup lang="ts">
-const props = defineProps<{
-  to: string;
-  title: string;
-  value: number | string;
-}>();
-</script>
 
 <style scoped></style>

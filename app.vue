@@ -1,9 +1,9 @@
 <template>
   <UApp>
     <NuxtLayout>
-      <!-- <FadeTransition> -->
+      <!-- <BaseFadeTransition> -->
       <NuxtPage />
-      <!-- </FadeTransition> -->
+      <!-- </BaseFadeTransition> -->
     </NuxtLayout>
   </UApp>
 </template>

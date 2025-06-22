@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <TeachersTable />
-  </div>
+  <TeachersMain />
 </template>
 
 <script setup lang="ts"></script>

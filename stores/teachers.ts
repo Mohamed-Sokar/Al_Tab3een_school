@@ -4,122 +4,139 @@ import {
   teachersLoans,
   teachersUpsentReports,
 } from "~/constants";
+import type {
+  Teacher,
+  BehavioralIssueTeacher,
+  TeacherUpsentReport,
+} from "~/types";
 import { defineStore } from "pinia";
 
 export const useTeacherStore = defineStore("teacher", () => {
-  const teachersData = ref(teachers);
+  const teachersData = ref<Teacher[]>(teachers);
   const behavioralIssuesTeacherData = ref(behavioralIssuesTeacher);
   const teachersLoansData = ref(teachersLoans);
   const teachersUpsentReportsData = ref(teachersUpsentReports);
 
   // Teacher operations
-  const addTeacher = (teacher) => {
+  const addTeacher = (teacher: Teacher) => {
     teachersData.value.unshift({ ...teacher });
   };
-  const editTeacher = (id, newTeacher) => {
-    const teacherIndex = getSpesificTeacherIndex(id);
+  const editTeacher = (teacherId: number, newTeacher: Teacher) => {
+    const teacherIndex = getSpesificTeacherIndex(teacherId);
     teachersData.value[teacherIndex] = newTeacher;
-    console.log(teachersData.value[teacherIndex]);
   };
-  const deleteTeacher = (id) => {
+  const deleteTeacher = (teacherId: number) => {
     const teacherIndex = teachersData.value.findIndex(
-      (teacher) => teacher.id === id
+      (teacher) => teacher.id === teacherId
     );
 
     teachersData.value.splice(teacherIndex, 1);
   };
-  const getSpesificTeacher = (id) => {
-    return teachersData.value.find((teacher) => teacher.id == id);
+  const getSpesificTeacher = (teacherId: number) => {
+    return teachersData.value.find((teacher) => teacher.id == teacherId);
   };
-  const getSpesificTeacherIndex = (id) => {
-    return teachersData.value.findIndex(
-      (teacher) => teacher.id.toString() === id.toString()
-    );
+  const getSpesificTeacherIndex = (teacherId: number) => {
+    return teachersData.value.findIndex((teacher) => teacher.id === teacherId);
   };
 
   // behavioral_issues operations
-  const addTeacherBehavioralIssue = (teacher_id, newIssue) => {
-    const targetedTeacher = getSpesificTeacher(teacher_id);
+  const addTeacherBehavioralIssue = (
+    teacherId: number,
+    description: string
+  ) => {
+    const targetedTeacher = getSpesificTeacher(teacherId);
 
     const newTeacher = {
       ...targetedTeacher,
-      behavioral_issues_count: targetedTeacher.behavioral_issues_count + 1,
+      behavioral_issues_count:
+        typeof targetedTeacher?.behavioral_issues_count === "number"
+          ? targetedTeacher?.behavioral_issues_count + 1
+          : 0,
     };
 
-    editTeacher(teacher_id, newTeacher);
+    editTeacher(teacherId, newTeacher);
 
     const newIssueBuffer = {
       id: Math.random(),
       date: new Date().toISOString().split("T")[0],
       teacher_name: targetedTeacher?.full_name,
       teacher_id: targetedTeacher?.id,
-      description: newIssue.description,
+      // description: description,
+      description: description,
     };
 
     behavioralIssuesTeacherData.value.unshift(newIssueBuffer);
   };
-  const editTeacherBehavioralIssue = (id, newIssue) => {
-    const issueIndex = getSpesificTeacherBehavioralIssueIndex(id);
+  const editTeacherBehavioralIssue = (
+    issueId: number,
+    newIssue: BehavioralIssueTeacher
+  ) => {
+    const issueIndex = getSpesificTeacherBehavioralIssueIndex(issueId);
     behavioralIssuesTeacherData.value[issueIndex] = {
       ...behavioralIssuesTeacherData.value[issueIndex],
+      // description: description,
       ...newIssue,
-      // description: newIssue.description,
     };
   };
-  const deleteTeacherBehavioralIssue = (issueId) => {
+  const deleteTeacherBehavioralIssue = (issueId: number) => {
     // Update the teacher's behavioral issues count
     const targetedIssue = getSpesificTeacherBehavioralIssue(issueId);
-    const targetedTeacher = getSpesificTeacher(
-      targetedIssue?.teacher_id.toString()
-    );
+    const targetedTeacher = getSpesificTeacher(targetedIssue?.teacher_id ?? 0);
 
     if (targetedTeacher) {
-      editTeacher(targetedTeacher.id, {
+      editTeacher(targetedIssue?.teacher_id || 0, {
         ...targetedTeacher,
-        behavioral_issues_count: targetedTeacher.behavioral_issues_count - 1,
+        behavioral_issues_count:
+          typeof targetedTeacher?.behavioral_issues_count === "number"
+            ? targetedTeacher?.behavioral_issues_count - 1
+            : 0,
       });
     }
     // Remove the issue from the list
-    const issueIndex = behavioralIssuesTeacherData.value.findIndex(
-      (issue) => issue.id === id
-    );
+    const issueIndex = getSpesificTeacherBehavioralIssueIndex(issueId);
 
     behavioralIssuesTeacherData.value.splice(issueIndex, 1);
   };
-  const getSpesificTeacherBehavioralIssue = (id) => {
+  const getSpesificTeacherBehavioralIssue = (issueId: number) => {
     return behavioralIssuesTeacherData.value.find(
-      (issue) => issue.id.toString() === id.toString()
+      (issue) => issue.id === issueId
     );
   };
-  const getSpesificTeacherBehavioralIssueIndex = (id) => {
+  const getSpesificTeacherBehavioralIssueIndex = (issueId: number) => {
     return behavioralIssuesTeacherData.value.findIndex(
-      (issue) => issue.id.toString() === id.toString()
+      (issue) => issue.id === issueId
     );
   };
 
   // Teacher loans operations
-  const addTeacherLoan = (teacher_id, amount) => {
-    const targetedTeacher = getSpesificTeacher(teacher_id);
+  const addTeacherLoan = (teacherId: number, amount: number) => {
+    const targetedTeacher = getSpesificTeacher(teacherId);
     // Update the teacher's loans count and amount
     const newTeacher = {
       ...targetedTeacher,
-      loans_count: targetedTeacher.loans_count + 1,
-      loans_amount: +targetedTeacher.loans_amount + +amount,
+      loans_count:
+        typeof targetedTeacher?.loans_count === "number"
+          ? targetedTeacher?.loans_count + 1
+          : 0,
+      loans_amount:
+        typeof targetedTeacher?.loans_amount === "number"
+          ? targetedTeacher?.loans_amount + +amount
+          : 0,
     };
-
+    console.log(newTeacher);
     // Edit the teacher's data
-    editTeacher(teacher_id, newTeacher);
+    editTeacher(teacherId, newTeacher);
 
     // Add the new loan to the loans data
     teachersLoansData.value.unshift({
       id: Math.random(),
       date: new Date().toISOString().split("T")[0],
-      teacher_id: targetedTeacher.id,
-      teacher_name: targetedTeacher.full_name,
+      teacher_id: targetedTeacher?.id,
+      teacher_name: targetedTeacher?.full_name,
       amount,
     });
   };
-  const editTeacherLoan = (loanId, amount) => {
+  const editTeacherLoan = (loanId: number, amount: number) => {
     const loanIndex = getSpesificTeacherLoanIndex(loanId);
 
     teachersLoansData.value[loanIndex] = {
@@ -127,99 +144,105 @@ export const useTeacherStore = defineStore("teacher", () => {
       amount,
     };
   };
-  const deleteTeacherLoan = (id) => {
-    const loanIndex = teachersLoansData.value.findIndex(
-      (loan) => loan.id.toString() === id.toString()
-    );
+  const deleteTeacherLoan = (loanId: number) => {
+    const loanIndex = getSpesificTeacherLoanIndex(loanId);
 
     if (loanIndex === -1) return;
     // Update the teacher's loans count and amount
     const targetedLoan = teachersLoansData.value[loanIndex];
-    const targetedTeacher = getSpesificTeacher(
-      targetedLoan?.teacher_id.toString()
-    );
+    const targetedTeacher = getSpesificTeacher(targetedLoan?.teacher_id || 0);
     if (!targetedTeacher) return;
     // Edit the teacher's data by decreasing the loans count and amount
     if (targetedTeacher) {
-      editTeacher(targetedTeacher.id, {
+      editTeacher(targetedTeacher?.id || 0, {
         ...targetedTeacher,
-        loans_count: +targetedTeacher.loans_count - 1,
-        loans_amount: +targetedTeacher.loans_amount - +targetedLoan.amount,
+        loans_count: targetedTeacher.loans_count || 0 - 1,
+        loans_amount:
+          (targetedTeacher.loans_amount || 0) - (targetedLoan.amount || 0),
       });
     }
 
     teachersLoansData.value.splice(loanIndex, 1);
   };
-  const getSpesificTeacherLoan = (loanId) => {
-    return teachersLoansData.value.find(
-      (loan) => loan.id.toString() === loanId.toString()
-    );
+  const getSpesificTeacherLoan = (loanId: number) => {
+    return teachersLoansData.value.find((loan) => loan.id === loanId);
   };
-  const getSpesificTeacherLoanIndex = (loanId) => {
-    return teachersLoansData.value.findIndex(
-      (loan) => loan.id.toString() === loanId.toString()
-    );
+  const getSpesificTeacherLoanIndex = (loanId: number) => {
+    return teachersLoansData.value.findIndex((loan) => loan.id === loanId);
   };
 
   // Teacher Upsent Reports operations
-  const addTeacherUpsentReport = (teacher_id, report) => {
-    const targetedTeacher = getSpesificTeacher(teacher_id);
+  const addTeacherUpsentReport = (
+    teacherId: number,
+    report: TeacherUpsentReport
+  ) => {
+    const targetedTeacher = getSpesificTeacher(teacherId);
     if (!targetedTeacher) return;
 
     // Update the teacher's upsent reports count
     const newTeacher = {
       ...targetedTeacher,
-      upsent_reports_count: targetedTeacher.upsent_reports_count + 1,
+      upsent_reports_count:
+        typeof targetedTeacher?.upsent_reports_count === "number"
+          ? targetedTeacher?.upsent_reports_count + 1
+          : 0,
     };
-    editTeacher(teacher_id, newTeacher);
+    editTeacher(teacherId, newTeacher);
 
     // Add the new report to the reports data
     teachersUpsentReportsData.value.unshift({
       id: Math.random(),
-      date: report.date,
+      // date: report.date,
+      date: new Date().toISOString().split("T")[0],
       teacher_id: targetedTeacher.id,
       teacher_name: targetedTeacher.full_name,
       // reason: report.reason,
     });
   };
-  const deleteTeacherUpsentReport = (reportId) => {
+  const deleteTeacherUpsentReport = (reportId: number) => {
     const reportIndex = getSpesificTeacherUpsentReportIndex(reportId);
     if (reportIndex === -1) return;
 
     // Update the teacher's upsent reports count
     const targetedReport = getSpesificTeacherUpsentReport(reportId);
-    const targetedTeacher = getSpesificTeacher(
-      targetedReport?.teacher_id.toString()
-    );
+    const targetedTeacher = getSpesificTeacher(targetedReport?.teacher_id || 0);
 
     if (targetedTeacher) {
-      editTeacher(targetedTeacher.id, {
+      editTeacher(targetedTeacher?.id || 0, {
         ...targetedTeacher,
-        upsent_reports_count: targetedTeacher.upsent_reports_count - 1,
+        upsent_reports_count:
+          typeof targetedTeacher?.upsent_reports_count === "number"
+            ? targetedTeacher?.upsent_reports_count - 1
+            : 0,
       });
     }
     // Remove the report from the list
     teachersUpsentReportsData.value.splice(reportIndex, 1);
   };
-  const toggleTeacherUpsentReport = (teacher_id, report) => {
+  const toggleTeacherUpsentReport = (
+    teacherId: number,
+    report: TeacherUpsentReport
+  ) => {
     // const reportIndex = getSpesificTeacherUpsentReportIndex(report.id);
     const reportIndex = teachersUpsentReportsData.value.findIndex(
-      (r) => r.teacher_id === teacher_id && r.date === report.date
+      (r) => r.teacher_id === teacherId && r.date === report.date
     );
-    console.log(reportIndex);
     if (reportIndex !== -1) {
       // If the report already exists, remove it
       deleteTeacherUpsentReport(
-        teachersUpsentReportsData.value[reportIndex].id
+        teachersUpsentReportsData.value[reportIndex].id || 0
       );
     } else {
       // If the report does not exist, add it
-      addTeacherUpsentReport(teacher_id, report);
+      addTeacherUpsentReport(teacherId, report);
     }
   };
-  const editTeacherUpsentReport = (id, newReport) => {
+  const editTeacherUpsentReport = (
+    reportId: number,
+    newReport: TeacherUpsentReport
+  ) => {
     const reportIndex = teachersUpsentReportsData.value.findIndex(
-      (report) => report.id === id
+      (report) => report.id === reportId
     );
 
     teachersUpsentReportsData.value[reportIndex] = {
@@ -227,27 +250,27 @@ export const useTeacherStore = defineStore("teacher", () => {
       ...newReport,
     };
   };
-  const getSpesificTeacherUpsentReport = (reportId) => {
+  const getSpesificTeacherUpsentReport = (reportId: number) => {
     return teachersUpsentReportsData.value.find(
       (report) => report.id == reportId
     );
   };
-  const getSpesificTeacherUpsentReportIndex = (reportId) => {
+  const getSpesificTeacherUpsentReportIndex = (reportId: number) => {
     return teachersUpsentReportsData.value.findIndex((r) => r.id === reportId);
   };
 
-  const totalTeacherAbsence = computed(() => (teacher_id) => {
+  const totalTeacherAbsence = computed(() => (teacherId: number) => {
     return teachersUpsentReportsData.value.filter(
-      (report) => report.teacher_id === teacher_id
+      (report) => report.teacher_id === teacherId
     ).length;
   });
-  const totalTeacherLoans = computed(() => (teacher_id) => {
-    return teachersLoansData.value.reduce((total, loan) => {
-      if (loan.teacher_id === teacher_id) {
-        return total + loan.loanValue;
+  const totalTeacherLoans = computed(() => (teacherId: number) => {
+    return teachersLoansData.value.reduce((total, loan): number => {
+      if (loan.teacher_id === teacherId) {
+        return total + loan.amount;
       }
       return total;
-    });
+    }, 0);
   });
 
   return {

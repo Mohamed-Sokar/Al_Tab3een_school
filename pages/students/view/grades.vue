@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <StudentsGradsTable />
-  </div>
+  <StudentsGrads />
 </template>
 
 <script setup lang="ts"></script>

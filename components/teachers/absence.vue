@@ -40,7 +40,9 @@ function getDropdownActions(report: TeacherUpsentReport): DropdownMenuItem[] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteTeacherUpsentReport(report.id);
+          deleteTeacherUpsentReport(
+            typeof report.id === "number" ? report.id : 0
+          );
         },
       },
     ],

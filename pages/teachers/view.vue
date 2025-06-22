@@ -1,6 +1,6 @@
 <template>
   <div>
-    <page-header
+    <BaseHeader
       title="المعلمون"
       description="إدارة بيانات المعلمون والمعلومات الأكاديمية"
     >
@@ -15,14 +15,14 @@
           >إضافة معلم</UButton
         >
       </template>
-    </page-header>
+    </BaseHeader>
 
     <div :class="wrraperLinksClasses">
       <NuxtLink
         v-for="link in links"
         :key="link.to"
         :to="link.to"
-        class="w-full h-full text-center p-1 rounded-md hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white hover:font-bold"
+        class="w-full h-full text-center p-2 rounded-md hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white hover:font-bold"
         :class="{
           'bg-secondary dark:bg-secondary-600 text-white font-bold':
             link.to === route.path,
@@ -31,9 +31,9 @@
         {{ link.label }}
       </NuxtLink>
     </div>
-    <FadeTransition>
+    <BaseFadeTransition>
       <NuxtPage />
-    </FadeTransition>
+    </BaseFadeTransition>
   </div>
 </template>
 
@@ -64,7 +64,7 @@ const links = [
 ];
 
 const wrraperLinksClasses = computed(() => {
-  return `grid grid-cols-4 gap-1 p-1 bg-secondary-50 border border-secondary-200 rounded-sm mt-2 mb-8 `;
+  return `text-sm grid grid-cols-4 gap-1 p-1 bg-secondary-50 border border-secondary-200 dark:bg-secondary-950 dark:border-secondary-500 rounded-sm mt-2 mb-8 `;
 });
 
 onMounted(() => {
@@ -77,7 +77,6 @@ onMounted(() => {
     },
     { immediate: true }
   );
-  console.log(route.path);
 });
 </script>
 

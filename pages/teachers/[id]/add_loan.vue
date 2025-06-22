@@ -61,7 +61,7 @@ const onSubmit = () => {
   const teacher_id = route.params.id;
   isLoading.value = true;
 
-  addTeacherLoan(teacher_id, state.amount);
+  addTeacherLoan(+teacher_id, state.amount);
 
   setTimeout(() => {
     isLoading.value = false;

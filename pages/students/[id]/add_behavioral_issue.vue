@@ -39,8 +39,9 @@
 
 <script setup lang="ts">
 import { object, string } from "yup";
-import { behavioralIssues, students } from "~/constants";
-import { type BehavioralIssues } from "~/types";
+import { useStudentStore } from "@/stores/students";
+
+const { addStudentBehavioralIssue } = useStudentStore();
 
 // const supabase = useSupabaseClient();
 const { toastSuccess, toastError } = useAppToast();
@@ -52,31 +53,17 @@ const schema = object({
   description: string().required("وصف المخالفة السلوكية مطلوب"),
 });
 
-const state = ref({
+const state = reactive({
   description: undefined,
 });
 
-console.log(route);
-
 // get student based on his id
-const targetedStudent = students.find(
-  (student) => student.id.toString() === route.params.id.toString()
-);
-console.log(targetedStudent);
 
 const onSubmit = () => {
   // add issue to database
   isLoading.value = true;
 
-  behavioralIssues.unshift({
-    id: Math.random(),
-    student_name: targetedStudent?.full_name,
-    student_id: targetedStudent?.id,
-    level: targetedStudent?.level,
-    section: targetedStudent?.section,
-    date: new Date().toISOString().split("T")[0],
-    description: state.value.description,
-  });
+  addStudentBehavioralIssue(+route.params.id, state.description + "");
 
   setTimeout(() => {
     isLoading.value = false;
@@ -87,10 +74,10 @@ const onSubmit = () => {
   }, 1000);
 };
 
-const resetForm = () => {
-  isLoading.value = false;
-  form.value.clear(); // clear the errors from the form
-};
+// const resetForm = () => {
+//   isLoading.value = false;
+//   form.value.clear(); // clear the errors from the form
+// };
 </script>
 
 <style scoped></style>

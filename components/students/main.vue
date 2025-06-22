@@ -1,17 +1,27 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import { type Student } from "~/types";
-import { months, students } from "~/constants";
-// import { getPaginationRowModel } from "@tanstack/vue-table";
+import type { Student } from "~/types";
+import { months } from "~/constants";
+import { useStudentStore } from "@/stores/students";
 
-const toast = useToast();
-// const supabase = useSupabaseClient();
-const globalFilter = ref("");
+const { studentsData, deleteStudent } = useStudentStore();
+
+const { toastSuccess, toastError } = useAppToast();
+
+const route = useRoute();
 const UBadge = resolveComponent("UBadge");
-const table = useTemplateRef("table");
-const studentsData = ref<Student[]>(students);
+const globalFilter = ref(route.query.level ?? "");
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
+
+// watch(
+//   route,
+//   () => {
+//     globalFilter.value = route.query.level;
+//     console.log(route.query.level);
+//   },
+//   { immediate: true }
+// );
 
 const columns: TableColumn<Student>[] = [
   {
@@ -20,7 +30,11 @@ const columns: TableColumn<Student>[] = [
   },
   {
     accessorKey: "identity_number",
-    header: "الهوية",
+    header: "هوية الطالب",
+  },
+  {
+    accessorKey: "father_identity_number",
+    header: "هوية الأب",
   },
   {
     accessorKey: "full_name",
@@ -35,12 +49,39 @@ const columns: TableColumn<Student>[] = [
     header: "تاريخ الميلاد",
   },
   {
+    accessorKey: "address",
+    header: "العنوان",
+  },
+  {
+    accessorKey: "masjed",
+    header: "المسجد",
+  },
+  {
     accessorKey: "level",
     header: "الصف الدراسي",
   },
   {
     accessorKey: "section",
     header: "الشعبة",
+  },
+  {
+    accessorKey: "behavioral_issues_count",
+    header: "عدد المخالفات السلوكية",
+    cell: ({ row }) => {
+      const behavioral_issues_count = row.original.behavioral_issues_count ?? 0;
+
+      return h(
+        UBadge,
+        {
+          class: `capitalize ${
+            behavioral_issues_count > 0 ? "font-bold" : "font-normal"
+          } `,
+          variant: `${behavioral_issues_count > 0 ? "subtle" : "soft"}`,
+          color: `${behavioral_issues_count > 0 ? "error" : "success"}`,
+        },
+        () => behavioral_issues_count
+      );
+    },
   },
   // {
   //   accessorKey: "memorized_juz",
@@ -53,6 +94,25 @@ const columns: TableColumn<Student>[] = [
   {
     accessorKey: "academic_level",
     header: "المستوى الأكاديمي العام",
+    cell: ({ row }) => {
+      const academic_level = row.original.academic_level;
+
+      return h(
+        UBadge,
+        {
+          class: "capitalize",
+          variant: "soft",
+          color: `${
+            academic_level === "ممتاز"
+              ? "success"
+              : academic_level === "جيد جدا"
+              ? "warning"
+              : "error"
+          }`,
+        },
+        () => academic_level
+      );
+    },
   },
   // {
   //   accessorKey: "behavioral_issues",
@@ -89,18 +149,6 @@ const columns: TableColumn<Student>[] = [
 function getDropdownActions(student: Student): DropdownMenuItem[][] {
   return [
     [
-      // {
-      //   label: "Copy user Id",
-      //   icon: "i-lucide-copy",
-      //   onSelect: () => {
-      //     navigator.clipboard.writeText(student.id.toString());
-      //     toast.add({
-      //       title: "User ID copied to clipboard!",
-      //       color: "success",
-      //       icon: "i-lucide-circle-check",
-      //     });
-      //   },
-      // },
       {
         label: "إضافة كشف درجات",
         icon: "i-lucide-copy",
@@ -112,7 +160,6 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
         label: "إضافة مخالفة سلوكية",
         icon: "i-lucide-copy",
         onSelect: () => {
-          console.log("add behavioral issue");
           navigateTo(`/students/${student.id}/add_behavioral_issue`);
         },
       },
@@ -130,14 +177,15 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteStudent(student.id);
+          deleteStudent(student.id || 1);
+          tableKey.value = Math.random();
         },
       },
     ],
   ];
 }
 
-const paymentStatusFilterItems = ["جميع الحالات", "مدفوعة", "غير مدفوعة"];
+// const paymentStatusFilterItems = ["جميع الحالات", "مدفوعة", "غير مدفوعة"];
 
 const fetchStudents = async () => {
   try {
@@ -155,11 +203,10 @@ const fetchStudents = async () => {
     // return data;
   } catch (error) {
     console.error("Error fetching students:", error);
-    toast.add({
+    toastError({
       title: "فشل في تحميل البيانات",
-      color: "error",
-      icon: "i-lucide-circle-x",
     });
+
     return [];
   } finally {
     isLoading.value = false;
@@ -171,47 +218,17 @@ const fetchStudents = async () => {
 
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
-const selectedPaymentStatus = ref(paymentStatusFilterItems[0]);
-
-const filteredStudents = computed(() => {
-  return students.value.filter((student) => {
-    const month = selectedMonth.value;
-    const paymentStatus = selectedPaymentStatus.value;
-
-    const statusForMonth =
-      typeof student.payments_status === "object"
-        ? student.payments_status?.[month]
-        : student.payments_status;
-
-    if (paymentStatus === "جميع الحالات") return true;
-
-    return statusForMonth === paymentStatus;
-  });
-});
 
 const numberedStudents = computed(() =>
   // filteredStudents.value.map((student, index) => ({
   //   ...student,
   //   rowNumber: index + 1,
   // }))
-  studentsData.value.map((student, index) => ({
+  studentsData.map((student, index) => ({
     ...student,
     rowNumber: index + 1,
   }))
 );
-
-const deleteStudent = (id: any) => {
-  const studentIndex = studentsData.value.findIndex(
-    (student) => student.id === id
-  );
-
-  studentsData.value.splice(studentIndex, 1);
-  tableKey.value = Math.random();
-};
-
-// watch(selectedMonth, async () => {
-//   students.value = await fetchStudents();
-// });
 </script>
 
 <template>

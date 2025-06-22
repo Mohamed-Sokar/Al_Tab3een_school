@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+// import { serverSupabaseClient } from "#supabase/server";
 
 export default defineEventHandler(async () => {
   //   const body = await readBody(event);

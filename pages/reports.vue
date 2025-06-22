@@ -1,7 +1,7 @@
 <template>
   <div>
-    <page-header title="التقارير" description="تقارير شاملة وإحصائيات مفصلة">
-    </page-header>
+    <BaseHeader title="التقارير" description="تقارير شاملة وإحصائيات مفصلة">
+    </BaseHeader>
   </div>
 </template>
 

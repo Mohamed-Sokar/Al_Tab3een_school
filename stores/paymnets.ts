@@ -1,7 +1,8 @@
 import type { Payment } from "~/types";
 import { payments } from "./../constants";
-// type NewPayment = Omit<Payment, "id">;
-export const usePaymentsStore = () => {
+import { defineStore } from "pinia";
+
+export const usePaymentsStore = defineStore("payments", () => {
   const paymentsData = ref<Payment[]>(payments);
 
   const addPayment = (payment: Payment) => {
@@ -28,6 +29,24 @@ export const usePaymentsStore = () => {
   const getSpecificPaymentIndex = (paymentId: number) => {
     return paymentsData.value.findIndex((payment) => payment.id == paymentId);
   };
+  const totalIncome = () => {
+    return paymentsData.value.reduce((sum: any, payment: Payment) => {
+      if (payment.type === "دخل") {
+        return (sum += payment.amount);
+      }
+      return (sum += 0);
+    }, 0);
+  };
+
+  const totalExpense = () => {
+    const reduce = paymentsData.value.reduce((sum: any, payment: Payment) => {
+      if (payment.type === "مصروف") {
+        return (sum += payment.amount);
+      }
+      return (sum += 0);
+    }, 0);
+    return reduce;
+  };
 
   return {
     paymentsData,
@@ -36,5 +55,7 @@ export const usePaymentsStore = () => {
     updatePayment,
     getSpecificPayment,
     getSpecificPaymentIndex,
+    totalIncome,
+    totalExpense,
   };
-};
+});

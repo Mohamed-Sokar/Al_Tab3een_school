@@ -1,5 +1,5 @@
 <template>
-  <TeachersUpsentTable />
+  <TeachersAbsence />
 </template>
 
 <script setup lang="ts"></script>

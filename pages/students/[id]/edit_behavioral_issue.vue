@@ -5,7 +5,7 @@
       :schema="schema"
       :state="state"
       class="grid grid-cols-1 gap-4"
-      @submit="onSubmit"
+      @submit="updateIssue"
     >
       <UFormField label="وصف المخالفة السلوكية" name="description">
         <UTextarea
@@ -39,11 +39,12 @@
 
 <script setup lang="ts">
 import { object, string } from "yup";
-import { behavioralIssues, students } from "~/constants";
-import { type BehavioralIssues } from "~/types";
+import { useStudentStore } from "@/stores/students";
 
-// const supabase = useSupabaseClient();
-const { toastSuccess, toastError } = useAppToast();
+const { editStudentBehavioralIssue, getSpesificStudentBehavioralIssue } =
+  useStudentStore();
+
+const { toastSuccess } = useAppToast();
 const route = useRoute();
 const isLoading = ref(false);
 const form = ref();
@@ -52,27 +53,21 @@ const schema = object({
   description: string().required("وصف المخالفة السلوكية مطلوب"),
 });
 
-const targetedIssue = behavioralIssues.find(
-  (issue) => issue.id?.toString() === route.params.id.toString()
-);
+const targetedIssue = getSpesificStudentBehavioralIssue(+route.params.id);
 
-console.log(targetedIssue);
-
-const state = ref({
-  description: targetedIssue?.description,
+const state = reactive<{
+  description: string | undefined;
+}>({
+  description: undefined,
 });
+// Assign targeted issue description to description state
+state.description = targetedIssue?.description;
 
-const onSubmit = () => {
+const updateIssue = () => {
   // add issue to database
   isLoading.value = true;
-  const issueIndex = behavioralIssues.findIndex(
-    (issue) => issue.id?.toString() === route.params.id.toString()
-  );
 
-  behavioralIssues[issueIndex] = {
-    ...behavioralIssues[issueIndex],
-    description: state.value.description,
-  };
+  editStudentBehavioralIssue(+route.params.id, state.description + "");
 
   setTimeout(() => {
     isLoading.value = false;
@@ -81,11 +76,6 @@ const onSubmit = () => {
     });
     navigateTo("/students/view/behavioral_issues");
   }, 1000);
-};
-
-const resetForm = () => {
-  isLoading.value = false;
-  form.value.clear(); // clear the errors from the form
 };
 </script>
 

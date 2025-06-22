@@ -16,10 +16,6 @@ const isLoading = ref(false);
 const tableKey = ref(Math.random());
 const UBadge = resolveComponent("UBadge");
 
-// onMounted(() => {
-// tableKey.value = Math.random();
-// });
-
 const columns: TableColumn<Teacher>[] = [
   {
     accessorKey: "rowNumber",
@@ -156,7 +152,7 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteTeacher(teacher.id);
+          deleteTeacher(teacher.id || 0);
           tableKey.value = Math.random();
         },
       },
@@ -214,7 +210,6 @@ const updateAbsenceStatus = (teacher_id: number) => {
     teacher_name: targetedTeacher?.full_name,
     date: new Date().toISOString().split("T")[0],
   };
-
   toggleTeacherUpsentReport(teacher_id, report);
 
   setTimeout(() => {
@@ -224,7 +219,7 @@ const updateAbsenceStatus = (teacher_id: number) => {
 
 const IsTeacherHasAbsenceReport = (teacher_id: number) => {
   const reportIndex = teachersUpsentReportsData.findIndex(
-    (report) => report.teacher_id?.toString() === teacher_id.toString()
+    (report) => report.teacher_id === teacher_id
   );
 
   if (reportIndex === -1) return false;

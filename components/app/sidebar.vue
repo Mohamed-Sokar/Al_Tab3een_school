@@ -26,13 +26,13 @@ const links = [
   {
     label: "الطلاب",
     icon: "i-lucide-users",
-    to: "/students/view",
+    to: "/students/view/students_table",
   },
   { label: "المعلمون", icon: "i-lucide-users", to: "/teachers/view" },
   { label: "المصروفات", icon: "i-lucide-credit-card", to: "/payments" },
   { label: "المستويات", icon: "i-lucide-book-open", to: "/levels" },
-  { label: "التقارير", icon: "i-lucide-bar-chart-3", to: "/reports" },
-  { label: "الإعدادات", icon: "i-lucide-settings", to: "/settings" },
+  // { label: "التقارير", icon: "i-lucide-bar-chart-3", to: "/reports" },
+  { label: "الإعدادات", icon: "i-lucide-settings", to: "/settings/general" },
 ];
 </script>
 

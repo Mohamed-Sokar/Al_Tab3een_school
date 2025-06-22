@@ -1,148 +1,14 @@
-<template>
-  <UCard class="max-w-3xl mx-auto mt-15">
-    <UForm
-      ref="form"
-      :schema="schema"
-      :state="newStudent"
-      class="grid grid-cols-2 gap-4"
-      @submit="updateStudent"
-    >
-      <UFormField label="الاسم رباعي" name="full_name">
-        <UInput
-          v-model="newStudent.full_name"
-          placeholder="الاسم رباعي"
-          label="الاسم"
-          class="w-full"
-          :disabled="isDisabled"
-        />
-      </UFormField>
-
-      <UFormField label="رقم الهوية" name="identity_number">
-        <UInput
-          v-model="newStudent.identity_number"
-          placeholder="رقم الهوية"
-          label="رقم الهوية"
-          class="w-full"
-          :disabled="isDisabled"
-        />
-      </UFormField>
-
-      <UFormField label="رقم الجوال" name="phone_number">
-        <UInput
-          v-model="newStudent.phone_number"
-          placeholder="05xxxxxxxx"
-          label="رقم الجوال"
-          class="w-full"
-          :disabled="isDisabled"
-        />
-      </UFormField>
-      <UFormField label="تاريخ الميلاد" name="birth_date">
-        <UInput
-          v-model="newStudent.birth_date"
-          type="date"
-          class="w-full"
-          :disabled="isDisabled"
-          placeholder="تاريخ الميلاد"
-          icon="heroicons-calendar-days-solid"
-        />
-      </UFormField>
-      <UFormField label="المستوى الدراسي" name="level">
-        <USelect
-          v-model="newStudent.level"
-          :items="level_options"
-          type="text"
-          class="w-full"
-          :disabled="isDisabled"
-          placeholder="المستوى الدراسي"
-        />
-      </UFormField>
-
-      <UFormField label="حالة الحفظ" name="memorization_status">
-        <USelect
-          v-model="newStudent.memorization_status"
-          :items="memorization_status_options"
-          type="text"
-          class="w-full"
-          :disabled="isDisabled"
-          placeholder="حالة الحفظ"
-        />
-      </UFormField>
-      <UFormField label="الأجزاء المحفوظة" name="memorized_juz">
-        <UInput
-          v-model.number="newStudent.memorized_juz"
-          type="number"
-          placeholder="الأجزاء المحفوظة"
-          label="الأجزاء المحفوظة"
-          class="w-full"
-          :disabled="isDisabled"
-        />
-      </UFormField>
-      <UFormField label="التسميع اليومي" name="daily_recitation">
-        <UInput
-          v-model="newStudent.daily_recitation"
-          placeholder="التسميع اليومي"
-          label="التسميع اليومي"
-          class="w-full"
-          :disabled="isDisabled"
-        />
-      </UFormField>
-      <UFormField label="المستوى الأكاديمي العام" name="academic_level">
-        <USelect
-          v-model="newStudent.academic_level"
-          :items="academic_level_options"
-          placeholder="المستوى الأكاديمي العام"
-          label="المستوى الأكاديمي العام"
-          class="w-full"
-          :disabled="isDisabled"
-        />
-      </UFormField>
-      <UFormField label="المخالفات السلوكية" name="behavioral_issues">
-        <UInput
-          v-model="newStudent.behavioral_issues"
-          placeholder="المخالفات السلوكية"
-          label="المخالفات السلوكية"
-          class="w-full"
-          :disabled="isDisabled"
-        />
-      </UFormField>
-      <UFormField label="الشعبة" name="section">
-        <UInput
-          v-model="newStudent.section"
-          placeholder="الشعبة"
-          label="الشعبة"
-          class="w-full"
-          :disabled="isDisabled"
-        />
-      </UFormField>
-      <div class="col-span-2 flex gap-2 mt-5">
-        <UButton
-          type="submit"
-          class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
-          color="secondary"
-          label="تعديل"
-          :loading="isLoading"
-        />
-        <UButton
-          variant="soft"
-          class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
-          color="secondary"
-          @click="navigateTo('/students/view')"
-          label="إلغاء"
-        />
-      </div>
-    </UForm>
-  </UCard>
-</template>
-
 <script setup lang="ts">
 import { object, string } from "yup";
 import {
   memorization_status_options,
   level_options,
   academic_level_options,
-  students,
 } from "~/constants";
 import { type Student } from "~/types";
+import { useStudentStore } from "@/stores/students";
+
+const { getSpesificStudent, editStudent } = useStudentStore();
 
 const schema = object({
   full_name: string().required("الاسم مطلوب"),
@@ -164,42 +30,31 @@ const schema = object({
 });
 
 const state = reactive<Student>({
-  id: Math.random(),
-  full_name: "Mohamed Sokar",
-  identity_number: "123456",
-  phone_number: "123456",
-  birth_date: new Date().toISOString().split("T")[0],
-  level: "الصف التاسع",
-  memorization_status: "حافظ قوي",
-  // payments_status: { يناير: "مدفوعة" },
-  memorized_juz: "30",
-  daily_recitation: "جزء",
-  academic_level: "ممتاز",
-  behavioral_issues: "لا يوجد",
-  section: "1",
+  id: undefined,
+  full_name: undefined,
+  identity_number: undefined,
+  phone_number: undefined,
+  birth_date: undefined,
+  level: undefined,
+  memorization_status: undefined,
+  memorized_juz: undefined,
+  daily_recitation: undefined,
+  academic_level: undefined,
+  behavioral_issues_count: 0,
+  section: undefined,
 });
 
-const isDisabled = ref(false);
-const supabase = useSupabaseClient();
 const route = useRoute();
 const { toastSuccess, toastError } = useAppToast();
 const isLoading = ref(false);
 const form = ref();
-const newStudent = ref();
-const studentsData = ref(students);
-// const isEditing = computed(() => !!props.student);
 
-const targetedStudent = studentsData.value.find(
-  (student) => student.id.toString() === route.params.id.toString()
-);
-newStudent.value = targetedStudent;
+const targetedStudent = getSpesificStudent(+route.params.id);
+Object.assign(state, targetedStudent);
 
 const updateStudent = async () => {
   isLoading.value = true;
-  const studentIndex = studentsData.value.findIndex(
-    (student) => student.id.toString() === route.params.id.toString()
-  );
-  studentsData.value[studentIndex] = newStudent.value;
+  editStudent(+route.params.id, state);
 
   setTimeout(() => {
     isLoading.value = false;
@@ -209,12 +64,131 @@ const updateStudent = async () => {
     navigateTo("/students/view");
   }, 500);
 };
-
-const resetForm = () => {
-  //   Object.assign(state, initialState);
-  isLoading.value = false;
-  form.value.clear(); // clear the errors from the form
-};
 </script>
+
+<template>
+  <UCard class="max-w-3xl mx-auto mt-15">
+    <UForm
+      ref="form"
+      :schema="schema"
+      :state="state"
+      class="grid grid-cols-2 gap-4"
+      @submit="updateStudent"
+    >
+      <UFormField label="الاسم رباعي" name="full_name">
+        <UInput
+          v-model="state.full_name"
+          placeholder="الاسم رباعي"
+          label="الاسم"
+          class="w-full"
+        />
+      </UFormField>
+
+      <UFormField label="رقم الهوية" name="identity_number">
+        <UInput
+          v-model="state.identity_number"
+          placeholder="رقم الهوية"
+          label="رقم الهوية"
+          class="w-full"
+        />
+      </UFormField>
+
+      <UFormField label="رقم الجوال" name="phone_number">
+        <UInput
+          v-model="state.phone_number"
+          placeholder="05xxxxxxxx"
+          label="رقم الجوال"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="تاريخ الميلاد" name="birth_date">
+        <UInput
+          v-model="state.birth_date"
+          type="date"
+          class="w-full"
+          placeholder="تاريخ الميلاد"
+          icon="heroicons-calendar-days-solid"
+        />
+      </UFormField>
+      <UFormField label="المستوى الدراسي" name="level">
+        <USelect
+          v-model="state.level"
+          :items="level_options"
+          type="text"
+          class="w-full"
+          placeholder="المستوى الدراسي"
+        />
+      </UFormField>
+
+      <UFormField label="حالة الحفظ" name="memorization_status">
+        <USelect
+          v-model="state.memorization_status"
+          :items="memorization_status_options"
+          type="text"
+          class="w-full"
+          placeholder="حالة الحفظ"
+        />
+      </UFormField>
+      <UFormField label="الأجزاء المحفوظة" name="memorized_juz">
+        <UInput
+          v-model.number="state.memorized_juz"
+          type="number"
+          placeholder="الأجزاء المحفوظة"
+          label="الأجزاء المحفوظة"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="التسميع اليومي" name="daily_recitation">
+        <UInput
+          v-model="state.daily_recitation"
+          placeholder="التسميع اليومي"
+          label="التسميع اليومي"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="المستوى الأكاديمي العام" name="academic_level">
+        <USelect
+          v-model="state.academic_level"
+          :items="academic_level_options"
+          placeholder="المستوى الأكاديمي العام"
+          label="المستوى الأكاديمي العام"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="المخالفات السلوكية" name="behavioral_issues">
+        <UInput
+          v-model="state.behavioral_issues"
+          placeholder="المخالفات السلوكية"
+          label="المخالفات السلوكية"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="الشعبة" name="section">
+        <UInput
+          v-model="state.section"
+          placeholder="الشعبة"
+          label="الشعبة"
+          class="w-full"
+        />
+      </UFormField>
+      <div class="col-span-2 flex gap-2 mt-5">
+        <UButton
+          type="submit"
+          class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
+          color="secondary"
+          label="تعديل"
+          :loading="isLoading"
+        />
+        <UButton
+          variant="soft"
+          class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
+          color="secondary"
+          @click="navigateTo('/students/view')"
+          label="إلغاء"
+        />
+      </div>
+    </UForm>
+  </UCard>
+</template>
 
 <style scoped></style>

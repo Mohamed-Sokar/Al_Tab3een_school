@@ -1,6 +1,6 @@
 <template>
   <div>
-    <page-header title="المصروفات" description="إدارة المصروفات الشهرية للطلاب">
+    <BaseHeader title="المصروفات" description="إدارة المصروفات الشهرية للطلاب">
       <template #actions>
         <UButton
           icon="heroicons-plus-circle-20-solid"
@@ -13,9 +13,9 @@
         >
       </template>
       <UBadge color="neutral" />
-    </page-header>
+    </BaseHeader>
 
-    <PaymentsTable />
+    <PaymentMain />
   </div>
 </template>
 

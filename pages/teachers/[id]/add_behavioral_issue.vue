@@ -41,12 +41,12 @@
 import { object, string } from "yup";
 import { useTeacherStore } from "@/stores/teachers";
 
-const { teachersData, addTeacherBehavioralIssue, getSpesificTeacher } =
-  useTeacherStore();
+const { addTeacherBehavioralIssue } = useTeacherStore();
 const { toastSuccess } = useAppToast();
 const route = useRoute();
 const isLoading = ref(false);
 const form = ref();
+const teacher_id = route.params.id;
 
 const schema = object({
   description: string().required("وصف المخالفة الإدارية مطلوب"),
@@ -59,8 +59,7 @@ const state = reactive({
 const onSubmit = () => {
   // add issue to database
   isLoading.value = true;
-  const teacher_id = route.params.id;
-  addTeacherBehavioralIssue(teacher_id, state);
+  addTeacherBehavioralIssue(+teacher_id, state.description + "");
 
   setTimeout(() => {
     isLoading.value = false;

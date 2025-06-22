@@ -1,6 +1,6 @@
 <template>
   <div>
-    <BehavioralIssuesTeachersTable />
+    <TeachersBehavioralIssue />
   </div>
 </template>
 

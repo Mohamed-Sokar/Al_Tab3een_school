@@ -1,7 +1,7 @@
 <template>
   <div class="flex">
     <!-- Sidebar -->
-    <Sidebar />
+    <AppSidebar />
 
     <!-- Page content -->
     <div
@@ -37,17 +37,23 @@ colorMode.preference = "system"; // Set default color mode
 const supabase = useSupabaseClient();
 
 // create user in both users and profiles tables
-const createUser = async () => {
-  const response = await $fetch("/api/admin/create-user", {
-    method: "POST",
-    body: {
-      email: "aboomarsokar@gmail.com",
-      password: "strongpassword123",
-      role: "manager", // or 'admin'
-    },
-  });
-  console.log(response);
-};
+// const createUser = async () => {
+//   const response = await $fetch("/api/admin/create-user", {
+//     method: "POST",
+//     body: {
+//       email: "aboomarsokar@gmail.com",
+//       password: "strongpassword123",
+//       role: "manager", // or 'admin'
+//     },
+//   });
+//   console.log(response);
+// };
+
+// const { success, response } = await $fetch("/api/send-telegram", {
+//   method: "POST",
+//   body: { message: "🔔 تمت إضافة طالب جديد في المدرسة!" },
+// });
+// console.log(success, response);
 
 // await createUser();
 </script>
