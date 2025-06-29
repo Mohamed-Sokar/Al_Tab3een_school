@@ -1,8 +1,3 @@
-import {
-  behavioralIssuesTeacher,
-  teachersLoans,
-  teachersUpsentReports,
-} from "~/constants";
 import type {
   Teacher,
   BehavioralIssueTeacher,
