@@ -19,7 +19,7 @@
       <UFormField label="السعة القصوى" name="maximumCapacity">
         <UInput
           type="number"
-          v-model.number="state.maximumCapacity"
+          v-model.number="state.maximum_capacity"
           placeholder="السعة القصوى"
           label="السعة القصوى"
           class="w-full"
@@ -40,14 +40,14 @@
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          :loading="isLoading"
+          :loading="levelsStore.loading"
           label="تعديل"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/levels')"
+          @click="navigateTo({ name: 'levels' })"
           label="إلغاء"
         />
       </div>
@@ -61,45 +61,34 @@ import { level_options } from "~/constants";
 import type { Level } from "~/types";
 import { useLevelsStore } from "@/stores/levels";
 
-const { levelsData, addLevel, getSpecificLevel, getSpecificLevelIndex } =
-  useLevelsStore();
+const levelsStore = useLevelsStore();
 
 const schema = object({
   title: string().required("الصف الدراسي مطلوب"),
-  maximumCapacity: number().required("السعة القصوى مطلوبة"),
+  maximum_capacity: number().required("السعة القصوى مطلوبة"),
   fees: number().required("الرسوم مطلوبة"),
 });
 
 const state = reactive<Level>({
-  id: undefined,
+  // id: undefined,
   title: undefined,
-  maximumCapacity: undefined,
+  maximum_capacity: undefined,
   fees: undefined,
-  studentsCount: undefined,
+  // studentsCount: undefined,
 });
 
 const route = useRoute();
-const { toastSuccess } = useAppToast();
-const isLoading = ref(false);
 const form = ref();
+const levelId =
+  route.params.id instanceof Array ? +route.params.id[0] : +route.params.id;
 
-const targetedLevel = getSpecificLevel(+route.params.id);
+const targetedLevel = levelsStore.getSpecificLevel(levelId);
 
 Object.assign(state, targetedLevel);
 
 const updateLevel = async () => {
-  isLoading.value = true;
-  const levelIndex = getSpecificLevelIndex(+route.params.id);
-
-  levelsData[levelIndex] = state;
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم تحديث المستوى بنجاح",
-    });
-    navigateTo("/levels");
-  }, 500);
+  await levelsStore.updateLevel(levelId, state);
+  navigateTo({ name: "levels" });
 };
 </script>
 

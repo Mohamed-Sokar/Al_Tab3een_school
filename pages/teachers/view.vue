@@ -11,7 +11,7 @@
           color="secondary"
           class="bg-blue-600 px-3 py-2 font-bold"
           variant="solid"
-          to="/teachers/add"
+          :to="{ name: 'teachers-add' }"
           >إضافة معلم</UButton
         >
       </template>
@@ -59,7 +59,7 @@ const links = [
   {
     label: "الحضور والغياب",
     icon: "i-lucide-user",
-    to: "/teachers/view/ubsent",
+    to: "/teachers/view/absence",
   },
 ];
 

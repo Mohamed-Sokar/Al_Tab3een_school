@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
+import type { DropdownMenuItem } from "@nuxt/ui";
 const route = useRoute();
-
+const { toastError, toastSuccess } = useAppToast();
 const isOpen = ref(false);
 const isLargeScreen = ref(false);
-
+const loading = ref(false);
+const supabase = useSupabaseClient();
+const user = useSupabaseUser();
 function updateScreen() {
   isLargeScreen.value = window.innerWidth >= 1024;
 }
@@ -21,6 +24,27 @@ watch(
   }
 );
 
+const signOut = async () => {
+  try {
+    loading.value = true;
+    const { error } = await supabase.auth.signOut();
+    navigateTo("/login");
+    if (error) {
+      throw new Error(error.message);
+    }
+    toastSuccess({
+      title: "تم تسجيل الخروج بنجاح",
+    });
+  } catch (error) {
+    toastError({
+      title: "حدث مشكلة في تسجيل الخروج",
+      description: error.message,
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
 const links = [
   { label: "الرئيسية", icon: "i-lucide-home", to: "/" },
   {
@@ -33,6 +57,36 @@ const links = [
   { label: "المستويات", icon: "i-lucide-book-open", to: "/levels" },
   // { label: "التقارير", icon: "i-lucide-bar-chart-3", to: "/reports" },
   { label: "الإعدادات", icon: "i-lucide-settings", to: "/settings/general" },
+];
+const items: DropdownMenuItem[] = [
+  [
+    {
+      slot: "account",
+      // label: user.value?.email,
+      icon: "i-lucide-user",
+      disabled: true,
+    },
+  ],
+  [
+    {
+      label: "تغيير الصورة الشخصية",
+      icon: "i-heroicons-camera",
+      onSelect: () => {
+        navigateTo("/settings/avatar");
+      },
+    },
+  ],
+  [
+    {
+      label: "تسجيل خروج",
+      color: "error",
+      icon: "heroicons-arrow-right-end-on-rectangle-20-solid",
+      class: "text-red-500  hover:cursor-pointer",
+      onSelect: () => {
+        signOut();
+      },
+    },
+  ],
 ];
 </script>
 
@@ -69,12 +123,44 @@ const links = [
       >
         <div>
           <!-- Logo -->
-          <UAvatar size="xl" />
+          <!-- <UAvatar size="xl" /> -->
+          <UDropdownMenu
+            v-if="user"
+            class="hover:cursor-pointer"
+            arrow
+            :items="items"
+            :ui="{
+              content: 'w-60',
+            }"
+          >
+            <UAvatar
+              :src="url ?? '/images/avatar.avif'"
+              size="xl"
+              class="border"
+            />
+            <template #account="{ item }">
+              <div class="text-left w-full">
+                <p class="text-muted">تم تسجيل الدخول بحساب</p>
+                <div class="flex justify-between w-full">
+                  <p class="font-medium text-gray-900 dark:text-white">
+                    {{ user.email }}
+                  </p>
+                  <UIcon
+                    :name="item.icon"
+                    class="flex-shrink-0 h-4 w-4 text-gray-400 dark:text-gray-500 ms-auto"
+                  />
+                </div>
+              </div>
+            </template>
+            <template #item-leading> </template>
+          </UDropdownMenu>
         </div>
-        <NuxtLink to="/">
-          <h2 class="text-xl font-bold text-white">مدرسة التابعين</h2>
-          <p class="text-sm text-blue-200 dark:text-gray-400">إدارة متكاملة</p>
-        </NuxtLink>
+        <div>
+          <h2 class="text-xl font-bold text-white">جلال أبو صايمة</h2>
+          <p class="text-sm text-blue-200 dark:text-gray-400">
+            مدير مدرسة التابعين
+          </p>
+        </div>
       </div>
 
       <!-- Navigation -->
@@ -99,7 +185,7 @@ const links = [
       </nav>
 
       <!-- Footer -->
-      <div
+      <!-- <div
         class="px-4 py-3 bg-blue-800 dark:bg-gray-900 flex items-center justify-between text-sm"
       >
         <div>
@@ -111,7 +197,7 @@ const links = [
         >
           م
         </div>
-      </div>
+      </div> -->
     </aside>
   </Transition>
 </template>

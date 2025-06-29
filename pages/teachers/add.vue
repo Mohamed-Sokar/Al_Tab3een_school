@@ -1,3 +1,42 @@
+<script setup lang="ts">
+import { object, string } from "yup";
+import { courses_options, teachers } from "~/constants";
+import { type Teacher } from "~/types";
+import { useTeachersStore } from "@/stores/teachers";
+const teachersStore = useTeachersStore();
+
+const form = ref();
+
+const schema = object({
+  full_name: string().required("الاسم مطلوب"),
+  identity_number: string()
+    .required("رقم الهوية مطلوب")
+    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+  phone_number: string()
+    .required("رقم الجوال مطلوب")
+    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
+  birth_date: string().required("تاريخ الميلاد مطلوب"),
+  subject: string().required("المادة التي يتم تدريسها مطلوبة"),
+});
+
+const state = reactive<Teacher>({
+  // id: undefined,
+  full_name: undefined,
+  identity_number: undefined,
+  phone_number: undefined,
+  birth_date: undefined,
+  subject: undefined,
+  // has_behavioral_issues: undefined,
+  // ubsent_days_count: undefined,
+  // loans: undefined,
+});
+
+const createTeacher = async () => {
+  await teachersStore.addTeacher({ ...state, manager_id: null });
+  navigateTo({ name: "teachers-view-teachers_table" });
+};
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -40,11 +79,10 @@
           icon="heroicons-calendar-days-solid"
         />
       </UFormField>
-      <UFormField label="المواد التي يتم تدريسها" name="courses">
+      <UFormField label="المادة" name="subject">
         <USelect
-          v-model="state.courses"
+          v-model="state.subject"
           :items="courses_options"
-          multiple
           type="text"
           class="w-full"
           placeholder="المواد التي يتم تدريسها"
@@ -56,7 +94,7 @@
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          :loading="isLoading"
+          :loading="teachersStore.loading"
           label="إضافة"
         />
         <UButton
@@ -70,64 +108,5 @@
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { array, boolean, object, string } from "yup";
-import { courses_options, teachers } from "~/constants";
-import { type Teacher } from "~/types";
-import { useTeacherStore } from "@/stores/teachers";
-const { addTeacher } = useTeacherStore();
-
-const { toastSuccess } = useAppToast();
-const isLoading = ref(false);
-const form = ref();
-
-const schema = object({
-  full_name: string().required("الاسم مطلوب"),
-  identity_number: string()
-    .required("رقم الهوية مطلوب")
-    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
-  phone_number: string()
-    .required("رقم الجوال مطلوب")
-    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
-  birth_date: string().required("تاريخ الميلاد مطلوب"),
-  courses: array().required("المواد التي يتم تدريسها مطلوبة"),
-});
-
-const state = reactive<Teacher>({
-  id: undefined,
-  full_name: undefined,
-  identity_number: undefined,
-  phone_number: undefined,
-  birth_date: undefined,
-  courses: undefined,
-  has_behavioral_issues: undefined,
-  ubsent_days_count: undefined,
-  loans: undefined,
-});
-
-const createTeacher = async () => {
-  isLoading.value = true;
-
-  const teacher = {
-    id: Math.random(),
-    full_name: state?.full_name,
-    identity_number: state?.identity_number,
-    phone_number: state?.phone_number,
-    birth_date: state?.birth_date,
-    courses: state?.courses,
-    ubsent_days_count: 0,
-    has_behavioral_issues: false,
-    loans: 0,
-  };
-
-  addTeacher(teacher);
-
-  setTimeout(() => {
-    isLoading.value = false;
-    navigateTo("/teachers/view");
-  }, 500);
-};
-</script>
 
 <style scoped></style>

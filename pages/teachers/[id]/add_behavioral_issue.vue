@@ -1,3 +1,33 @@
+<script setup lang="ts">
+import { object, string } from "yup";
+import { useTeachersStore } from "@/stores/teachers";
+
+const teachersStore = useTeachersStore();
+
+const route = useRoute();
+const form = ref();
+const teacherId = Array.isArray(route.params.id)
+  ? route.params.id[0]
+  : route.params.id ?? "";
+
+const schema = object({
+  description: string().required("وصف المخالفة الإدارية مطلوب"),
+});
+
+const state = reactive({
+  description: undefined,
+});
+
+const onSubmit = async () => {
+  // add issue to database
+  await teachersStore.addTeacherBehavioralIssue(
+    teacherId,
+    state.description + ""
+  );
+  navigateTo({ name: "teachers-view-behavioral_issues" });
+};
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -23,52 +53,18 @@
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
-          :loading="isLoading"
+          :loading="teachersStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/teachers/view')"
+          @click="navigateTo({ name: 'teachers-view-teachers_table' })"
           label="إلغاء"
         />
       </div>
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { object, string } from "yup";
-import { useTeacherStore } from "@/stores/teachers";
-
-const { addTeacherBehavioralIssue } = useTeacherStore();
-const { toastSuccess } = useAppToast();
-const route = useRoute();
-const isLoading = ref(false);
-const form = ref();
-const teacher_id = route.params.id;
-
-const schema = object({
-  description: string().required("وصف المخالفة الإدارية مطلوب"),
-});
-
-const state = reactive({
-  description: undefined,
-});
-
-const onSubmit = () => {
-  // add issue to database
-  isLoading.value = true;
-  addTeacherBehavioralIssue(+teacher_id, state.description + "");
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم إضافة المخالفة السلوكية",
-    });
-    navigateTo("/teachers/view/behavioral_issues");
-  }, 500);
-};
-</script>
 
 <style scoped></style>

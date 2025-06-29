@@ -1,3 +1,34 @@
+<script setup lang="ts">
+import { object, string } from "yup";
+import { useTeachersStore } from "@/stores/teachers";
+
+const teachersStore = useTeachersStore();
+
+const route = useRoute();
+const form = ref();
+
+const schema = object({
+  description: string().required("وصف المخالفة السلوكية مطلوب"),
+});
+
+const targetedIssue = teachersStore.getSpesificTeacherBehavioralIssue(
+  +route.params.id
+);
+
+const state = reactive({
+  description: targetedIssue?.description,
+});
+
+const onSubmit = async () => {
+  // add issue to database
+  await teachersStore.editTeacherBehavioralIssue(
+    +route.params.id,
+    state.description + ""
+  );
+  navigateTo({ name: "teachers-view-behavioral_issues" });
+};
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -23,60 +54,18 @@
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="isLoading"
+          :loading="teachersStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/teachers/view')"
+          @click="navigateTo({ name: 'teachers-view-behavioral_issues' })"
           label="إلغاء"
         />
       </div>
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { object, string } from "yup";
-import { useTeacherStore } from "@/stores/teachers";
-
-const {
-  getSpesificTeacherBehavioralIssue,
-  getSpesificTeacherBehavioralIssueIndex,
-  editTeacherBehavioralIssue,
-  behavioralIssuesTeacherData,
-  // behavioralIssuesTeacherData,
-} = useTeacherStore();
-
-const { toastSuccess } = useAppToast();
-const route = useRoute();
-const isLoading = ref(false);
-const form = ref();
-
-const schema = object({
-  description: string().required("وصف المخالفة السلوكية مطلوب"),
-});
-
-const targetedIssue = getSpesificTeacherBehavioralIssue(route.params.id);
-
-const state = reactive({
-  description: targetedIssue?.description,
-});
-
-const onSubmit = () => {
-  // add issue to database
-  isLoading.value = true;
-  editTeacherBehavioralIssue(route.params.id, state);
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم تعديل المخالفة بنجاح",
-    });
-    navigateTo("/teachers/view/behavioral_issues");
-  }, 500);
-};
-</script>
 
 <style scoped></style>

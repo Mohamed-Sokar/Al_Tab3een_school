@@ -1,102 +1,341 @@
 import type { Student, BehavioralIssue } from "~/types";
-import { students, behavioralIssues } from "~/constants";
-// import { defineStore } from "pinia";
+import { defineStore } from "pinia";
+import { useAppToast } from "@/composables/useAppToast";
 
 export const useStudentStore = defineStore("students", () => {
-  const studentsData = ref<Student[]>(students);
-  const behavioralIssuesStudentData = ref(behavioralIssues);
+  const { toastSuccess, toastError } = useAppToast();
+  const studentsData = ref<Student[]>([]);
+  const behavioralIssuesStudentData = ref<BehavioralIssue[]>();
+  const loading = ref(false);
+  const tableKey = ref(Math.random());
 
-  // Students operations
-  const addStudent = (student: Student) => {
-    studentsData.value.unshift({ ...student });
-  };
-  const editStudent = (studentId: number, newstudent: Student) => {
-    const studentIndex = getSpesificStudentIndex(studentId);
-    studentsData.value[studentIndex] = newstudent;
-  };
-  const deleteStudent = (studentId: number) => {
-    const studentIndex = getSpesificStudentIndex(studentId);
+  // Getters
+  const sortedStudents = computed(() => {
+    return [...(studentsData.value ?? [])].sort((a, b) =>
+      (a.full_name ?? "").localeCompare(b.full_name ?? "")
+    );
+  });
+  const sortedIssues = computed(() => {
+    return [...(behavioralIssuesStudentData.value ?? [])].sort((a, b) =>
+      (a.student_name ?? "").localeCompare(b.student_name ?? "")
+    );
+  });
 
-    studentsData.value.splice(studentIndex, 1);
+  // Actions
+  const fetchStudents = async () => {
+    loading.value = true;
+    try {
+      const { data } = await api.get("/students");
+      console.log(data);
+      // set students data to ref locally
+      studentsData.value = data;
+      toastSuccess({
+        title: "تم تحميل الطلاب بنجاح",
+      });
+      tableKey.value = Math.random();
+    } catch (err) {
+      toastError({
+        title: "هناك مشكلة في تحميل الطلاب",
+      });
+      throw new Error();
+    } finally {
+      loading.value = false;
+    }
   };
-  const getSpesificStudent = (studentId: number) => {
-    return studentsData.value.find((student) => student.id === studentId);
+  const addStudent = async (student: Student) => {
+    loading.value = true;
+    try {
+      const { data } = await api.post("/students", student);
+      toastSuccess({
+        title: `:تم إضافة الطالب ${data[0].full_name} بنجاح`,
+      });
+      // add student locally
+      (studentsData.value || []).unshift({ ...student });
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في إضافة الطالب",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
   };
-  const getSpesificStudentIndex = (studentId: number) => {
+  const editStudent = async (studentId: string, newStudent: Student) => {
+    try {
+      loading.value = true;
+      const cleaned = removeInvalidFields(newStudent); // 🧹 remove unfound columns in DB
+
+      const { data } = await api.put(`students/${studentId}`, cleaned);
+
+      toastSuccess({
+        title: `:تم تحديث بيانات الطالب ${data[0].full_name} بنجاح`,
+      });
+      // update student locally
+      const studentIndex = getSpesificStudentIndex(studentId);
+
+      // Keep existing behavioral_issues from old data
+      if (studentsData.value && studentIndex !== -1) {
+        const existingIssues =
+          studentsData.value[studentIndex].students_behavioral_issues;
+        // Merge new data and keep behavioral_issues field
+        studentsData.value[studentIndex] = {
+          ...data[0],
+          students_behavioral_issues: existingIssues,
+        };
+      }
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في تعديل الطالب",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const deleteStudent = async (studentId: string) => {
+    try {
+      loading.value = true;
+      const { data } = await api.delete(`students/${studentId}`);
+      toastSuccess({
+        title: `:تم حذف الطالب ( ${data[0].full_name} ) بنجاح`,
+      });
+      // delete student locally
+      const studentIndex = getSpesificStudentIndex(studentId);
+      (studentsData.value || []).splice(studentIndex, 1);
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في حذف الطالب",
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const getSpesificStudent = (studentId: string) => {
+    return studentsData.value?.find((student) => student.id === studentId);
+  };
+  const getSpesificStudentIndex = (studentId: string) => {
     return studentsData.value.findIndex((student) => student.id === studentId);
   };
 
   // behavioral_issues operations
-  const addStudentBehavioralIssue = (
-    studentId: number,
+  const fetchBehavioralIssues = async () => {
+    loading.value = true;
+    try {
+      const { data } = await api.get("/students/behavioral-issues");
+      console.log(data);
+      // set behavioral Issues data to ref locally
+      behavioralIssuesStudentData.value = data;
+      toastSuccess({
+        title: "تم تحميل المخالفات بنجاح",
+      });
+      tableKey.value = Math.random();
+    } catch (err) {
+      // toastError({
+      //   title: err.message,
+      // });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const addStudentBehavioralIssue = async (
+    studentId: string,
     description: string
   ) => {
     const targetedStudent = getSpesificStudent(studentId);
 
-    const newStudent = {
-      ...targetedStudent,
-      behavioral_issues_count:
-        typeof targetedStudent?.behavioral_issues_count === "number"
-          ? targetedStudent?.behavioral_issues_count + 1
-          : 0,
-    };
+    if (!targetedStudent) return;
 
-    editStudent(studentId, newStudent);
-
-    const newIssueBuffer = {
-      id: Math.random(),
-      date: new Date().toISOString().split("T")[0],
+    const newIssue = {
+      student_id: targetedStudent.id,
+      level: targetedStudent.level,
+      class_group: targetedStudent.class_group,
+      description: description,
       student_name: targetedStudent?.full_name,
-      level: targetedStudent?.level,
-      section: targetedStudent?.section,
-      student_id: targetedStudent?.id,
-      description: description,
+      date: new Date().toISOString().split("T")[0],
     };
 
-    behavioralIssuesStudentData.value.unshift(newIssueBuffer);
-  };
-  const editStudentBehavioralIssue = (issueId: number, description: string) => {
-    const issueIndex = getSpesificStudentBehavioralIssueIndex(issueId);
-    behavioralIssuesStudentData.value[issueIndex] = {
-      ...behavioralIssuesStudentData.value[issueIndex],
-      description: description,
-    };
-  };
-  const deleteStudentBehavioralIssue = (issueId: number) => {
-    // Update the Student's behavioral issues count
-    const targetedIssue = getSpesificStudentBehavioralIssue(issueId);
-    const targetedStudent = getSpesificStudent(targetedIssue?.student_id);
+    try {
+      loading.value = true;
+      const { data } = await api.post("/students/behavioral-issues", newIssue);
 
-    if (targetedStudent) {
-      editStudent(targetedStudent.id, {
-        ...targetedStudent,
-        behavioral_issues_count:
-          typeof targetedStudent?.behavioral_issues_count === "number"
-            ? targetedStudent?.behavioral_issues_count - 1
-            : 0,
+      toastSuccess({
+        title: "تم إضافة المخالفة السلوكية",
       });
-    }
-    // Remove the issue from the list
-    const issueIndex = getSpesificStudentBehavioralIssueIndex(issueId);
 
-    behavioralIssuesStudentData.value.splice(issueIndex, 1);
+      // const studentIndex = getSpesificStudentIndex(studentId);
+      if (studentsData.value && !!targetedStudent) {
+        // const existingStudent = studentsData.value[studentIndex];
+
+        // ensure exsisting the behavioral issues array
+        if (!targetedStudent.students_behavioral_issues) {
+          targetedStudent.students_behavioral_issues = [];
+        }
+
+        // add new behavioral Issue
+        targetedStudent.students_behavioral_issues.push({
+          id: data[0].id, // المخالفة التي أرجعها السيرفر
+          ...newIssue,
+          // description: description,
+          // date: newIssue.date,
+          // student_name: targetedStudent?.full_name,
+          // student_id: targetedStudent?.id,
+          // level: targetedStudent?.level,
+          // class_group: targetedStudent?.class_group,
+        });
+      }
+
+      (behavioralIssuesStudentData.value || []).unshift(data[0]);
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في إضافة المخالفة السلوكية",
+      });
+      // throw Error(err instanceof Error ? err.message : String(err));s
+    } finally {
+      loading.value = false;
+    }
+  };
+  const editStudentBehavioralIssue = async (
+    issueId: number,
+    description: string
+  ) => {
+    try {
+      loading.value = true;
+      const issueIndex = getSpesificStudentBehavioralIssueIndex(issueId);
+      const targetedIssue = getSpesificStudentBehavioralIssue(issueId);
+      console.log(issueIndex);
+
+      const { data } = await api.put(`/students/behavioral-issues/${issueId}`, {
+        ...(behavioralIssuesStudentData.value || [])[issueIndex],
+        description,
+      });
+
+      (behavioralIssuesStudentData.value || [])[issueIndex] = {
+        ...(behavioralIssuesStudentData.value || [])[issueIndex],
+        description: description,
+      };
+
+      const studentIndex = getSpesificStudentIndex(
+        targetedIssue?.student_id ?? ""
+      );
+
+      // update students behavioral issues array locally
+      if (
+        studentsData.value &&
+        studentsData.value[studentIndex] &&
+        studentsData.value[studentIndex].students_behavioral_issues
+      ) {
+        // You can safely access students_behavioral_issues[issueIndex] here
+        // For example, update the description:
+        studentsData.value[studentIndex].students_behavioral_issues[
+          issueIndex
+        ].description = description;
+      }
+
+      tableKey.value = Math.random();
+
+      toastSuccess({
+        title: "تم تعديل المخالفة بنجاح",
+      });
+    } catch (err) {
+      toastError({
+        title: "حدثت مشكلة أثناء تعديل المخالفة",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const deleteStudentBehavioralIssue = async (issueId: number) => {
+    // Update the Student's behavioral issues
+    const targetedIssue = getSpesificStudentBehavioralIssue(issueId);
+    const issueIndex = getSpesificStudentBehavioralIssueIndex(issueId);
+    const targetedStudent = getSpesificStudent(targetedIssue?.student_id || "");
+
+    try {
+      // delete issue from DB
+      loading.value = true;
+      const { data } = await api.delete(
+        `students/behavioral-issues/${issueId}`
+      );
+      toastSuccess({
+        title: `:تم حذف المخالفة بنجاح`,
+      });
+
+      // delete issue locally
+      (behavioralIssuesStudentData.value || []).splice(issueIndex, 1);
+
+      // delete issue from the student behavioral issues array
+      if (targetedStudent) {
+        const targetedIssueIndex =
+          targetedStudent.students_behavioral_issues?.findIndex(
+            (issue) => issue.id === issueId
+          );
+
+        targetedStudent.students_behavioral_issues?.splice(
+          targetedIssueIndex ?? 0,
+          1
+        );
+      }
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في حذف المخالفة",
+      });
+    } finally {
+      loading.value = false;
+    }
   };
   const getSpesificStudentBehavioralIssue = (issueId: number) => {
-    return behavioralIssuesStudentData.value.find(
-      (issue) => issue.id === issueId
+    return sortedIssues.value.find(
+      (issue: BehavioralIssue) => issue.id === issueId
     );
   };
   const getSpesificStudentBehavioralIssueIndex = (issueId: number) => {
-    return behavioralIssuesStudentData.value.findIndex(
-      (issue) => issue.id === issueId
+    return (behavioralIssuesStudentData.value ?? []).findIndex(
+      (issue) => issue.id !== undefined && +issue.id === +issueId
     );
   };
 
+  // helper Methods
+  function cleanObject<T extends object>(obj: T): Partial<T> {
+    return Object.fromEntries(
+      Object.entries(obj).filter(([_, v]) => v !== undefined)
+    ) as Partial<T>;
+  }
+  function removeInvalidFields(student: Student): Partial<Student> {
+    const allowedFields = [
+      "id",
+      "full_name",
+      "identity_number",
+      "father_identity_number",
+      "phone_number",
+      "birth_date",
+      "level",
+      "masjed",
+      "address",
+      "memorization_status",
+      "memorized_juz",
+      "daily_recitation",
+      "class_group",
+      "created_at",
+    ];
+
+    return Object.fromEntries(
+      Object.entries(student).filter(([key]) => allowedFields.includes(key))
+    );
+  }
   return {
     // state
     studentsData,
+    loading,
     behavioralIssuesStudentData,
+    tableKey,
+    // Getters
+    sortedStudents,
+    sortedIssues,
     // student operations
+    fetchStudents,
+    fetchBehavioralIssues,
     addStudent,
     editStudent,
     deleteStudent,

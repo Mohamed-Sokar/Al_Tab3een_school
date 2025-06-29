@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   modules: ["@nuxt/ui", "@nuxtjs/supabase", "@pinia/nuxt", "nuxt-charts"],
+  // plugins: ["~/plugins/axios"],
   css: [
     "~/assets/css/main.css",
     "nprogress/nprogress.css",
@@ -9,6 +10,13 @@ export default defineNuxtConfig({
   ],
   devtools: { enabled: true },
   supabase: {
-    redirect: false,
+    redirect: true,
+  },
+  runtimeConfig: {
+    public: {
+      baseUrl: process.env.BASE_URL ?? "http://localhost:3000",
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    },
   },
 });

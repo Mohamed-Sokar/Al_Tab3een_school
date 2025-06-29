@@ -1,41 +1,36 @@
 <script setup lang="ts">
-import { number, object, string } from "yup";
-import { payment_type_options, payments } from "~/constants";
-import { type Payment } from "~/types";
+import { number, object, string, date } from "yup";
+import { payment_type_options } from "~/constants";
+import type { Payment } from "~/types";
 import { usePaymentsStore } from "@/stores/paymnets";
 
-const { addPayment } = usePaymentsStore();
+const paymentsStore = usePaymentsStore();
 
 const schema = object({
   type: string().required("نوع الدفعة مطلوب"),
   description: string().required("وصف الدفعة مطلوب"),
-  date: string().required("تاريخ الدفعة مطلوب"),
+  date: date().required("تاريخ الدفعة مطلوب"),
   amount: number().required("القيمة مطلوبة"),
 });
 
 const state = reactive<Payment>({
-  id: undefined,
   type: undefined,
   description: undefined,
   date: undefined,
   amount: undefined,
 });
 
-const { toastSuccess } = useAppToast();
-const isLoading = ref(false);
 const form = ref();
 
 const onSubmit = async () => {
-  isLoading.value = true;
-  addPayment({ ...state });
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم إضافة الدفعة بنجاح",
-    });
-    navigateTo("/payments");
-  }, 500);
+  console.log("submited");
+  // Convert date string to Date object before submitting
+  const payload = {
+    ...state,
+    date: state.date ? new Date(state.date) : undefined,
+  };
+  await paymentsStore.addPayment(payload);
+  navigateTo({ name: "payments" });
 };
 </script>
 
@@ -93,13 +88,13 @@ const onSubmit = async () => {
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
-          :loading="isLoading"
+          :loading="paymentsStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/payments')"
+          @click="navigateTo({ name: 'payments' })"
           label="إلغاء"
         />
       </div>

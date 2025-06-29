@@ -1,6 +1,51 @@
+<script setup lang="ts">
+import { number, object, string } from "yup";
+import { payment_type_options } from "~/constants";
+import { type Payment } from "~/types";
+
+import { usePaymentsStore } from "@/stores/paymnets";
+
+const paymentsStore = usePaymentsStore();
+let targetedPayment;
+
+const schema = object({
+  type: string().required("نوع الدفعة مطلوب"),
+  description: string().required("وصف الدفعة مطلوب"),
+  date: string().required("تاريخ الدفعة مطلوب"),
+  amount: number().required("القيمة مطلوبة"),
+});
+
+const state = reactive<Payment>({
+  id: undefined,
+  type: undefined,
+  description: undefined,
+  date: undefined,
+  amount: undefined,
+});
+
+const route = useRoute();
+const form = ref();
+
+targetedPayment = paymentsStore.getSpecificPayment(+route.params.id);
+Object.assign(state, targetedPayment);
+
+if (!targetedPayment) {
+  targetedPayment = await paymentsStore.getPaymentById(+route.params.id);
+  Object.assign(state, targetedPayment);
+  console.log(targetedPayment);
+}
+
+const onSubmit = async () => {
+  await paymentsStore.updatePayment(+route.params.id, state);
+  navigateTo({ name: "payments" });
+};
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
+    <div v-if="paymentsStore.loading">Loading</div>
     <UForm
+      v-else
       ref="form"
       :schema="schema"
       :state="state"
@@ -52,65 +97,18 @@
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="isLoading"
+          :loading="paymentsStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/payments')"
+          @click="navigateTo({ name: 'payments' })"
           label="إلغاء"
         />
       </div>
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { number, object, string } from "yup";
-import { payment_type_options, payments } from "~/constants";
-import { type Payment } from "~/types";
-
-import { usePaymentsStore } from "@/stores/paymnets";
-
-const { updatePayment, getSpecificPayment } = usePaymentsStore();
-
-const schema = object({
-  type: string().required("نوع الدفعة مطلوب"),
-  description: string().required("وصف الدفعة مطلوب"),
-  date: string().required("تاريخ الدفعة مطلوب"),
-  amount: number().required("القيمة مطلوبة"),
-});
-
-const state = reactive<Payment>({
-  id: undefined,
-  type: undefined,
-  description: undefined,
-  date: undefined,
-  amount: undefined,
-});
-
-const route = useRoute();
-const { toastSuccess } = useAppToast();
-const isLoading = ref(false);
-const form = ref();
-
-const targetedPayment = getSpecificPayment(+route.params.id);
-
-Object.assign(state, targetedPayment);
-
-const onSubmit = async () => {
-  isLoading.value = true;
-  updatePayment(+route.params.id, state);
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم تحديث الدفعة بنجاح",
-    });
-    navigateTo("/payments");
-  }, 500);
-};
-</script>
 
 <style scoped></style>

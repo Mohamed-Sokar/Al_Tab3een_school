@@ -1,3 +1,28 @@
+<script setup lang="ts">
+import { object, number } from "yup";
+import { useTeachersStore } from "@/stores/teachers";
+
+const teachersStore = useTeachersStore();
+
+const route = useRoute();
+const form = ref();
+let teacher_id =
+  route.params.id instanceof Array ? route.params.id[0] : route.params.id ?? 0;
+
+const schema = object({
+  amount: number().required("قيمة السلفة مطلوبة"),
+});
+
+const state = reactive({
+  amount: undefined,
+});
+
+const onSubmit = async () => {
+  await teachersStore.addTeacherLoan(teacher_id || "", state.amount || 0);
+  navigateTo({ name: "teachers-view-loans" });
+};
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -24,53 +49,18 @@
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
-          :loading="isLoading"
+          :loading="teachersStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/teachers/view')"
+          @click="navigateTo({ name: 'teachers-view-teachers_table' })"
           label="إلغاء"
         />
       </div>
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { object, string } from "yup";
-import { useTeacherStore } from "@/stores/teachers";
-
-const { addTeacherLoan } = useTeacherStore();
-
-const { toastSuccess } = useAppToast();
-const route = useRoute();
-const isLoading = ref(false);
-const form = ref();
-
-const schema = object({
-  amount: string().required("قيمة السلفة مطلوبة"),
-});
-
-const state = reactive({
-  amount: undefined,
-});
-
-const onSubmit = () => {
-  const teacher_id = route.params.id;
-  isLoading.value = true;
-
-  addTeacherLoan(+teacher_id, state.amount);
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم إضافة السلفة بنجاح",
-    });
-    navigateTo("/teachers/view/loans");
-  }, 500);
-};
-</script>
 
 <style scoped></style>

@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import type { TeacherUpsentReport } from "~/types";
+import type { TeacherAbsenceReport } from "~/types";
 import { months } from "~/constants";
-import { useTeacherStore } from "@/stores/teachers";
-const { teachersUpsentReportsData, deleteTeacherUpsentReport } =
-  useTeacherStore();
+import { useTeachersStore } from "@/stores/teachers";
+const teachersStore = useTeachersStore();
+const { getArabicDayName } = useDateUtils();
 
 const globalFilter = ref("");
-const isLoading = ref(false);
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
 
-const columns: TableColumn<TeacherUpsentReport>[] = [
+const columns: TableColumn<TeacherAbsenceReport>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
@@ -25,22 +24,45 @@ const columns: TableColumn<TeacherUpsentReport>[] = [
   },
   {
     accessorKey: "date",
-    header: "تاريخ الغياب",
+    header: "اليوم",
+    cell: ({ row }) => {
+      const day = getArabicDayName(String(row.original.date));
+      return day;
+    },
+  },
+  {
+    accessorKey: "date",
+    header: "التاريخ",
+  },
+  {
+    accessorKey: "excuse_status",
+    header: "حالة العذر",
+  },
+  {
+    accessorKey: "reason",
+    header: "السبب",
   },
   {
     id: "action",
   },
 ];
 
-function getDropdownActions(report: TeacherUpsentReport): DropdownMenuItem[] {
+function getDropdownActions(report: TeacherAbsenceReport): DropdownMenuItem[] {
   return [
     [
+      {
+        label: "Edit",
+        icon: "i-lucide-edit",
+        onSelect: () => {
+          navigateTo(`/teachers/${report.id}/edit_absence_report`);
+        },
+      },
       {
         label: "Delete",
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteTeacherUpsentReport(
+          teachersStore.deleteTeacherAbsenceReport(
             typeof report.id === "number" ? report.id : 0
           );
         },
@@ -49,20 +71,23 @@ function getDropdownActions(report: TeacherUpsentReport): DropdownMenuItem[] {
   ];
 }
 
-const filteredUpsentReports = computed(() => {
+const filteredAbsenceReports = computed(() => {
   tableKey.value = Math.random();
-  return teachersUpsentReportsData.filter(
-    (report) =>
-      report.date === selectedDate.value &&
-      new Date(report.date).getMonth() === months.indexOf(selectedMonth.value)
+  return teachersStore.sortedAbsenceReports.filter(
+    (report: TeacherAbsenceReport) =>
+      // report.date === selectedDate.value &&
+      new Date(report.date || new Date()).getMonth() ===
+      months.indexOf(selectedMonth.value)
   );
 });
 
-const numberedUpsentReports = computed(() =>
-  filteredUpsentReports.value.map((report, index) => ({
-    ...report,
-    rowNumber: index + 1,
-  }))
+const numberedAbsenceReports = computed(() =>
+  filteredAbsenceReports.value.map(
+    (report: TeacherAbsenceReport, index: number) => ({
+      ...report,
+      rowNumber: index + 1,
+    })
+  )
 );
 </script>
 
@@ -106,7 +131,7 @@ const numberedUpsentReports = computed(() =>
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ teachersUpsentReportsData.length }})</span>
+        <span>({{ numberedAbsenceReports.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -117,18 +142,18 @@ const numberedUpsentReports = computed(() =>
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ teachersUpsentReportsData.length }})</span>
+        <span>({{ numberedAbsenceReports.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>
     <!-- end Export -->
 
     <UTable
-      :loading="isLoading"
+      :loading="teachersStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
       ref="table"
-      :data="numberedUpsentReports"
+      :data="numberedAbsenceReports"
       :columns="columns"
     >
       <template #action-cell="{ row }">

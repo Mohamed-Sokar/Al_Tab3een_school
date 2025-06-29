@@ -1,41 +1,39 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { Student } from "~/types";
-import { months } from "~/constants";
+import type { BehavioralIssue } from "~/types";
 import { useStudentStore } from "@/stores/students";
 
-const { studentsData, deleteStudent } = useStudentStore();
-
-const { toastSuccess, toastError } = useAppToast();
+const studentsStore = useStudentStore();
 
 const route = useRoute();
 const UBadge = resolveComponent("UBadge");
-const globalFilter = ref(route.query.level ?? "");
-const isLoading = ref(false);
+const globalFilter = ref<string>(
+  typeof route.query.level === "string" ? route.query.level : ""
+);
 const tableKey = ref(Math.random());
 
-// watch(
-//   route,
-//   () => {
-//     globalFilter.value = route.query.level;
-//     console.log(route.query.level);
-//   },
-//   { immediate: true }
-// );
+const selectedStudent = ref();
+typeof route.query.level === "string" ? route.query.level : "";
+const showModal = ref(false);
+function showIssuesModal(student: Student) {
+  selectedStudent.value = student;
+  showModal.value = true;
+}
 
 const columns: TableColumn<Student>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
   },
-  {
-    accessorKey: "identity_number",
-    header: "هوية الطالب",
-  },
-  {
-    accessorKey: "father_identity_number",
-    header: "هوية الأب",
-  },
+  // {
+  //   accessorKey: "identity_number",
+  //   header: "هوية الطالب",
+  // },
+  // {
+  //   accessorKey: "father_identity_number",
+  //   header: "هوية الأب",
+  // },
   {
     accessorKey: "full_name",
     header: "الاسم رباعي",
@@ -61,25 +59,25 @@ const columns: TableColumn<Student>[] = [
     header: "الصف الدراسي",
   },
   {
-    accessorKey: "section",
+    accessorKey: "class_group",
     header: "الشعبة",
   },
   {
-    accessorKey: "behavioral_issues_count",
-    header: "عدد المخالفات السلوكية",
+    accessorKey: "students_behavioral_issues",
+    header: "المخالفات السلوكية",
     cell: ({ row }) => {
-      const behavioral_issues_count = row.original.behavioral_issues_count ?? 0;
-
+      const issues = row.original.students_behavioral_issues || [];
       return h(
         UBadge,
         {
-          class: `capitalize ${
-            behavioral_issues_count > 0 ? "font-bold" : "font-normal"
+          class: `capitalize hover:cursor-pointer hover:outline ${
+            issues.length > 0 ? "font-bold" : "font-normal"
           } `,
-          variant: `${behavioral_issues_count > 0 ? "subtle" : "soft"}`,
-          color: `${behavioral_issues_count > 0 ? "error" : "success"}`,
+          variant: `${issues.length > 0 ? "subtle" : "soft"}`,
+          color: `${issues.length > 0 ? "error" : "success"}`,
+          onClick: () => showIssuesModal(row.original),
         },
-        () => behavioral_issues_count
+        () => `${issues.length} مخالفة`
       );
     },
   },
@@ -91,29 +89,29 @@ const columns: TableColumn<Student>[] = [
   //   accessorKey: "daily_recitation",
   //   header: "التسميع اليومي",
   // },
-  {
-    accessorKey: "academic_level",
-    header: "المستوى الأكاديمي العام",
-    cell: ({ row }) => {
-      const academic_level = row.original.academic_level;
+  // {
+  //   accessorKey: "academic_level",
+  //   header: "المستوى الأكاديمي العام",
+  //   cell: ({ row }) => {
+  //     const academic_level = row.original.academic_level;
 
-      return h(
-        UBadge,
-        {
-          class: "capitalize",
-          variant: "soft",
-          color: `${
-            academic_level === "ممتاز"
-              ? "success"
-              : academic_level === "جيد جدا"
-              ? "warning"
-              : "error"
-          }`,
-        },
-        () => academic_level
-      );
-    },
-  },
+  //     return h(
+  //       UBadge,
+  //       {
+  //         class: "capitalize",
+  //         variant: "soft",
+  //         color: `${
+  //           academic_level === "ممتاز"
+  //             ? "success"
+  //             : academic_level === "جيد جدا"
+  //             ? "warning"
+  //             : "error"
+  //         }`,
+  //       },
+  //       () => academic_level
+  //     );
+  //   },
+  // },
   // {
   //   accessorKey: "behavioral_issues",
   //   header: "مخالفات سلوكية",
@@ -150,17 +148,19 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
   return [
     [
       {
-        label: "إضافة كشف درجات",
-        icon: "i-lucide-copy",
+        label: "إضافة مخالفة سلوكية",
+        color: "warning",
+        icon: "i-heroicons-exclamation-triangle",
         onSelect: () => {
-          navigateTo(`/students/${student.id}/add_grades_report`);
+          navigateTo(`/students/${student.id}/add_behavioral_issue`);
         },
       },
       {
-        label: "إضافة مخالفة سلوكية",
-        icon: "i-lucide-copy",
+        label: "إضافة كشف درجات",
+        icon: "i-heroicons-academic-cap",
+        color: "info",
         onSelect: () => {
-          navigateTo(`/students/${student.id}/add_behavioral_issue`);
+          navigateTo(`/students/${student.id}/add_grades_report`);
         },
       },
     ],
@@ -177,7 +177,9 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteStudent(student.id || 1);
+          studentsStore.deleteStudent(
+            typeof student.id === "string" ? student.id : ""
+          );
           tableKey.value = Math.random();
         },
       },
@@ -185,54 +187,59 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
   ];
 }
 
-// const paymentStatusFilterItems = ["جميع الحالات", "مدفوعة", "غير مدفوعة"];
-
-const fetchStudents = async () => {
-  try {
-    isLoading.value = true;
-    const { data } = await $fetch("/api/fetch-students", {
-      method: "GET",
-    });
-    console.log(data);
-    // toast.add({
-    //   title: "تم تحميل البيانات بنجاح",
-    //   color: "success",
-    //   icon: "i-lucide-circle-check",
-    // });
-    return data as Student[];
-    // return data;
-  } catch (error) {
-    console.error("Error fetching students:", error);
-    toastError({
-      title: "فشل في تحميل البيانات",
-    });
-
-    return [];
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Fetch students data when the component is mounted
-// students.value = await fetchStudents();
-
-const currentMonthIndex = new Date().getMonth();
-const selectedMonth = ref(months[currentMonthIndex]);
-
 const numberedStudents = computed(() =>
-  // filteredStudents.value.map((student, index) => ({
-  //   ...student,
-  //   rowNumber: index + 1,
-  // }))
-  studentsData.map((student, index) => ({
-    ...student,
-    rowNumber: index + 1,
-  }))
+  studentsStore.sortedStudents.map((student, index) => {
+    // console.log(student?.behavioral_issues?.count);
+    return {
+      ...student,
+      // behavioral_issues_count: student?.behavioral_issues[0].count,
+      // behavioral_issues_count: student?.behavioral_issues?.count || 0,
+      rowNumber: index + 1,
+    };
+  })
 );
+const dayNameArabic = (date: string) =>
+  new Date(date).toLocaleDateString("ar-EG", { weekday: "long" });
 </script>
 
 <template>
   <div>
+    <UModal v-model:open="showModal" title="تفاصيل المخالفات">
+      <template #body>
+        <div v-if="selectedStudent?.students_behavioral_issues?.length">
+          <ul>
+            <li
+              class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2"
+            >
+              <span class="font-bold">اليوم</span>
+              <span class="font-bold">التاريخ</span>
+              <span class="font-bold">المخالفة</span>
+            </li>
+            <li
+              v-for="(
+                issue, index
+              ) in selectedStudent.students_behavioral_issues"
+              :key="index"
+              class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 mb-2"
+            >
+              <span>
+                {{ dayNameArabic(issue.date + "") }}
+              </span>
+              <span> {{ issue.date }} </span>
+              <span> {{ issue.description }} </span>
+            </li>
+          </ul>
+          <div class="pt-3">
+            <span> المجموع: </span>
+            <span class="font-bold">
+              {{ selectedStudent.students_behavioral_issues.length }}
+            </span>
+          </div>
+        </div>
+
+        <p v-else>لا توجد مخالفات.</p>
+      </template>
+    </UModal>
     <!-- Start Filters -->
     <div class="w-full grid md:grid-cols-6 gap-3 mt-5">
       <UInput
@@ -290,8 +297,8 @@ const numberedStudents = computed(() =>
     <!-- end Export -->
 
     <UTable
-      :loading="isLoading"
-      :key="tableKey"
+      :loading="studentsStore.loading"
+      :key="studentsStore.tableKey"
       v-model:global-filter="globalFilter"
       ref="table"
       :data="numberedStudents"

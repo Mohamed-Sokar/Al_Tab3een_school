@@ -1,3 +1,19 @@
+<script setup lang="ts">
+import { useLevelsStore } from "@/stores/levels";
+import { useStudentStore } from "@/stores/students";
+const levelsStore = useLevelsStore();
+const studentsStore = useStudentStore();
+
+const levelsWithStudentsCount = computed(() => {
+  return levelsStore.levelsData.map((level) => {
+    const count = studentsStore.studentsData.filter(
+      (s) => s.level === level.title
+    ).length;
+    return { ...level, studentsCount: count };
+  });
+});
+</script>
+
 <template>
   <div>
     <BaseHeader
@@ -17,13 +33,13 @@
       </template>
     </BaseHeader>
     <div class="grid lg:grid-cols-3 gap-4 mt-5">
-      <LevelsCard v-for="level in levels" :key="level.id" :level="level" />
+      <LevelsCard
+        v-for="level in levelsWithStudentsCount"
+        :key="level.id"
+        :level="level"
+      />
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { levels } from "~/constants";
-</script>
 
 <style scoped></style>

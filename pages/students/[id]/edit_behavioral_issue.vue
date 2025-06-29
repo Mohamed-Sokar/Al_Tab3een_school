@@ -29,7 +29,7 @@
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/students/view')"
+          @click="navigateTo({ name: 'students-view-behavioral_issues' })"
           label="إلغاء"
         />
       </div>
@@ -41,10 +41,8 @@
 import { object, string } from "yup";
 import { useStudentStore } from "@/stores/students";
 
-const { editStudentBehavioralIssue, getSpesificStudentBehavioralIssue } =
-  useStudentStore();
+const studentsStore = useStudentStore();
 
-const { toastSuccess } = useAppToast();
 const route = useRoute();
 const isLoading = ref(false);
 const form = ref();
@@ -53,8 +51,11 @@ const schema = object({
   description: string().required("وصف المخالفة السلوكية مطلوب"),
 });
 
-const targetedIssue = getSpesificStudentBehavioralIssue(+route.params.id);
+const issueId = +route.params.id;
 
+const targetedIssue = studentsStore.getSpesificStudentBehavioralIssue(issueId);
+
+console.log(targetedIssue);
 const state = reactive<{
   description: string | undefined;
 }>({
@@ -63,19 +64,14 @@ const state = reactive<{
 // Assign targeted issue description to description state
 state.description = targetedIssue?.description;
 
-const updateIssue = () => {
+const updateIssue = async () => {
   // add issue to database
-  isLoading.value = true;
+  await studentsStore.editStudentBehavioralIssue(
+    issueId,
+    state.description + ""
+  );
 
-  editStudentBehavioralIssue(+route.params.id, state.description + "");
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم تعديل المخالفة بنجاح",
-    });
-    navigateTo("/students/view/behavioral_issues");
-  }, 1000);
+  navigateTo({ name: "students-view-behavioral_issues" });
 };
 </script>
 

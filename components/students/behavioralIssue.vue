@@ -3,14 +3,12 @@ import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { BehavioralIssue } from "~/types";
 import { months } from "~/constants";
 import { useStudentStore } from "@/stores/students";
+const { getArabicDayName } = useDateUtils();
 
-const { behavioralIssuesStudentData, deleteStudentBehavioralIssue } =
-  useStudentStore();
+const studentsStore = useStudentStore();
 
-const { toastSuccess } = useAppToast();
 const globalFilter = ref("");
-const isLoading = ref(false);
-const tableKey = ref(Math.random());
+// const tableKey = ref(Math.random());
 
 const columns: TableColumn<BehavioralIssue>[] = [
   {
@@ -27,8 +25,16 @@ const columns: TableColumn<BehavioralIssue>[] = [
     header: "الصف",
   },
   {
-    accessorKey: "section",
+    accessorKey: "class_group",
     header: "الشعبة",
+  },
+  {
+    accessorKey: "date",
+    header: "اليوم",
+    cell: ({ row }) => {
+      const day = getArabicDayName(String(row.original.date));
+      return day;
+    },
   },
   {
     accessorKey: "date",
@@ -58,7 +64,7 @@ function getDropdownActions(issue: BehavioralIssue): DropdownMenuItem[][] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteStudentBehavioralIssue(issue.id || 1);
+          studentsStore.deleteStudentBehavioralIssue(issue.id || 1);
           tableKey.value = Math.random();
         },
       },
@@ -70,7 +76,7 @@ const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
 
 const numberedIssues = computed(() =>
-  behavioralIssuesStudentData.map((issue, index) => ({
+  studentsStore.sortedIssues.map((issue, index) => ({
     ...issue,
     rowNumber: index + 1,
   }))
@@ -110,7 +116,7 @@ const numberedIssues = computed(() =>
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ behavioralIssuesStudentData.length }})</span>
+        <span>({{ studentsStore.sortedIssues.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -121,15 +127,15 @@ const numberedIssues = computed(() =>
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ behavioralIssuesStudentData.length }})</span>
+        <span>({{ studentsStore.sortedIssues.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>
     <!-- end Export -->
 
     <UTable
-      :loading="isLoading"
-      :key="tableKey"
+      :loading="studentsStore.loading"
+      :key="studentsStore.tableKey"
       v-model:global-filter="globalFilter"
       ref="table"
       :data="numberedIssues"

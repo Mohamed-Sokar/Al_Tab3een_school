@@ -2,7 +2,7 @@
 import { usePaymentsStore } from "@/stores/paymnets";
 import { useLevelsStore } from "@/stores/levels";
 
-const { totalIncome, totalExpense } = usePaymentsStore();
+const paymentsStore = usePaymentsStore();
 const { levelStudentsCount } = useLevelsStore();
 
 const colorMode = useColorMode();
@@ -17,12 +17,12 @@ const DonutData = [
   {
     color: "#ff0000",
     name: "الصادر",
-    value: totalExpense(),
+    value: paymentsStore.totalExpense,
   },
   {
     color: "#22c55e",
     name: "الوارد",
-    value: totalIncome(),
+    value: paymentsStore.totalIncome,
   },
 ];
 
@@ -69,11 +69,15 @@ const yFormatter = (i: number) => `${i}`;
           <div class="text-(--ui-text-muted) text-xs mt-3">
             <div>
               الدخل :
-              <span class="font-bold text-success"> {{ totalIncome() }}</span>
+              <span class="font-bold text-success">
+                {{ paymentsStore.totalIncome }}</span
+              >
             </div>
             <div>
               المصروفات :
-              <span class="font-bold text-error"> {{ totalExpense() }} </span>
+              <span class="font-bold text-error">
+                {{ paymentsStore.totalExpense }}
+              </span>
             </div>
           </div>
         </div>

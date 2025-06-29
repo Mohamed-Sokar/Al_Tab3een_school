@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Level } from "~/types";
 
-const props = defineProps<{
+defineProps<{
   level: Level;
 }>();
 </script>
@@ -57,7 +57,7 @@ const props = defineProps<{
         </div>
         <div class="text-error text-sm flex items-center gap-1">
           <div class="font-bold">
-            {{ level.maximumCapacity }}
+            {{ level.maximum_capacity }}
           </div>
           <div class="font-semibold">طالب</div>
         </div>
@@ -90,13 +90,13 @@ const props = defineProps<{
         <div
           class="text-sm flex items-center gap-1"
           :class="`text-${
-            level.maximumCapacity - level.studentsCount > 0
+            (level.maximum_capacity ?? 0) - (level.studentsCount ?? 0) > 0
               ? 'success'
               : 'error'
           }`"
         >
           <div class="font-bold">
-            {{ level.maximumCapacity - level.studentsCount }}
+            {{ (level.maximum_capacity ?? 0) - (level.studentsCount ?? 0) }}
           </div>
           <div class="font-semibold">مقعد</div>
         </div>
@@ -109,7 +109,10 @@ const props = defineProps<{
           color="secondary"
           variant="subtle"
           @click="
-            navigateTo(`/students/view/students_table?level=${level.title}`)
+            navigateTo({
+              name: 'students-view-students_table',
+              query: { level: level.title },
+            })
           "
         />
         <UButton
@@ -117,7 +120,12 @@ const props = defineProps<{
           class="hover:cursor-pointer flex justify-center"
           color="secondary"
           variant="solid"
-          @click="navigateTo(`/levels/${level.id}/edit_level`)"
+          @click="
+            navigateTo({
+              name: 'levels-id-edit_level',
+              params: { id: level.id },
+            })
+          "
         />
       </div>
     </div>

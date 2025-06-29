@@ -7,8 +7,9 @@
     <div
       class="lg:w-[calc(100%-190px)] min-h-screen w-full bg-gray-50 dark:bg-gray-950"
     >
-      <!-- <app-header class="h-10" /> -->
-      <div class="w-full px-4 pt-4 pb-10">
+      <div
+        class="w-full min-h-screen px-4 pt-4 pb-10 bg-gradient-to-b from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800"
+      >
         <main>
           <slot />
         </main>
@@ -18,6 +19,8 @@
 </template>
 
 <script setup lang="ts">
+// import { students, teachers } from "~/constants";
+const supabase = useSupabaseClient();
 useHead({
   title: "Al Tabeen School",
   htmlAttrs: {
@@ -25,8 +28,33 @@ useHead({
     lang: "ar",
   },
 });
+
 const colorMode = useColorMode();
 colorMode.preference = "system"; // Set default color mode
+
+const studentsStore = useStudentStore();
+const paymentsStore = usePaymentsStore();
+const teachersStore = useTeachersStore();
+const levelsStore = useLevelsStore();
+
+onMounted(async () => {
+  // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
+  await levelsStore.fetchLevels();
+  await studentsStore.fetchStudents();
+  await teachersStore.fetchTeachers();
+  await teachersStore.fetchAbsenceReports();
+
+  await teachersStore.fetchTeachersLoans();
+  await teachersStore.fetchTeachersBehavioralIssues();
+  await studentsStore.fetchBehavioralIssues();
+  await paymentsStore.fetchPayments();
+});
+
+// import { useStudentStore } from "@/stores/students";
+// const { fetchStudents, loading, sortedStudents } = useStudentStore();
+// const response = fetchStudents();
+// console.log(response);
+
 // const user = useSupabaseUser();
 
 // watch(
@@ -34,7 +62,7 @@ colorMode.preference = "system"; // Set default color mode
 //   () => (colorMode.preference = user.value?.user_metadata?.color_mode),
 //   { immediate: true }
 // );
-const supabase = useSupabaseClient();
+// const supabase = useSupabaseClient();
 
 // create user in both users and profiles tables
 // const createUser = async () => {
@@ -51,10 +79,18 @@ const supabase = useSupabaseClient();
 
 // const { success, response } = await $fetch("/api/send-telegram", {
 //   method: "POST",
-//   body: { message: "🔔 تمت إضافة طالب جديد في المدرسة!" },
+//   body: { message: "🔔 +1تمت إضافة طالب جديد في المدرسة!" },
 // });
 // console.log(success, response);
+// const { data } = await $fetch("/api/students", {
+//   method: "GET",
+// });
 
+// const { id } = await $fetch(`/api/students/${data[0].id}`, {
+//   method: "PUT",
+//   body: {},
+// });
+// console.log(data, id);
 // await createUser();
 </script>
 

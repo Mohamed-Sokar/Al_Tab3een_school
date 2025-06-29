@@ -1,4 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import {
+  AuthError,
+  createClient,
+  PostgrestError,
+  User,
+} from "@supabase/supabase-js";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);

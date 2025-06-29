@@ -14,7 +14,6 @@
           placeholder="أدخل قيمة السلفة"
           label="إضافة سلفة"
           class="w-full mt-2"
-          :rows="5"
         />
       </UFormField>
 
@@ -24,13 +23,13 @@
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="isLoading"
+          :loading="teachersStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/teachers/view')"
+          @click="navigateTo({ name: 'teachers-view-loans' })"
           label="إلغاء"
         />
       </div>
@@ -39,24 +38,21 @@
 </template>
 
 <script setup lang="ts">
-import { number, object, string } from "yup";
-import { teachersLoans } from "~/constants";
-import { useTeacherStore } from "@/stores/teachers";
+import { number, object } from "yup";
+import { useTeachersStore } from "@/stores/teachers";
 
-const { getSpesificTeacherLoan, getSpesificTeacherLoanIndex, editTeacherLoan } =
-  useTeacherStore();
+const teachersStore = useTeachersStore();
 
-const { toastSuccess } = useAppToast();
-const route = useRoute();
-const isLoading = ref(false);
 const form = ref();
+const route = useRoute();
+const loanId =
+  route.params.id instanceof Array ? route.params.id[0] : route.params.id ?? 0;
+
+const targetedLoan = teachersStore.getSpesificTeacherLoan(+loanId);
 
 const schema = object({
   amount: number().required("قيمة السلفة مطلوبة"),
 });
-
-const loanId = route.params.id;
-const targetedLoan = getSpesificTeacherLoan(loanId);
 
 const state = reactive({
   amount: targetedLoan?.amount,
@@ -64,17 +60,9 @@ const state = reactive({
 
 const onSubmit = () => {
   // add issue to database
-  isLoading.value = true;
+  teachersStore.editTeacherLoan(+loanId, state.amount || 0);
 
-  editTeacherLoan(loanId, state.amount);
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم تعديل السلفة بنجاح",
-    });
-    navigateTo("/teachers/view/loans");
-  }, 500);
+  navigateTo({ name: "teachers-view-loans" });
 };
 </script>
 

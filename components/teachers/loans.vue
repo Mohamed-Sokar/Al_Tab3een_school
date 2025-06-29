@@ -2,12 +2,11 @@
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { TeacherLoan } from "~/types";
 import { months } from "~/constants";
-import { useTeacherStore } from "@/stores/teachers";
-
-const { teachersLoansData, deleteTeacherLoan } = useTeacherStore();
+import { useTeachersStore } from "@/stores/teachers";
+const { getArabicDayName } = useDateUtils();
+const teachersStore = useTeachersStore();
 
 const globalFilter = ref("");
-const isLoading = ref(false);
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
@@ -22,7 +21,14 @@ const columns: TableColumn<TeacherLoan>[] = [
     accessorKey: "teacher_name",
     header: "اسم المعلم",
   },
-
+  {
+    accessorKey: "date",
+    header: "اليوم",
+    cell: ({ row }) => {
+      const day = getArabicDayName(String(row.original.date));
+      return day;
+    },
+  },
   {
     accessorKey: "date",
     header: "تاريخ السلفة",
@@ -52,7 +58,9 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
-          deleteTeacherLoan(typeof loan.id === "number" ? loan.id : 0);
+          teachersStore.deleteTeacherLoan(
+            typeof loan.id === "number" ? loan.id : 0
+          );
         },
       },
     ],
@@ -61,7 +69,7 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
 
 const filteredLoans = computed(() => {
   tableKey.value = Math.random();
-  return teachersLoansData.filter(
+  return teachersStore.sortedLoans.filter(
     (loan) =>
       new Date(loan.date || new Date()).getMonth() ===
       months.indexOf(selectedMonth.value)
@@ -109,7 +117,7 @@ const numberedLoans = computed(() =>
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ teachersLoansData.length }})</span>
+        <span>({{ numberedLoans.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -120,14 +128,14 @@ const numberedLoans = computed(() =>
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ teachersLoansData.length }})</span>
+        <span>({{ numberedLoans.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>
     <!-- end Export -->
 
     <UTable
-      :loading="isLoading"
+      :loading="teachersStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
       ref="table"

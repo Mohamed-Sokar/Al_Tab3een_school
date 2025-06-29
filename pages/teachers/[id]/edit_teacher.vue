@@ -1,3 +1,52 @@
+<script setup lang="ts">
+import { array, object, string } from "yup";
+import { courses_options } from "~/constants";
+import { type Teacher } from "~/types";
+import { useTeachersStore } from "@/stores/teachers";
+
+const teachersStore = useTeachersStore();
+
+const schema = object({
+  full_name: string().required("الاسم مطلوب"),
+  identity_number: string()
+    .required("رقم الهوية مطلوب")
+    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+  phone_number: string()
+    .required("رقم الجوال مطلوب")
+    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
+  birth_date: string().required("تاريخ الميلاد مطلوب"),
+  subject: string().required("المواد التي يتم تدريسها مطلوبة"),
+});
+
+const state = reactive<Teacher>({
+  // id: undefined,
+  full_name: undefined,
+  identity_number: undefined,
+  phone_number: undefined,
+  birth_date: undefined,
+  subject: undefined,
+  // has_behavioral_issues: undefined,
+  // ubsent_days_count: undefined,
+  // loans: undefined,
+});
+
+const route = useRoute();
+const form = ref();
+
+const teacherId = Array.isArray(route.params.id)
+  ? route.params.id[0]
+  : route.params.id ?? "";
+
+const targetedTeacher = teachersStore.getSpesificTeacher(teacherId);
+
+Object.assign(state, targetedTeacher);
+
+const updateTeacher = async () => {
+  await teachersStore.updateTeacher(teacherId, state);
+  navigateTo({ name: "teachers-view-teachers_table" });
+};
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -42,12 +91,11 @@
       </UFormField>
       <UFormField label="المواد التي يتم تدريسها" name="courses">
         <USelect
-          v-model="state.courses"
+          v-model="state.subject"
           :items="courses_options"
-          multiple
           type="text"
           class="w-full"
-          placeholder="المواد التي يتم تدريسها"
+          placeholder="المادة التي يتم تدريسها"
         />
       </UFormField>
 
@@ -56,78 +104,19 @@
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          :loading="isLoading"
+          :loading="teachersStore.loading"
           label="تعديل"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/teachers/view')"
+          @click="navigateTo({ name: 'teachers-view-teachers_table' })"
           label="إلغاء"
         />
       </div>
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { array, object, string } from "yup";
-import { courses_options } from "~/constants";
-import { type Teacher } from "~/types";
-import { useTeacherStore } from "@/stores/teachers";
-
-const { teachersData, getSpesificTeacher } = useTeacherStore();
-
-const schema = object({
-  full_name: string().required("الاسم مطلوب"),
-  identity_number: string()
-    .required("رقم الهوية مطلوب")
-    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
-  phone_number: string()
-    .required("رقم الجوال مطلوب")
-    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
-  birth_date: string().required("تاريخ الميلاد مطلوب"),
-  courses: array().required("المواد التي يتم تدريسها مطلوبة"),
-});
-
-const state = reactive<Teacher>({
-  id: undefined,
-  full_name: undefined,
-  identity_number: undefined,
-  phone_number: undefined,
-  birth_date: undefined,
-  courses: undefined,
-  has_behavioral_issues: undefined,
-  ubsent_days_count: undefined,
-  loans: undefined,
-});
-
-const route = useRoute();
-const { toastSuccess } = useAppToast();
-const isLoading = ref(false);
-const form = ref();
-
-const targetedTeacher = getSpesificTeacher(route.params.id);
-
-Object.assign(state, targetedTeacher);
-
-const updateTeacher = async () => {
-  isLoading.value = true;
-  const teacherIndex = teachersData.findIndex(
-    (teacher) => teacher.id.toString() === route.params.id.toString()
-  );
-
-  teachersData[teacherIndex] = state;
-
-  setTimeout(() => {
-    isLoading.value = false;
-    toastSuccess({
-      title: "تم تحديث بيانات المعلم بنجاح",
-    });
-    navigateTo("/teachers/view");
-  }, 500);
-};
-</script>
 
 <style scoped></style>

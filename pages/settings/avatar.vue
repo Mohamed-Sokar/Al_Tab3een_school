@@ -47,7 +47,7 @@ const fileInput = ref(); // Reference to an input with ref="fileInput" attribute
 
 //const { url } = useAvatarUrl();
 // const avatarUrl = computed(() => url ?? "/images/avatar.png");
-const avatarUrl = computed(() => "/images/avatar.png");
+const avatarUrl = computed(() => "/images/avatar.avif");
 
 const saveAvatar = async () => {
   // 1. Get the uploaded file

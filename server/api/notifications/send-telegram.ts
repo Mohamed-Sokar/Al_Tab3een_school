@@ -1,3 +1,5 @@
+import { defineEventHandler, createError, readBody } from "h3";
+
 export default defineEventHandler(async (event) => {
   const { message } = await readBody(event);
 
@@ -15,8 +17,11 @@ export default defineEventHandler(async (event) => {
     `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
     {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: {
-        chat_id: CHAT_ID,
+        chat_id: `${CHAT_ID}`,
         text: message,
       },
     }

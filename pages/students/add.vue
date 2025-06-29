@@ -1,19 +1,10 @@
 <script setup lang="ts">
 import { object, string } from "yup";
-import {
-  memorization_status_options,
-  level_options,
-  academic_level_options,
-} from "~/constants";
+import { memorization_status_options, level_options } from "~/constants";
 import type { Student } from "~/types";
 import { useStudentStore } from "@/stores/students";
 
-const { addStudent } = useStudentStore();
-
-// const supabase = useSupabaseClient();
-const route = useRoute();
-const { toastSuccess, toastError } = useAppToast();
-const isLoading = ref(false);
+const studentsStore = useStudentStore();
 const form = ref();
 
 const schema = object({
@@ -21,83 +12,46 @@ const schema = object({
   identity_number: string()
     .required("رقم الهوية مطلوب")
     .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+  father_identity_number: string()
+    .required("رقم هوية الأب مطلوب")
+    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
   phone_number: string()
     .required("رقم الجوال مطلوب")
     .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
   birth_date: string().required("تاريخ الميلاد مطلوب"),
+  address: string().required("العنوان مطلوب"),
+  masjed: string().required("المسجد مطلوب"),
   level: string().required("الصف الدراسي مطلوب"),
   memorization_status: string().required("حالة الحفظ مطلوبة"),
-  //   payments_status: Object(),
   memorized_juz: string().required("الأجزاء المحفوظة مطلوبة"),
   daily_recitation: string().required("التسميع اليومي مطلوب"),
-  // academic_level: string(),
-  // behavioral_issues: string(),
-  section: string().required("الشعبة مطلوبة"),
+  // academic_level: string().required("المستوى الأكاديمي العام مطلوب"),
+  class_group: string().required("الشعبة مطلوبة"),
 });
-
-// const initialState = {
-//   id: undefined,
-//   full_name: undefined,
-//   identity_number: undefined,
-//   phone_number: undefined,
-//   birth_date: undefined,
-//   level: undefined,
-//   memorization_status: undefined,
-//   payments_status: undefined,
-//   memorized_juz: undefined,
-//   daily_recitation: undefined,
-//   //   academic_level: undefined,
-//   //   behavioral_issues: undefined,
-//   section: undefined,
-// };
 
 const newStudentState = reactive<Student>({
   id: undefined,
   full_name: undefined,
   identity_number: undefined,
+  father_identity_number: undefined,
   phone_number: undefined,
   birth_date: undefined,
   level: undefined,
+  masjed: undefined,
+  address: undefined,
   memorization_status: undefined,
-  // payments_status: undefined,
   memorized_juz: undefined,
   daily_recitation: undefined,
-  academic_level: undefined,
+  // academic_level: undefined,
+  behavioral_issues: undefined,
   behavioral_issues_count: undefined,
-  section: undefined,
+  class_group: undefined,
 });
 
 const createStudent = async () => {
-  addStudent({ ...newStudentState, id: Math.random() });
-  setTimeout(() => {
-    navigateTo("/students/view");
-  }, 500);
-  // resetForm();
-  // try {
-  //   const { error } = await supabase.from("students").insert({
-  //     ...newStudentState,
-  //   });
-  //   if (error) throw error;
-  //   toastSuccess({
-  //     title: "تم إضافة الطالب بنجاح",
-  //   });
-  //   // إعادة ضبط النموذج
-  //   Object.keys(newStudentState).forEach((key) => {
-  //     newStudentState[key] = key === "payments_status" ? {} : undefined;
-  //   });
-  // } catch (err) {
-  //   toastError({
-  //     title: "حدث خطأ أثناء إضافة الطالب",
-  //     description: err.message,
-  //   });
-  // }
+  await studentsStore.addStudent({ ...newStudentState });
+  navigateTo("/students/view/students_table");
 };
-
-// const resetForm = () => {
-//   Object.assign(newStudentState, initialState);
-//   isLoading.value = false;
-//   form.value.clear(); // clear the errors from the form
-// };
 </script>
 
 <template>
@@ -126,12 +80,36 @@ const createStudent = async () => {
           class="w-full"
         />
       </UFormField>
+      <UFormField label="رقم هوية الأب" name="father_identity_number">
+        <UInput
+          v-model="newStudentState.father_identity_number"
+          placeholder="رقم هوية الأب"
+          label="رقم هوية الأب"
+          class="w-full"
+        />
+      </UFormField>
 
       <UFormField label="رقم الجوال" name="phone_number">
         <UInput
           v-model="newStudentState.phone_number"
           placeholder="05xxxxxxxx"
           label="رقم الجوال"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="العنوان" name="address">
+        <UInput
+          v-model="newStudentState.address"
+          placeholder="العنوان"
+          label="العنوان"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="المسجد" name="masjed">
+        <UInput
+          v-model="newStudentState.masjed"
+          placeholder="المسجد"
+          label="المسجد"
           class="w-full"
         />
       </UFormField>
@@ -182,7 +160,6 @@ const createStudent = async () => {
       </UFormField>
       <!-- <UFormField label="المستوى الأكاديمي العام" name="academic_level">
         <USelect
-          disabled
           v-model="newStudentState.academic_level"
           :items="academic_level_options"
           placeholder="المستوى الأكاديمي العام"
@@ -190,18 +167,9 @@ const createStudent = async () => {
           class="w-full"
         />
       </UFormField> -->
-      <!-- <UFormField label="المخالفات السلوكية" name="behavioral_issues">
+      <UFormField label="الشعبة" name="class_group">
         <UInput
-          disabled
-          v-model="newStudentState.behavioral_issues"
-          placeholder="المخالفات السلوكية"
-          label="المخالفات السلوكية"
-          class="w-full"
-        />
-      </UFormField> -->
-      <UFormField label="الشعبة" name="section">
-        <UInput
-          v-model="newStudentState.section"
+          v-model="newStudentState.class_group"
           placeholder="الشعبة"
           label="الشعبة"
           class="w-full"
@@ -213,12 +181,13 @@ const createStudent = async () => {
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
+          :loading="studentsStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/students/view')"
+          @click="navigateTo('/students/view/students_table')"
           label="إلغاء"
         />
       </div>

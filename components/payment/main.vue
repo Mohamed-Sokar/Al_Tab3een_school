@@ -4,16 +4,18 @@ import { type Payment } from "~/types";
 import { months } from "~/constants";
 import { usePaymentsStore } from "@/stores/paymnets";
 
-const { paymentsData, deletePayment } = usePaymentsStore();
+const paymentsStore = usePaymentsStore();
+const { getArabicDayName } = useDateUtils();
 
 const UBadge = resolveComponent("UBadge");
 // const table = useTemplateRef("table");
 const globalFilter = ref("");
-const isLoading = ref(false);
-const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
+const tableKey = ref(Math.random());
 // const selectedDate = ref(new Date().toISOString().split("T")[0]);
+
+watch(selectedMonth, () => (tableKey.value = Math.random()));
 
 const columns: TableColumn<Payment>[] = [
   {
@@ -24,11 +26,11 @@ const columns: TableColumn<Payment>[] = [
     accessorKey: "type",
     header: "نوع الدفعة",
     cell: ({ row }) => {
-      const status = row.original.type ?? "دخل";
+      const status = row.original.type ?? "وارد";
 
       const color = {
-        دخل: "success" as const,
-        مصروف: "error" as const,
+        وارد: "success" as const,
+        صادر: "error" as const,
       }[status];
 
       return h(
@@ -36,6 +38,14 @@ const columns: TableColumn<Payment>[] = [
         { class: "capitalize", variant: "subtle", color },
         () => status
       );
+    },
+  },
+  {
+    accessorKey: "date",
+    header: "اليوم",
+    cell: ({ row }) => {
+      const day = getArabicDayName(String(row.original.date));
+      return day;
     },
   },
   {
@@ -61,7 +71,6 @@ function getDropdownActions(payment: Payment): DropdownMenuItem[] {
       label: "Edit",
       icon: "i-lucide-edit",
       onSelect: () => {
-        // console.log("Edit action for user:", student);
         navigateTo(`/payments/${payment.id}/edit_payment`);
       },
     },
@@ -70,19 +79,22 @@ function getDropdownActions(payment: Payment): DropdownMenuItem[] {
       icon: "i-lucide-trash",
       color: "error",
       onSelect: () => {
-        deletePayment(payment.id ?? 0);
+        paymentsStore.deletePayment(payment.id ?? 0);
       },
     },
   ];
 }
 
 const filteredPayments = computed(() => {
-  tableKey.value = Math.random();
-  return paymentsData.filter(
-    (payment) =>
-      // payment.date === selectedDate.value &&
-      new Date(payment.date ?? new Date()).getMonth() ===
-      months.indexOf(selectedMonth.value)
+  // tableKey.value = Math.random();
+  return paymentsStore.sortedPayment.filter((payment) =>
+    // payment.date === selectedDate.value &&
+    {
+      return (
+        new Date(payment.date ?? new Date()).getMonth() ===
+        months.indexOf(selectedMonth.value)
+      );
+    }
   );
 });
 
@@ -95,7 +107,7 @@ const numberedPayments = computed(() =>
 
 const total = computed(() =>
   numberedPayments.value.reduce((sum: any, payment: Payment) => {
-    if (payment.type === "دخل") {
+    if (payment.type === "وارد") {
       return (sum += payment.amount);
     } else {
       return (sum -= payment.amount ?? 0);
@@ -117,13 +129,6 @@ const total = computed(() =>
         placeholder="البحث عن دفعة..."
         class="w-full md:col-span-4"
       />
-      <!-- <UInput
-        v-model="selectedDate"
-        type="date"
-        size="lg"
-        color="secondary"
-        class="w-full"
-      /> -->
       <USelect
         v-model="selectedMonth"
         :items="months"
@@ -143,7 +148,7 @@ const total = computed(() =>
         class="p-2 font-bold text-blue-700"
       >
         <span>تصدير</span>
-        <span>({{ paymentsData.length }})</span>
+        <span>({{ paymentsStore.paymentsData?.length }})</span>
         <span> PDF </span>
       </UButton>
       <UButton
@@ -154,7 +159,7 @@ const total = computed(() =>
         class="p-2 font-bold text-green-700"
       >
         <span>تصدير</span>
-        <span>({{ paymentsData.length }})</span>
+        <span>({{ paymentsStore.paymentsData?.length }})</span>
         <span> Excel </span>
       </UButton>
     </div>
@@ -181,7 +186,7 @@ const total = computed(() =>
 
     <!-- Start Table -->
     <UTable
-      :loading="isLoading"
+      :loading="paymentsStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
       ref="table"

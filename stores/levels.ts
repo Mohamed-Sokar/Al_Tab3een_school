@@ -1,44 +1,143 @@
 import type { Level } from "~/types";
-import { levels } from "@/constants";
 import { defineStore } from "pinia";
+import { useStudentStore } from "@/stores/students";
 
 export const useLevelsStore = defineStore("levels", () => {
-  const levelsData = ref<Level[]>(levels);
+  const studentsStore = useStudentStore();
+  // helper composables
+  const { toastError, toastSuccess } = useAppToast();
+  // Data
+  const levels = ref<Level[]>([]);
+  const loading = ref(false);
+  // const tableKey = ref(Math.random());
 
-  const addLevel = (level: Level) => {
-    return levelsData.value.unshift({
-      ...level,
-      id: Math.random(),
-    });
-  };
-  const deleteLevel = (levelId: number) => {
-    const targetedLevelIndex = levelsData.value.findIndex(
-      (level) => level.id === levelId
-    );
-    return levelsData.value.splice(targetedLevelIndex, 1);
-  };
-  const updateLevel = (levelId: number, newLevel: Level) => {
-    const targetedLevelIndex = getSpecificLevelIndex(levelId);
-    const targetedLevel = getSpecificLevel(levelId);
+  // Getters
+  const levelsData = computed(() => levels.value);
 
-    return (levelsData.value[targetedLevelIndex] = {
-      ...targetedLevel,
-      ...newLevel,
+  const levelsWithStudentsCount = computed(() => {
+    return levels.value.map((level) => {
+      const count = studentsStore.studentsData.filter(
+        (s) => s.level === level.title
+      ).length;
+      return { ...level, studentsCount: count };
     });
+  });
+
+  const fetchLevels = async () => {
+    loading.value = true;
+    try {
+      const { data } = await api.get("/levels");
+
+      console.log(data);
+      // set levels data to ref locally
+      levels.value = data;
+      toastSuccess({
+        title: "تم تحميل المستويات بنجاح",
+      });
+      // tableKey.value = Math.random();
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة أثناء تحميل المستويات",
+        description: err.message,
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
   };
-  const getSpecificLevel = (levelId: number | string) => {
-    return levelsData.value.find((level) => level.id === levelId);
+  const addLevel = async (level: Level) => {
+    loading.value = true;
+
+    try {
+      const { data } = await api.post("/levels", level);
+      toastSuccess({
+        title: `:تم إضافة المستوى بنجاح`,
+      });
+      console.log(data);
+      // add student locally
+      levels.value.unshift({
+        ...level,
+      });
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في إضافة المستوى",
+        description: err.message,
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const deleteLevel = async (levelId: number) => {
+    try {
+      loading.value = true;
+      await api.delete(`levels/${levelId}`);
+
+      toastSuccess({
+        title: `:تم حذف المستوى بنجاح`,
+      });
+      // delete level locally
+      const levelIndex = getSpecificLevelIndex(levelId);
+      levels.value.splice(levelIndex, 1);
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في حذف المستوى",
+        description: err.message,
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const updateLevel = async (levelId: number, newLevel: Level) => {
+    try {
+      loading.value = true;
+      const { data } = await api.put(`levels/${levelId}`, newLevel);
+
+      toastSuccess({
+        title: `:تم تحديث بيانات المستوى بنجاح`,
+      });
+
+      console.log(data);
+
+      // update level locally
+      const levelIndex = getSpecificLevelIndex(levelId);
+      const targetedLevel = getSpecificLevel(levelId);
+
+      levels.value[levelIndex] = {
+        ...targetedLevel,
+        ...newLevel,
+        // ...data,
+      };
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في تعديل بيانات المستوى",
+        description: err.message,
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const getSpecificLevel = (levelId: number) => {
+    return levels.value.find((level) => level.id === levelId);
   };
   const getSpecificLevelIndex = (levelId: number) => {
-    return levelsData.value.findIndex((level) => level.id === levelId);
+    return levels.value.findIndex((level) => level.id === levelId);
   };
   const levelStudentsCount = (levelTitle: string) => {
-    return levelsData.value.find((level) => level.title === levelTitle)
-      ?.studentsCount;
+    return levelsWithStudentsCount.value.find(
+      (level) => level.title === levelTitle
+    )?.studentsCount;
   };
 
   return {
+    // Data
+    loading,
+    //Getters
     levelsData,
+    levelsWithStudentsCount,
+
+    // Actions
+    fetchLevels,
     addLevel,
     updateLevel,
     deleteLevel,

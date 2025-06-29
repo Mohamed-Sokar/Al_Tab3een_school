@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import type { Payment, TeacherLoan } from "~/types";
 import { useStudentStore } from "@/stores/students";
-import { useTeacherStore } from "@/stores/teachers";
+import { useTeachersStore } from "@/stores/teachers";
 import { usePaymentsStore } from "@/stores/paymnets";
 import { useLevelsStore } from "@/stores/levels";
-const { studentsData, behavioralIssuesStudentData } = useStudentStore();
+const studentsStore = useStudentStore();
 const {
   teachersData,
-  behavioralIssuesTeacherData,
+  behavioralIssuesTeachersData,
   teachersUpsentReportsData,
   teachersLoansData,
-} = useTeacherStore();
-const { paymentsData } = usePaymentsStore();
+} = useTeachersStore();
+const paymentsStore = usePaymentsStore();
 const { levelsData } = useLevelsStore();
 
 const totalPayments = computed(() =>
-  paymentsData.reduce((sum: any, payment: Payment) => {
+  paymentsStore.totalPayments.reduce((sum: any, payment: Payment) => {
     if (payment.type === "دخل") {
       return (sum += payment.amount);
     } else {
@@ -37,9 +37,10 @@ const studentsGradeAvarage = computed(() => "91.5%");
       <HomeCard
         to="/students/view/students_table"
         title="إجمالي الطلاب"
-        :value="studentsData.length"
+        :value="studentsStore.sortedStudents.length"
         color="secondary"
         icon-name="i-heroicons-users"
+        :loading="studentsStore.loading"
       />
       <HomeCard
         to="/teachers/view"
@@ -47,6 +48,7 @@ const studentsGradeAvarage = computed(() => "91.5%");
         :value="teachersData.length"
         color="secondary"
         icon-name="i-heroicons-users"
+        :loading="studentsStore.loading"
       />
       <HomeCard
         to="/payments"
@@ -54,13 +56,15 @@ const studentsGradeAvarage = computed(() => "91.5%");
         :value="totalPayments"
         color="warning"
         icon-name="i-heroicons-currency-dollar"
+        :loading="studentsStore.loading"
       />
-      <HomeCard
+      <!-- <HomeCard
         to="/levels"
         title="إجمالي المستويات"
         color="primary"
         :value="levelsData.length"
         icon-name="i-lucide-book-open"
+        :loading="studentsStore.loading"
       />
       <HomeCard
         to="/students/view/grades"
@@ -68,35 +72,40 @@ const studentsGradeAvarage = computed(() => "91.5%");
         color="primary"
         :value="studentsGradeAvarage"
         icon-name="i-lucide-book-open"
-      />
+        :loading="studentsStore.loading"
+      /> -->
       <HomeCard
         to="/teachers/view/loans"
         title="مجموع سلف المدرسين"
         :value="totalTeachersLoans"
         color="warning"
         icon-name="i-heroicons-currency-dollar"
+        :loading="studentsStore.loading"
       />
       <HomeCard
         to="/students/view/behavioral_issues"
         title="مجموع المخالفات السلوكية للطلاب"
-        :value="behavioralIssuesStudentData.length"
+        :value="studentsStore.sortedIssues.length"
         color="error"
         icon-name="i-heroicons-exclamation-triangle"
+        :loading="studentsStore.loading"
       />
       <HomeCard
         to="/teachers/view/behavioral_issues"
         title="مجموع المخالفات الإدارية للمعلمين"
-        :value="behavioralIssuesTeacherData.length"
+        :value="behavioralIssuesTeachersData.length"
         color="error"
         icon-name="i-heroicons-exclamation-triangle"
+        :loading="studentsStore.loading"
       />
-      <HomeCard
+      <!-- <HomeCard
         to="/teachers/view/ubsent"
         title="مجموع أيام غياب المدرسين"
         :value="teachersUpsentReportsData.length"
         color="error"
         icon-name="i-heroicons-exclamation-triangle"
-      />
+        :loading="studentsStore.loading"
+      /> -->
     </div>
   </div>
 </template>
