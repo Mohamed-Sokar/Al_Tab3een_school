@@ -70,9 +70,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     if (error) {
       throw new Error(error.message);
     }
-    const response = await api.post("/notifications/send-telegram", {
-      message: `🔔 تم تسجيل الدخول بحساب ${state.email}`,
-    });
+    // const response = await api.post("/notifications/send-telegram", {
+    //   message: `🔔 تم تسجيل الدخول بحساب ${state.email}`,
+    // });
+
     toastSuccess({ title: "تم تسجيل الدخول بنجاح" });
     navigateTo({ name: "auth-callback" });
   } catch (error) {
