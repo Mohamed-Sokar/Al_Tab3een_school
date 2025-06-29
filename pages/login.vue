@@ -71,7 +71,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       throw new Error(error.message);
     }
 
-    await $fetch("/api/notifications/send-telegram", {
+    const response = await $fetch("/api/notifications/send-telegram", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
