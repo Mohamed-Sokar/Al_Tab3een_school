@@ -13,17 +13,17 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const response = await $fetch(
+  const response = await fetch(
     `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: {
-        chat_id: `${CHAT_ID}`,
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
         text: message,
-      },
+      }),
     }
   );
 
