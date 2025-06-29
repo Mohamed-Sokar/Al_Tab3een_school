@@ -8,6 +8,7 @@ const isLargeScreen = ref(false);
 const loading = ref(false);
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
+console.log(user.value.email);
 function updateScreen() {
   isLargeScreen.value = window.innerWidth >= 1024;
 }
@@ -27,14 +28,18 @@ watch(
 const signOut = async () => {
   try {
     loading.value = true;
+    const response = await api.post("/notifications/send-telegram", {
+      message: `🔔 تم تسجيل الخروج من حساب ${user.value?.email}`,
+    });
+
     const { error } = await supabase.auth.signOut();
     navigateTo("/login");
     if (error) {
       throw new Error(error.message);
     }
-    const response = await api.post("/notifications/send-telegram", {
-      message: `🔔 تم تسجيل الخروج من حساب ${user.value?.email}`,
-    });
+    // const response = await api.post("/notifications/send-telegram", {
+    //   message: `🔔 تم تسجيل الخروج من حساب ${user.value?.email}`,
+    // });
     toastSuccess({
       title: "تم تسجيل الخروج بنجاح",
     });
