@@ -32,6 +32,9 @@ const signOut = async () => {
     if (error) {
       throw new Error(error.message);
     }
+    const response = await api.post("/notifications/send-telegram", {
+      message: `🔔 تم تسجيل الخروج من حساب ${user.value?.email}`,
+    });
     toastSuccess({
       title: "تم تسجيل الخروج بنجاح",
     });
