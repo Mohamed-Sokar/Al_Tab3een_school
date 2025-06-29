@@ -28,19 +28,15 @@ watch(
 const signOut = async () => {
   try {
     loading.value = true;
-    await $fetch("/api/notifications/send-telegram", {
-      method: "POST",
-      body: { message: `🔔 تم تسجيل الخروج من حساب ${user?.value?.email}` },
+    await api.post("/notifications/send-telegram", {
+      message: `🔔 تم تسجيل الخروج من حساب ${user.value?.email}`,
     });
-
     const { error } = await supabase.auth.signOut();
     navigateTo("/login");
     if (error) {
       throw new Error(error.message);
     }
-    // const response = await api.post("/notifications/send-telegram", {
-    //   message: `🔔 تم تسجيل الخروج من حساب ${user.value?.email}`,
-    // });
+
     toastSuccess({
       title: "تم تسجيل الخروج بنجاح",
     });

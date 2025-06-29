@@ -70,13 +70,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     if (error) {
       throw new Error(error.message);
     }
-
-    const response = await $fetch("/api/notifications/send-telegram", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: { message: `🔔 تم تسجيل الدخول بحساب ${state.email}` },
+    await api.post("/notifications/send-telegram", {
+      message: `🔔 تم تسجيل الدخول بحساب ${state.email}`,
     });
 
     toastSuccess({ title: "تم تسجيل الدخول بنجاح" });
