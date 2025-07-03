@@ -148,7 +148,15 @@ const numberedAbsenceReports = computed(() =>
     </div>
     <!-- end Export -->
 
-    <UTable
+    <BaseTable
+      :loading="teachersStore.loading"
+      :key="tableKey"
+      v-model:global-filter="globalFilter"
+      :data="numberedAbsenceReports"
+      :columns="columns"
+      :get-dropdown-actions="getDropdownActions"
+    />
+    <!-- <UTable
       :loading="teachersStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
@@ -167,6 +175,6 @@ const numberedAbsenceReports = computed(() =>
           />
         </UDropdownMenu>
       </template>
-    </UTable>
+    </UTable> -->
   </div>
 </template>

@@ -4,11 +4,9 @@
     <AppSidebar />
 
     <!-- Page content -->
-    <div
-      class="lg:w-[calc(100%-190px)] min-h-screen w-full bg-gray-50 dark:bg-gray-950"
-    >
+    <div class="lg:w-[calc(100%-190px)] min-h-screen w-full dark:bg-gray-950">
       <div
-        class="w-full min-h-screen px-4 pt-4 pb-10 bg-gradient-to-b from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800"
+        class="w-full min-h-screen px-4 pt-4 pb-10 dark:from-gray-900 dark:to-gray-800"
       >
         <main>
           <slot />
@@ -36,14 +34,19 @@ const studentsStore = useStudentStore();
 const paymentsStore = usePaymentsStore();
 const teachersStore = useTeachersStore();
 const levelsStore = useLevelsStore();
+const academicClassesStore = useAcademicClassesStore();
+const quranClassesStore = useQuranClassesStore();
+const driversStore = useDriversStore();
 
 onMounted(async () => {
   // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
-  await levelsStore.fetchLevels();
   await studentsStore.fetchStudents();
+  await academicClassesStore.fetchClasses();
+  await quranClassesStore.fetchClasses();
+  await driversStore.fetchDrivers();
+  await levelsStore.fetchLevels();
   await teachersStore.fetchTeachers();
   await teachersStore.fetchAbsenceReports();
-
   await teachersStore.fetchTeachersLoans();
   await teachersStore.fetchTeachersBehavioralIssues();
   await studentsStore.fetchBehavioralIssues();

@@ -1,6 +1,8 @@
 interface Student {
   id?: string | undefined;
   full_name: string | undefined;
+  driver_id?: number | undefined;
+
   identity_number: string | undefined;
   father_identity_number: string | undefined;
   phone_number: string | undefined;
@@ -12,9 +14,11 @@ interface Student {
   memorized_juz: string | undefined;
   memorization_status: "غير حافظ" | "حافظ قوي" | "حافظ ضعيف" | undefined;
   daily_recitation: string | undefined;
-  academic_level?: string | undefined;
-  students_behavioral_issues: Array<BehavioralIssue> | undefined;
   behavioral_issues_count?: number | undefined;
+  academic_class?: Class | undefined;
+  quran_class?: Class | undefined;
+  driver?: Driver | undefined;
+  behavioral_issues: Array<BehavioralIssue> | undefined;
 }
 
 interface Teacher {
@@ -41,6 +45,27 @@ interface Payment {
   description: string | undefined;
   date: Date | undefined;
   amount: number | undefined;
+}
+
+interface Class {
+  id?: number | undefined;
+  title: string | undefined;
+  group: string | undefined;
+  floor: string | undefined;
+  wing: string | undefined;
+  maximum_capacity: number | undefined;
+  studentsCount?: number | undefined;
+}
+
+interface Driver {
+  id?: number | undefined;
+  name: string | undefined;
+  phone_no: string | undefined;
+  car_type: string | undefined;
+  address: string | undefined;
+  car_color: string | undefined;
+  studentsCount?: number | undefined;
+  maximum_capacity?: number | undefined;
 }
 
 interface BehavioralIssue {
@@ -102,9 +127,15 @@ interface Level {
   fees: number | undefined;
   maximum_capacity: number | undefined;
 }
-
+interface LinkItem {
+  label: string;
+  icon: string;
+  to: string;
+}
 export type {
   Student,
+  Class,
+  Driver,
   BehavioralIssue,
   BehavioralIssueTeacher,
   GradesReport,
@@ -113,4 +144,5 @@ export type {
   TeacherLoan,
   TeacherAbsenceReport,
   Level,
+  LinkItem,
 };

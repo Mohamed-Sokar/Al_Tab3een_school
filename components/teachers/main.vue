@@ -2,17 +2,28 @@
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { Teacher } from "~/types";
 import { useTeachersStore } from "@/stores/teachers";
+import type { Column } from "@tanstack/vue-table";
 
 const teachersStore = useTeachersStore();
 const { getArabicDayName } = useDateUtils();
 type Flag = "behavioral_issues" | "loans" | "absence";
 
 const globalFilter = ref("");
+const sorting = ref([
+  {
+    id: "id",
+    desc: false,
+  },
+]);
 const tableKey = ref(Math.random());
 const UBadge = resolveComponent("UBadge");
+const UButton = resolveComponent("UButton");
+const UDropdownMenu = resolveComponent("UDropdownMenu");
 const selectedTeacher = ref<Teacher>();
 const selectedArrayFlag = ref<Flag>();
 const showModal = ref(false);
+const table = ref();
+
 function showIssuesModal(teacher: Teacher, flag: Flag) {
   selectedArrayFlag.value = flag;
   selectedTeacher.value = teacher;
@@ -30,7 +41,21 @@ const columns: TableColumn<Teacher>[] = [
   },
   {
     accessorKey: "full_name",
-    header: "الاسم رباعي",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label: "الاسم رباعي",
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5 ",
+        onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+      });
+    },
   },
   {
     accessorKey: "phone_number",
@@ -38,7 +63,18 @@ const columns: TableColumn<Teacher>[] = [
   },
   {
     accessorKey: "birth_date",
-    header: "تاريخ الميلاد",
+    // header: "تاريخ الميلاد",
+    header: ({ column }) => getHeader(column, "تاريخ الميلاد"),
+    cell: ({ row }) => {
+      // return new Date(row.getValue("birth_date")).toLocaleString("en-US", {
+      //   day: "numeric",
+      //   month: "short",
+      //   hour: "2-digit",
+      //   minute: "2-digit",
+      //   hour12: false,
+      // });
+      return row.original.birth_date;
+    },
   },
   {
     accessorKey: "subject",
@@ -147,7 +183,62 @@ const columns: TableColumn<Teacher>[] = [
     id: "action",
   },
 ];
+function getHeader(column: Column<Teacher>, label: string) {
+  const isSorted = column.getIsSorted();
 
+  return h(
+    UDropdownMenu,
+    {
+      content: {
+        align: "start",
+      },
+      "aria-label": "Actions dropdown",
+      items: [
+        {
+          label: "Asc",
+          type: "checkbox",
+          icon: "i-lucide-arrow-up-narrow-wide",
+          checked: isSorted === "asc",
+          onSelect: () => {
+            if (isSorted === "asc") {
+              column.clearSorting();
+            } else {
+              column.toggleSorting(false);
+            }
+          },
+        },
+        {
+          label: "Desc",
+          icon: "i-lucide-arrow-down-wide-narrow",
+          type: "checkbox",
+          checked: isSorted === "desc",
+          onSelect: () => {
+            if (isSorted === "desc") {
+              column.clearSorting();
+            } else {
+              column.toggleSorting(true);
+            }
+          },
+        },
+      ],
+    },
+    () =>
+      h(UButton, {
+        color: "neutral",
+        variant: "ghost",
+        label,
+        icon: isSorted
+          ? isSorted === "asc"
+            ? "i-lucide-arrow-up-narrow-wide"
+            : "i-lucide-arrow-down-wide-narrow"
+          : "i-lucide-arrow-up-down",
+        class: "-mx-2.5 data-[state=open]:bg-elevated",
+        "aria-label": `Sort by ${
+          isSorted === "asc" ? "descending" : "ascending"
+        }`,
+      })
+  );
+}
 function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
   return [
     [
@@ -371,7 +462,17 @@ const numberedTeachers = computed(() => {
     </div>
     <!-- end Export -->
 
-    <UTable
+    <BaseTable
+      :loading="teachersStore.loading"
+      :key="tableKey"
+      v-model:global-filter="globalFilter"
+      :ref="table"
+      :data="numberedTeachers"
+      :columns="columns"
+      v-model:sorting="sorting"
+      :get-dropdown-actions="getDropdownActions"
+    />
+    <!-- <UTable
       :loading="teachersStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
@@ -381,16 +482,6 @@ const numberedTeachers = computed(() => {
     >
       <template #action-cell="{ row }">
         <div class="flex gap-2 items-center">
-          <!-- <UButton
-            color="error"
-            icon="i-lucide-user-minus"
-            :variant="buttonAbsenceVariant(row.original.id ?? 0)"
-            label="غياب"
-            size="xs"
-            class="rounded-md hover:cursor-pointer text-xs"
-            @click="updateAbsenceStatus(row.original.id ?? 0)"
-          /> -->
-
           <UDropdownMenu :items="getDropdownActions(row.original)">
             <UButton
               icon="i-lucide-ellipsis-vertical"
@@ -402,6 +493,6 @@ const numberedTeachers = computed(() => {
           </UDropdownMenu>
         </div>
       </template>
-    </UTable>
+    </UTable> -->
   </div>
 </template>

@@ -8,7 +8,7 @@ const globalFilter = ref("");
 const gradesReportsData = ref<GradesReport[]>(gradesReports);
 const isLoading = ref(false);
 const tableKey = ref(Math.random());
-
+const table = ref();
 const new_grades_level_options = ["الكل", ...grades_level_options];
 
 const columns: TableColumn<GradesReport>[] = [
@@ -198,7 +198,16 @@ const deleteReport = (id: any) => {
     </div>
     <!-- end Export -->
 
-    <UTable
+    <BaseTable
+      :loading="isLoading"
+      :key="tableKey"
+      v-model:global-filter="globalFilter"
+      :ref="table"
+      :data="numberedReports"
+      :columns="columns"
+      :get-dropdown-actions="getDropdownActions"
+    />
+    <!-- <UTable
       :loading="isLoading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
@@ -217,6 +226,6 @@ const deleteReport = (id: any) => {
           />
         </UDropdownMenu>
       </template>
-    </UTable>
+    </UTable> -->
   </div>
 </template>

@@ -185,7 +185,15 @@ const total = computed(() =>
     </div>
 
     <!-- Start Table -->
-    <UTable
+    <BaseTable
+      :loading="paymentsStore.loading"
+      :key="tableKey"
+      v-model:global-filter="globalFilter"
+      :data="numberedPayments"
+      :columns="columns"
+      :get-dropdown-actions="getDropdownActions"
+    />
+    <!-- <UTable
       :loading="paymentsStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
@@ -204,6 +212,6 @@ const total = computed(() =>
           />
         </UDropdownMenu>
       </template>
-    </UTable>
+    </UTable> -->
   </div>
 </template>

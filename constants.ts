@@ -17,17 +17,38 @@ export const memorization_status_options = [
 
 export const academic_level_options = ["ممتاز", "جيد جدا", "جيد", "ضعيف"];
 
-export const level_options = [
-  "الصف الأول",
-  "الصف الثاني",
-  "الصف الثالث",
-  "الصف الرابع",
-  "الصف الخامس",
-  "الصف السادس",
-  "الصف السابع",
-  "الصف الثامن",
-  "الصف التاسع",
+export const quran_classes_options = [
+  "تثبيت",
+  "الأول",
+  "الثاني",
+  "الثالث",
+  "الرابع",
+  "الخامس",
+  "السادس",
+  "السابع",
+  "الثامن",
+  "التاسع",
 ];
+export const level_options = [
+  "الأول",
+  "الثاني",
+  "الثالث",
+  "الرابع",
+  "الخامس",
+  "السادس",
+  "السابع",
+  "الثامن",
+  "التاسع",
+];
+
+export const class_group_options = ["1", "2", "3", "4", "5"];
+export const class_wing_options = [
+  "الجنوبية",
+  "الشمالية",
+  "الغربية",
+  "الشرقية",
+];
+export const class_floor_options = ["الأرضي", "الأول", "الثاني", "الثالث"];
 
 export const courses_options = [
   "اللغة العربية",

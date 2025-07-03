@@ -1,10 +1,11 @@
 import type { Student, BehavioralIssue } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
+import { students } from "~/constants";
 
 export const useStudentStore = defineStore("students", () => {
   const { toastSuccess, toastError } = useAppToast();
-  const studentsData = ref<Student[]>([]);
+  const studentsData = ref<Student[]>(students);
   const behavioralIssuesStudentData = ref<BehavioralIssue[]>();
   const loading = ref(false);
   const tableKey = ref(Math.random());
@@ -110,6 +111,108 @@ export const useStudentStore = defineStore("students", () => {
       loading.value = false;
     }
   };
+  const deleteMultipleStudents = async (ids: string[]) => {
+    try {
+      loading.value = true;
+
+      await api.delete("/students/delete-many", { data: { ids } });
+
+      // إزالة الطلاب من الواجهة مباشرة
+      studentsData.value = studentsData.value.filter(
+        (student) => !ids.includes(student.id || "")
+      );
+
+      toastSuccess({ title: "تم حذف الطلاب بنجاح" });
+    } catch (error) {
+      toastError({ title: "فشل في حذف الطلاب" });
+    } finally {
+      loading.value = false;
+    }
+  };
+  // const updateAcademicClassForStudents = async (
+  //   studentIds: string[],
+  //   classId: number
+  // ) => {
+  //   try {
+  //     loading.value = true;
+
+  //     const { data } = await api.put("/students/update-academic-class", {
+  //       studentIds,
+  //       classId,
+  //     });
+
+  //     console.log(data);
+
+  //     toastSuccess({ title: "تم نقل الطلاب للصف الدراسي الجديد بنجاح" });
+
+  //     // تحديث البيانات محليًا إذا لزم الأمر
+  //     studentsData.value = studentsData.value.map((student) =>
+  //       studentIds.includes(student.id || "")
+  //         ? { ...student, academic_class_id: classId }
+  //         : student
+  //     );
+  //   } catch (error) {
+  //     toastError({ title: "فشل في نقل الطلاب" });
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
+  // const updateQuranClassForStudents = async (
+  //   studentIds: string[],
+  //   classId: number
+  // ) => {
+  //   try {
+  //     loading.value = true;
+
+  //     const { data } = await api.put("/students/update-quran-class", {
+  //       studentIds,
+  //       classId,
+  //     });
+
+  //     console.log(data);
+
+  //     toastSuccess({ title: "تم نقل الطلاب للصف القرآني الجديد بنجاح" });
+
+  //     // تحديث البيانات محليًا إذا لزم الأمر
+  //     studentsData.value = studentsData.value.map((student) =>
+  //       studentIds.includes(student.id || "")
+  //         ? { ...student, academic_class_id: classId }
+  //         : student
+  //     );
+  //   } catch (error) {
+  //     toastError({ title: "فشل في نقل الطلاب" });
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
+  // const updatesDriverForStudents = async (
+  //   studentIds: string[],
+  //   driverId: number
+  // ) => {
+  //   try {
+  //     loading.value = true;
+
+  //     const { data } = await api.put("/students/update-driver", {
+  //       studentIds,
+  //       driverId,
+  //     });
+
+  //     console.log(data);
+
+  //     toastSuccess({ title: "تم تعيين سائق للطلاب بنجاح" });
+
+  //     // تحديث البيانات محليًا إذا لزم الأمر
+  //     studentsData.value = studentsData.value.map((student) =>
+  //       studentIds.includes(student.id || "")
+  //         ? { ...student, driver_id: driverId }
+  //         : student
+  //     );
+  //   } catch (error) {
+  //     toastError({ title: "فشل في تعيين السائق" });
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
   const getSpesificStudent = (studentId: string) => {
     return studentsData.value?.find((student) => student.id === studentId);
   };
@@ -339,6 +442,10 @@ export const useStudentStore = defineStore("students", () => {
     addStudent,
     editStudent,
     deleteStudent,
+    deleteMultipleStudents,
+    // updateAcademicClassForStudents,
+    // updatesDriverForStudents,
+    // updateQuranClassForStudents,
     getSpesificStudent,
     getSpesificStudentIndex,
     // student behavioral Iissue operations

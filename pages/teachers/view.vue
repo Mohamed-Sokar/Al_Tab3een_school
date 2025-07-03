@@ -17,20 +17,8 @@
       </template>
     </BaseHeader>
 
-    <div :class="wrraperLinksClasses">
-      <NuxtLink
-        v-for="link in links"
-        :key="link.to"
-        :to="link.to"
-        class="w-full h-full text-center p-2 rounded-md hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white hover:font-bold"
-        :class="{
-          'bg-secondary dark:bg-secondary-600 text-white font-bold':
-            link.to === route.path,
-        }"
-      >
-        {{ link.label }}
-      </NuxtLink>
-    </div>
+    <BaseTabs :links="links" />
+
     <BaseFadeTransition>
       <NuxtPage />
     </BaseFadeTransition>

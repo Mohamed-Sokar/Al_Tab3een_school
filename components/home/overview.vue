@@ -8,7 +8,7 @@ const studentsStore = useStudentStore();
 const {
   teachersData,
   behavioralIssuesTeachersData,
-  teachersUpsentReportsData,
+  // teachersUpsentReportsData,
   teachersLoansData,
 } = useTeachersStore();
 const paymentsStore = usePaymentsStore();

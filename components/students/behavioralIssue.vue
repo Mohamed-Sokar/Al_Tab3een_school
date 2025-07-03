@@ -9,6 +9,7 @@ const studentsStore = useStudentStore();
 
 const globalFilter = ref("");
 // const tableKey = ref(Math.random());
+const table = ref();
 
 const columns: TableColumn<BehavioralIssue>[] = [
   {
@@ -133,7 +134,16 @@ const numberedIssues = computed(() =>
     </div>
     <!-- end Export -->
 
-    <UTable
+    <BaseTable
+      :loading="studentsStore.loading"
+      :key="studentsStore.tableKey"
+      v-model:global-filter="globalFilter"
+      :ref="table"
+      :data="numberedIssues"
+      :columns="columns"
+      :get-dropdown-actions="getDropdownActions"
+    />
+    <!-- <UTable
       :loading="studentsStore.loading"
       :key="studentsStore.tableKey"
       v-model:global-filter="globalFilter"
@@ -152,6 +162,6 @@ const numberedIssues = computed(() =>
           />
         </UDropdownMenu>
       </template>
-    </UTable>
+    </UTable> -->
   </div>
 </template>

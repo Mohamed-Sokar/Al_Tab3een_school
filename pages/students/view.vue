@@ -1,5 +1,4 @@
 <script setup lang="ts">
-const route = useRoute();
 const isOpen = ref<Boolean>(false);
 
 const links = [
@@ -55,22 +54,8 @@ const links = [
       </template>
     </BaseHeader>
 
-    <div
-      class="text-sm grid grid-cols-3 gap-1 p-1 bg-secondary-50 border border-secondary-200 dark:bg-secondary-950 dark:border-secondary-500 mt-2 mb-8 rounded-sm"
-    >
-      <NuxtLink
-        v-for="link in links"
-        :key="link.to"
-        :to="link.to"
-        class="w-full h-full rounded-md text-center p-2 hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white hover:font-bold"
-        :class="{
-          'bg-secondary dark:bg-secondary-600 text-white font-bold':
-            link.to === route.path,
-        }"
-      >
-        {{ link.label }}
-      </NuxtLink>
-    </div>
+    <BaseTabs :links="links" />
+
     <BaseFadeTransition>
       <NuxtPage />
     </BaseFadeTransition>
