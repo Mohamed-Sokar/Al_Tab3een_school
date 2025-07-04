@@ -14,7 +14,7 @@ export default defineNuxtConfig({
   },
   ssr: true,
   nitro: {
-    preset: "netlify",
+    preset: "vercel",
   },
   runtimeConfig: {
     public: {
