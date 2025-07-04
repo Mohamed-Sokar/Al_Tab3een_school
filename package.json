@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@iconify/utils": "^2.3.0",
     "@nuxt/ui": "^3.1.3",
     "@nuxtjs/supabase": "^1.5.1",
     "@pinia/nuxt": "^0.11.1",
