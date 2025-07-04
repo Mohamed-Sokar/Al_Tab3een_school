@@ -1,0 +1,1 @@
+import{_ as o}from"./HuR9QTfO.js";import{_ as t,c,b as r,o as n}from"./Bdt3oPQx.js";const s={};function a(_,i){const e=o;return n(),c("div",null,[r(e,{title:"التقارير",description:"تقارير شاملة وإحصائيات مفصلة"})])}const p=t(s,[["render",a]]);export{p as default};

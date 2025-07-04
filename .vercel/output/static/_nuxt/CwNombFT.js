@@ -1,0 +1,1 @@
+import{k as t,O as l,i as n,o as p,w as d,r as f,S as i,j as u,P as m}from"./Bdt3oPQx.js";const c=t({__name:"Label",props:{for:{},asChild:{type:Boolean},as:{default:"label"}},setup(o){const s=o;return l(),(r,a)=>(p(),n(u(m),i(s,{onMousedown:a[0]||(a[0]=e=>{!e.defaultPrevented&&e.detail>1&&e.preventDefault()})}),{default:d(()=>[f(r.$slots,"default")]),_:3},16))}});export{c as _};
