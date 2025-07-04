@@ -14,6 +14,7 @@
       </template>
       <UBadge color="neutral" />
     </BaseHeader>
+    Plans
   </div>
 </template>
 
