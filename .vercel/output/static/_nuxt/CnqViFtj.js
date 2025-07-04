@@ -1,1 +1,0 @@
-import{ag as r}from"./Bdt3oPQx.js";const e=()=>{const s=r();return{toastSuccess:({title:o,description:c=""})=>{s.add({title:o,description:c,icon:"heroicons-check-circle",color:"success"})},toastError:({title:o,description:c=""})=>{s.add({title:o,description:c,icon:"heroicons-exclamation-circle",color:"error"})}}};export{e as u};

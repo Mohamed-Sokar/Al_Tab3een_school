@@ -1,1 +1,0 @@
-import{_ as o,c as t,o as r,b as a,Z as c}from"./Bdt3oPQx.js";const n={},s={class:"pt-30 w-full h-screen bg-gradient-to-r from-blue-200 from-10% via-sky-200 via-30% to-purple-100 to-90% dark:from-gray-900 dark:to-gray-800"};function _(f,d){const e=c;return r(),t("div",s,[a(e)])}const m=o(n,[["render",_]]);export{m as default};

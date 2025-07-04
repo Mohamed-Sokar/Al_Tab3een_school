@@ -1,1 +1,0 @@
-import{_ as o,i as t,o as n,w as a,r,ad as s}from"./Bdt3oPQx.js";const _={};function c(e,d){return n(),t(s,{duration:150,mode:"out-in",name:"fade"},{default:a(()=>[r(e.$slots,"default")]),_:3})}const f=o(_,[["render",c]]);export{f as _};
