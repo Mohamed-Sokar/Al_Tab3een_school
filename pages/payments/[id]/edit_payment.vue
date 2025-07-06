@@ -16,7 +16,7 @@ const schema = object({
 });
 
 const state = reactive<Payment>({
-  id: undefined,
+  // id: undefined,
   type: undefined,
   description: undefined,
   date: undefined,

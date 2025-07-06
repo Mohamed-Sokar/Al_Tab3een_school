@@ -77,7 +77,12 @@ const links = [
     star: true,
   },
   { label: "المستويات", icon: "i-lucide-book-open", to: "/levels" },
-  { label: "خطط الطلاب", icon: "i-heroicons-calendar-days", to: "/plans" },
+  {
+    label: "خطط الطلاب",
+    icon: "i-heroicons-calendar-days",
+    to: "/plans",
+    star: true,
+  },
   // { label: "التقارير", icon: "i-lucide-bar-chart-3", to: "/reports" },
   { label: "الإعدادات", icon: "i-lucide-settings", to: "/settings/general" },
 ];

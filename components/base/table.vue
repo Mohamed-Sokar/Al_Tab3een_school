@@ -37,6 +37,10 @@ const props = defineProps({
     type: Array as PropType<any[]>,
     required: true,
   },
+  expanded: {
+    type: Boolean,
+    required: false,
+  },
   getDropdownActions: {
     type: Function as PropType<
       (row: any) => DropdownMenuItem[][] | DropdownMenuItem[]
@@ -86,7 +90,7 @@ const columnVisibility = ref({
 <template>
   <div class="flex flex-col flex-1 w-full">
     <!-- {{ table?.tableApi?.getAllColumns()[1].columnDef.header }} -->
-    <div class="flex justify-start px-4 py-3.5 border-b border-accented">
+    <div class="flex justify-start px-4 py-3.5">
       <UDropdownMenu
         :items="
           table?.tableApi
@@ -126,6 +130,7 @@ const columnVisibility = ref({
       @update:global-filter="(value) => emit('update:globalFilter', value)"
       :data="data"
       :columns="newColumns"
+      class="border border-accented rounded-tr-md rounded-tl-md mt-3"
     >
       <template #action-cell="{ row }">
         <UDropdownMenu :items="getDropdownActions(row.original)">
@@ -138,8 +143,11 @@ const columnVisibility = ref({
           />
         </UDropdownMenu>
       </template>
+      <template #expanded="{ row }" v-if="expanded">
+        <pre>{{ row.original }}</pre>
+      </template>
     </UTable>
-    <div class="px-4 py-3.5 border-t border-accented text-sm text-muted">
+    <div class="px-4 py-3.5 border-accented text-sm text-muted">
       {{ table?.tableApi?.getFilteredSelectedRowModel().rows.length || 0 }} من
       {{ table?.tableApi?.getFilteredRowModel().rows.length || 0 }} صف محدد
     </div>

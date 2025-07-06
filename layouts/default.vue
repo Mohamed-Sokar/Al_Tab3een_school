@@ -37,10 +37,12 @@ const levelsStore = useLevelsStore();
 const academicClassesStore = useAcademicClassesStore();
 const quranClassesStore = useQuranClassesStore();
 const driversStore = useDriversStore();
+const plansStore = usePlansStore();
 
 onMounted(async () => {
   // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
   await studentsStore.fetchStudents();
+  await plansStore.fetchPlans();
   await academicClassesStore.fetchClasses();
   await quranClassesStore.fetchClasses();
   await driversStore.fetchDrivers();

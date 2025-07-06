@@ -33,12 +33,13 @@ export const useStudentStore = defineStore("students", () => {
       toastSuccess({
         title: "تم تحميل الطلاب بنجاح",
       });
-      tableKey.value = Math.random();
+      // tableKey.value = Math.random();
     } catch (err) {
       toastError({
         title: "هناك مشكلة في تحميل الطلاب",
+        description: err.message,
       });
-      throw new Error();
+      // throw new Error();
     } finally {
       loading.value = false;
     }
@@ -77,11 +78,11 @@ export const useStudentStore = defineStore("students", () => {
       // Keep existing behavioral_issues from old data
       if (studentsData.value && studentIndex !== -1) {
         const existingIssues =
-          studentsData.value[studentIndex].students_behavioral_issues;
+          studentsData.value[studentIndex].behavioral_issues;
         // Merge new data and keep behavioral_issues field
         studentsData.value[studentIndex] = {
           ...data[0],
-          students_behavioral_issues: existingIssues,
+          behavioral_issues: existingIssues,
         };
       }
     } catch (err) {

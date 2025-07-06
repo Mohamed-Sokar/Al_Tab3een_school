@@ -19,6 +19,17 @@ interface Student {
   quran_class?: Class | undefined;
   driver?: Driver | undefined;
   behavioral_issues: Array<BehavioralIssue> | undefined;
+  plan?: Plan | undefined;
+  plan_id?: number | undefined;
+  student_monthly_achievements?: StudentMonthlyAchievements[] | undefined;
+}
+
+interface StudentMonthlyAchievements {
+  id?: number | undefined;
+  student_id?: string | undefined;
+  month: string | undefined;
+  achieved_pages: number | undefined;
+  status: "مكتمل" | "غير مكتمل" | undefined;
 }
 
 interface Teacher {
@@ -66,6 +77,20 @@ interface Driver {
   car_color: string | undefined;
   studentsCount?: number | undefined;
   maximum_capacity?: number | undefined;
+}
+interface Plan {
+  id?: number | undefined;
+  year: number | undefined;
+  stage: string | undefined;
+  total_pages: number | undefined;
+  semester: string | undefined;
+  months_plans?: Array<MonthlyPlan> | undefined;
+}
+interface MonthlyPlan {
+  id?: number | undefined;
+  plan_id?: number | undefined;
+  month: string | undefined;
+  pages: number | undefined;
 }
 
 interface BehavioralIssue {
@@ -136,6 +161,8 @@ export type {
   Student,
   Class,
   Driver,
+  Plan,
+  MonthlyPlan,
   BehavioralIssue,
   BehavioralIssueTeacher,
   GradesReport,

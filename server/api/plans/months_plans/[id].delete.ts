@@ -1,16 +1,14 @@
-import { defineEventHandler, readBody, createError } from "h3";
+import { defineEventHandler, createError } from "h3";
 import { serverSupabaseClient } from "#supabase/server";
-import { Payment } from "~/types";
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event);
-  const id = getRouterParam(event, "id");
-  const updates: Payment = await readBody(event);
+  const id = event.context.params?.id;
 
   const { data, error } = await client
-    .from("payments")
-    .update(updates)
-    .eq("id", id ?? "")
+    .from("months_plans")
+    .delete()
+    .eq("id", Number(id) ?? 0)
     .select();
 
   if (error) {

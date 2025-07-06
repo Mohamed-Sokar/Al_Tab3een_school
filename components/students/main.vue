@@ -6,14 +6,19 @@ import { useStudentStore } from "@/stores/students";
 import { useAcademicClassesStore } from "@/stores/academic_classes";
 import { useQuranClassesStore } from "@/stores/quran_classes";
 import { useDriversStore } from "@/stores/drivers";
+import { usePlansStore } from "@/stores/plans";
 import { object, number } from "yup";
 import type { InferType } from "yup";
+import { months } from "~/constants";
 
 const schema = object({
   selectedClassId: number().required("الصف مطلوب"),
 });
 const assignDriverSchema = object({
   selectedDriverId: number().required("السائق مطلوب"),
+});
+const assignPlanSchema = object({
+  selectedPlanId: number().required("الخطة مطلوبة"),
 });
 type Schema = InferType<typeof schema>;
 
@@ -22,6 +27,7 @@ const studentsStore = useStudentStore();
 const quranClassesStore = useQuranClassesStore();
 const academicClassesStore = useAcademicClassesStore();
 const driversStore = useDriversStore();
+const plansStore = usePlansStore();
 
 const route = useRoute();
 const UButton = resolveComponent("UButton");
@@ -41,6 +47,8 @@ type Flag =
   | "move_quran_class"
   | "move_academic_class"
   | "driver_info"
+  | "plan"
+  | "assign_plan"
   | "assign_driver";
 
 // data
@@ -53,19 +61,20 @@ const showModal = ref(false);
 const selectedFlag = ref<Flag>();
 const selectedClassId = ref<number | undefined>(undefined);
 const selectedDriverId = ref<number | undefined>(undefined);
+const selectedPlanId = ref<number | undefined>(undefined);
 const columns: TableColumn<Student>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
   },
-  {
-    accessorKey: "identity_number",
-    header: "هوية الطالب",
-  },
-  {
-    accessorKey: "father_identity_number",
-    header: "هوية الأب",
-  },
+  // {
+  //   accessorKey: "identity_number",
+  //   header: "هوية الطالب",
+  // },
+  // {
+  //   accessorKey: "father_identity_number",
+  //   header: "هوية الأب",
+  // },
   {
     accessorKey: "full_name",
     header: ({ column }) => {
@@ -84,33 +93,33 @@ const columns: TableColumn<Student>[] = [
       });
     },
   },
-  {
-    accessorKey: "phone_number",
-    header: "رقم الجوال",
-  },
-  {
-    accessorKey: "birth_date",
-    // header: "تاريخ الميلاد",
-    header: ({ column }) => getHeader(column, "تاريخ الميلاد"),
-    cell: ({ row }) => {
-      // return new Date(row.getValue("birth_date")).toLocaleString("en-US", {
-      //   day: "numeric",
-      //   month: "short",
-      //   hour: "2-digit",
-      //   minute: "2-digit",
-      //   hour12: false,
-      // });
-      return row.original.birth_date;
-    },
-  },
-  {
-    accessorKey: "address",
-    header: "العنوان",
-  },
-  {
-    accessorKey: "masjed",
-    header: "المسجد",
-  },
+  // {
+  //   accessorKey: "phone_number",
+  //   header: "رقم الجوال",
+  // },
+  // {
+  //   accessorKey: "birth_date",
+  //   // header: "تاريخ الميلاد",
+  //   header: ({ column }) => getHeader(column, "تاريخ الميلاد"),
+  //   cell: ({ row }) => {
+  //     // return new Date(row.getValue("birth_date")).toLocaleString("en-US", {
+  //     //   day: "numeric",
+  //     //   month: "short",
+  //     //   hour: "2-digit",
+  //     //   minute: "2-digit",
+  //     //   hour12: false,
+  //     // });
+  //     return row.original.birth_date;
+  //   },
+  // },
+  // {
+  //   accessorKey: "address",
+  //   header: "العنوان",
+  // },
+  // {
+  //   accessorKey: "masjed",
+  //   header: "المسجد",
+  // },
   {
     accessorKey: "academic_class",
     header: "الصف الدراسي",
@@ -170,6 +179,48 @@ const columns: TableColumn<Student>[] = [
           },
         },
         () => quranClassName
+      );
+    },
+  },
+  {
+    accessorKey: "student_monthly_achievements",
+    header: "خطة الحفظ",
+    cell: ({ row }) => {
+      const currentMonth = months[new Date().getMonth()];
+      const student = row.original;
+
+      const requiredPages =
+        student.plan?.months_plans?.find((plan) => plan.month === currentMonth)
+          ?.pages ?? 0;
+
+      const achievedPages = getMonthAchievedPages(currentMonth, student);
+
+      // نتحقق إذا لم تُحمّل الخطة بعد
+      if (requiredPages === 0) {
+        return h(
+          UBadge,
+          { color: "gray", variant: "subtle" },
+          () => "لا توجد خطة"
+        );
+      }
+
+      // console.log("requiredPages", requiredPages);
+      // console.log("achievedPages", achievedPages);
+
+      const isAchieved = isPlanAchieved(requiredPages, achievedPages);
+
+      return h(
+        UBadge,
+        {
+          class: "capitalize hover:cursor-pointer hover:outline",
+          variant: "subtle",
+          color: isAchieved ? "success" : "error", // استخدم لون صريح بدلاً من "success"
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation();
+            showBasedModal("plan", student);
+          },
+        },
+        () => (isAchieved ? "مكتمل" : "غير مكتمل")
       );
     },
   },
@@ -239,6 +290,7 @@ function showBasedModal(flag: Flag, student?: Student) {
   if (!!student) {
     selectedStudent.value = student;
   }
+  // console.log(selectedStudent.value);
 }
 function getDropdownActions(student: Student): DropdownMenuItem[][] {
   return [
@@ -389,6 +441,19 @@ const assignStudentsToDriver = async () => {
   rowSelection.value = {};
   selectedDriverId.value = undefined;
 };
+const assignStudentsToPlan = async () => {
+  if (!selectedPlanId.value || selectedStudents.value.length === 0) return;
+
+  await plansStore.assignPlanToStudents(
+    selectedStudentsIds.value.filter(
+      (id): id is string => typeof id === "string"
+    ),
+    selectedPlanId.value
+  );
+
+  rowSelection.value = {};
+  selectedDriverId.value = undefined;
+};
 
 async function onSubmit() {
   if (selectedFlag.value === "move_academic_class") {
@@ -399,6 +464,9 @@ async function onSubmit() {
     await studentsStore.fetchStudents();
   } else if (selectedFlag.value === "assign_driver") {
     await assignStudentsToDriver();
+    await studentsStore.fetchStudents();
+  } else if (selectedFlag.value === "assign_plan") {
+    await assignStudentsToPlan();
     await studentsStore.fetchStudents();
   }
   showModal.value = false;
@@ -472,13 +540,31 @@ const modelTitle = computed(() =>
     ? "تفاصيل الصف القرآني"
     : selectedFlag.value === "driver_info"
     ? "تفاصيل السائق"
+    : selectedFlag.value === "plan"
+    ? "تفاصيل خطة الطالب"
     : ""
 );
+
+const getMonthAchievedPages = (month: string, student?: Student): number => {
+  return (
+    student?.student_monthly_achievements?.find((p) => p.month === month)
+      ?.achieved_pages ?? 0
+  );
+};
+
+const isPlanAchieved = (required: number, achieved: number): boolean => {
+  return achieved >= required;
+};
+
+const getAchievementColor = (month: string, planPages: number) => {
+  const achievedPages = getMonthAchievedPages(month, selectedStudent.value);
+  return isPlanAchieved(planPages, achievedPages) ? "success" : "error";
+};
 </script>
 
 <template>
   <div>
-    <UModal v-model:open="showModal" :title="modelTitle">
+    <UModal v-model:open="showModal" :title="modelTitle" class="min-w-3xl">
       <template #body>
         <div v-if="selectedFlag === 'studentIssue'">
           <div v-if="selectedStudent?.behavioral_issues?.length">
@@ -608,6 +694,136 @@ const modelTitle = computed(() =>
 
           <p v-else>لم يتم تعيين سائق بعد</p>
         </div>
+        <div v-if="selectedFlag === 'plan'">
+          <div v-if="selectedStudent?.plan" class="text-sm">
+            <!-- general plan details -->
+            <!-- <div class="mb-3">
+              <h3
+                class="font-bold text-sm text-center p-2 rounded-tr-md rounded-tl-md text-secondary bg-secondary-100"
+              >
+                تفاصيل الخطة الفصلية
+              </h3>
+              <div class="bg-secondary-50 px-2">
+                <ul>
+                  <li
+                    class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
+                  >
+                    <span class="font-bold">السنة</span>
+                    <span class="font-bold">الفصل</span>
+                    <span class="font-bold">المرحلة</span>
+                    <span class="font-bold">عدد الصفحات الإجمالي</span>
+                  </li>
+                  <li
+                    class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center"
+                  >
+                    <span class="">
+                      {{ selectedStudent.plan.year }}
+                    </span>
+                    <span class="">
+                      {{ selectedStudent.plan.semester }}
+                    </span>
+                    <span class="">
+                      {{ selectedStudent.plan.stage }}
+                    </span>
+                    <span class="">
+                      {{ selectedStudent.plan.total_pages }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div> -->
+
+            <!-- monthly plan details -->
+            <!-- <div v-if="selectedStudent.plan.months_plans" class="mb-3">
+              <h3
+                class="font-bold text-sm text-center p-2 rounded-tr-md rounded-tl-md text-secondary bg-secondary-100"
+              >
+                تفاصيل الخطط الشهرية
+              </h3>
+              <div class="bg-secondary-50 px-2">
+                <ul>
+                  <li
+                    class="grid grid-cols-2 justify-between items-center gap-2 border-b py-2 place-items-center"
+                  >
+                    <span class="font-bold">الشهر</span>
+                    <span class="font-bold">عدد الصفحات المطلوبة</span>
+                  </li>
+                  <li
+                    class="grid grid-cols-2 justify-between items-center gap-2 py-2 place-items-center not-last:border-b border-gray-400 not-last:border-dashed"
+                    v-for="monthPlan in selectedStudent.plan.months_plans"
+                    :key="monthPlan.id"
+                  >
+                    <span class="">
+                      {{ monthPlan.month }}
+                    </span>
+                    <span class="">
+                      {{ monthPlan.pages }}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div> -->
+
+            <!-- achievment plan details -->
+            <div
+              v-if="selectedStudent.plan.months_plans?.length"
+              class="border border-accented rounded-tr-lg rounded-tl-lg"
+            >
+              <h3
+                class="font-bold text-sm text-center py-2 rounded-tr-md rounded-tl-md bg-accented"
+              >
+                تفاصيل إنجاز الطالب
+              </h3>
+              <div class="px-2">
+                <ul>
+                  <li
+                    class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
+                  >
+                    <span class="font-bold">الشهر</span>
+                    <span class="font-bold">عدد الصفحات المطلوبة</span>
+                    <span class="font-bold">عدد الصفحات المنجزة</span>
+                    <span class="font-bold">الحالة</span>
+                  </li>
+                  <li
+                    class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center not-last:border-b border-gray-400 not-last:border-dashed"
+                    v-for="plan in selectedStudent.plan.months_plans"
+                    :key="plan.id"
+                  >
+                    <span>
+                      {{ plan.month }}
+                    </span>
+                    <span>
+                      {{ plan.pages }}
+                    </span>
+                    <span>
+                      {{
+                        getMonthAchievedPages(plan.month ?? "", selectedStudent)
+                      }}
+                    </span>
+                    <UBadge
+                      :color="
+                        getAchievementColor(plan.month ?? '', plan.pages ?? 0)
+                      "
+                    >
+                      {{
+                        isPlanAchieved(
+                          plan.pages ?? 0,
+                          getMonthAchievedPages(
+                            plan.month ?? "",
+                            selectedStudent
+                          )
+                        )
+                          ? "مكتمل"
+                          : "غير مكتمل"
+                      }}
+                    </UBadge>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <p v-else>لم يتم تعيين خطة بعد</p>
+        </div>
 
         <div v-if="selectedFlag === 'move_academic_class'">
           <UForm
@@ -723,6 +939,44 @@ const modelTitle = computed(() =>
             </div>
           </UForm>
         </div>
+        <div v-if="selectedFlag === 'assign_plan'">
+          <UForm
+            :schema="assignPlanSchema"
+            :state="{ selectedPlanId }"
+            class="space-y-4"
+            @submit="onSubmit"
+          >
+            <UFormField label="اختر الخطة" required name="planId">
+              <USelect
+                class="w-full"
+                v-model="selectedPlanId"
+                :items="
+                  plansStore.plansData.map((plan) => ({
+                    label: `${plan.semester} ${plan.year} - ${plan.stage} - عدد الصفحات: ( ${plan.total_pages} )`,
+                    value: plan.id,
+                  }))
+                "
+                placeholder="اختر الخطة"
+              />
+            </UFormField>
+            <div class="flex gap-3 items-center">
+              <UButton
+                type="submit"
+                label="تعيين"
+                color="secondary"
+                :loading="plansStore.loading"
+                class="w-30 flex justify-center mt-5 hover:cursor-pointer font-bold"
+              />
+              <UButton
+                label="إلغاء"
+                color="neutral"
+                variant="soft"
+                class="w-30 flex justify-center mt-5 hover:cursor-pointer"
+                @click="showModal = false"
+              />
+            </div>
+          </UForm>
+        </div>
       </template>
     </UModal>
 
@@ -800,6 +1054,20 @@ const modelTitle = computed(() =>
             <span>سائق</span>
             <span>({{ selectedStudents.length }})</span>
           </UButton>
+          <!-- assign plan to students button -->
+          <UButton
+            icon="lucide-car-taxi-front"
+            variant="outline"
+            color="warning"
+            size="xs"
+            class="p-2 font-bold h-full"
+            @click="showBasedModal('assign_plan')"
+          >
+            <span>تعيين</span>
+            <span>خطة</span>
+            <span>({{ selectedStudents.length }})</span>
+          </UButton>
+
           <!-- Excel export button -->
           <UButton
             icon="heroicons-document-chart-bar-solid"
