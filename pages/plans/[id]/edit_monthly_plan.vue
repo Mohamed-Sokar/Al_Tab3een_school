@@ -11,18 +11,31 @@ const schema = object({
 });
 
 const state = reactive({
+  id: undefined as number | undefined,
   month: undefined as string | undefined,
   pages: undefined as number | undefined,
 });
 const route = useRoute();
-const generalPlanId = +route.params.id;
+
+const generalPlanId = route.query.generalPlanId ?? 0;
+const monthlyPlanId = +route.params.id;
+
+const targetedGeneralPlan =
+  generalPlanId != null
+    ? plansStore.plansData.find((plan) => plan.id === +generalPlanId)
+    : undefined;
+
+const targetedMonthlyPlan = targetedGeneralPlan?.months_plans?.find(
+  (plan) => plan.id === +monthlyPlanId
+);
+
+Object.assign(state, targetedMonthlyPlan);
 
 const form = ref();
 
 const onSubmit = async () => {
-  console.log(state);
-  await plansStore.addMonthlyPlan(generalPlanId, state);
-  navigateTo({ name: "plans" });
+  await plansStore.updateMonthlyPlan(+monthlyPlanId, +generalPlanId, state);
+  navigateTo({ name: "plans", query: { planId: generalPlanId } });
 };
 </script>
 
@@ -59,7 +72,7 @@ const onSubmit = async () => {
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          label="إضافة"
+          label="تعديل"
           :loading="plansStore.loading"
         />
         <UButton

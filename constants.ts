@@ -98,6 +98,7 @@ export const plan_stage_options = [
   "الصف الثامن",
   "الصف التاسع",
 ];
+export const students_type_options = ["طلاب قدامى", "طلاب جدد"];
 
 export const students = [
   {

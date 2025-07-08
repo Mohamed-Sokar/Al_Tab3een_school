@@ -2,7 +2,11 @@
 import { number, object, string } from "yup";
 import type { Plan } from "~/types";
 import { usePlansStore } from "@/stores/plans";
-import { plan_stage_options, semesterOptions } from "~/constants";
+import {
+  plan_stage_options,
+  semesterOptions,
+  students_type_options,
+} from "~/constants";
 import { USelect } from "#components";
 
 const plansStore = usePlansStore();
@@ -16,6 +20,7 @@ const schema = object({
   stage: string().required("المرحلة مطلوبة"),
   semester: string().required("الفصل الدراسي مطلوب"),
   total_pages: number().required("عدد الصفحات مطلوبة"),
+  students_type: string().required("نوع الطلاب مطلوب"),
 });
 
 const state = reactive<Plan>({
@@ -23,6 +28,7 @@ const state = reactive<Plan>({
   stage: undefined,
   semester: undefined,
   total_pages: undefined,
+  students_type: students_type_options[0],
 });
 
 Object.assign(state, targetedPlan);
@@ -30,7 +36,6 @@ Object.assign(state, targetedPlan);
 const form = ref();
 
 const onSubmit = async () => {
-  console.log(state);
   await plansStore.updatePlan(+planId, state);
   navigateTo({ name: "plans" });
 };
@@ -69,6 +74,15 @@ const onSubmit = async () => {
           v-model="state.stage"
           placeholder="المرحلة"
           label="المرحلة"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="نوع الطلاب" name="students_type">
+        <USelect
+          :items="students_type_options"
+          v-model="state.students_type"
+          placeholder="نوع الطلاب"
+          label="نوع الطلاب"
           class="w-full"
         />
       </UFormField>

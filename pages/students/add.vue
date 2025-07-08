@@ -25,7 +25,6 @@ const schema = object({
   memorization_status: string().required("حالة الحفظ مطلوبة"),
   memorized_juz: string().required("الأجزاء المحفوظة مطلوبة"),
   daily_recitation: string().required("التسميع اليومي مطلوب"),
-  // academic_level: string().required("المستوى الأكاديمي العام مطلوب"),
   class_group: string().required("الشعبة مطلوبة"),
 });
 

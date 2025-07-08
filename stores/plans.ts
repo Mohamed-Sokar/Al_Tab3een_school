@@ -1,4 +1,5 @@
-import type { MonthlyPlan, Plan } from "~/types";
+import { students } from "~/constants";
+import type { MonthlyPlan, Plan, Student } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
@@ -34,6 +35,29 @@ export const usePlansStore = defineStore("plans", () => {
     loading.value = true;
 
     try {
+      // check is plan in exist
+      plans.value.find(
+        (p) =>
+          p.stage === plan.stage &&
+          p.semester === plan.semester &&
+          p.students_type === plan.students_type &&
+          p.year === plan.year
+      );
+      if (
+        plans.value.find(
+          (p) =>
+            p.stage === plan.stage &&
+            p.semester === plan.semester &&
+            p.students_type === plan.students_type &&
+            p.year === plan.year
+        )
+      ) {
+        toastError({
+          title: "هذه الخطة موجودة بالفعل",
+        });
+        return;
+      }
+
       const { data } = await api.post("/plans", {
         ...plan,
       });
@@ -41,46 +65,10 @@ export const usePlansStore = defineStore("plans", () => {
         title: `:تم إضافة الخطة بنجاح`,
       });
       console.log(data);
-      // add student locally
+      // add plan locally
       plans.value.unshift({
-        ...plan,
+        ...data[0],
       });
-    } catch (err) {
-      toastError({
-        title: "حدث مشكلة في إضافة الخطة",
-      });
-      throw Error(err instanceof Error ? err.message : String(err));
-    } finally {
-      loading.value = false;
-    }
-  };
-  const addMonthlyPlan = async (
-    generalPlanId: number,
-    monthlyPlan: MonthlyPlan
-  ) => {
-    loading.value = true;
-    const newMonthlyPlan = {
-      plan_id: generalPlanId,
-      ...monthlyPlan,
-    };
-    try {
-      const { data } = await api.post("/plans/months_plans", newMonthlyPlan);
-      console.log(data);
-      toastSuccess({
-        title: `:تم إضافة الخطة بنجاح`,
-      });
-      // console.log(data);
-      // add monthly plan locally
-      const plan = plans.value.find((p) => p.id === generalPlanId);
-      if (plan) {
-        if (!plan.months_plans) {
-          plan.months_plans = [];
-        }
-        plan.months_plans.push({
-          ...data[0],
-        });
-        console.log(plans.value);
-      }
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة الخطة",
@@ -101,37 +89,6 @@ export const usePlansStore = defineStore("plans", () => {
       // delete student locally
       const planIndex = getSpecificPlanIndex(planId);
       plans.value.splice(planIndex, 1);
-    } catch (err) {
-      toastError({
-        title: "حدث مشكلة في حذف الخطة",
-      });
-    } finally {
-      loading.value = false;
-    }
-  };
-  const deleteMonthlyPlan = async (
-    monthlyPlanId: number,
-    generalPlanId: number
-  ) => {
-    try {
-      loading.value = true;
-      await api.delete(`plans/months_plans/${monthlyPlanId}`);
-
-      toastSuccess({
-        title: `:تم حذف الخطة بنجاح`,
-      });
-      // delete plan locally
-      const plan = getSpecificPlan(generalPlanId);
-      const planIndex = getSpecificPlanIndex(generalPlanId);
-
-      if (plan && plan.months_plans) {
-        const monthlyPlanIndex = plan.months_plans.findIndex(
-          (monthlyPlan) => monthlyPlan.id === monthlyPlanId
-        );
-        if (monthlyPlanIndex !== -1) {
-          plans.value[planIndex]?.months_plans?.splice(monthlyPlanIndex, 1);
-        }
-      }
     } catch (err) {
       toastError({
         title: "حدث مشكلة في حذف الخطة",
@@ -169,6 +126,167 @@ export const usePlansStore = defineStore("plans", () => {
       loading.value = false;
     }
   };
+  const addMonthlyPlan = async (
+    generalPlanId: number,
+    monthlyPlan: MonthlyPlan
+  ) => {
+    const newMonthlyPlan = {
+      plan_id: generalPlanId,
+      ...monthlyPlan,
+    };
+    try {
+      loading.value = true;
+      // check if monthly plan in general plan is exist
+      if (
+        plans.value
+          .find((plan) => plan.id === generalPlanId)
+          ?.months_plans?.find(
+            (monthPlan) => monthPlan.month === monthlyPlan.month
+          )
+      ) {
+        toastError({
+          title: "هذه الخطة موجودة بالفعل",
+        });
+        return;
+      }
+
+      const { data } = await api.post("/plans/months_plans", newMonthlyPlan);
+      console.log(data);
+      toastSuccess({
+        title: `:تم إضافة الخطة بنجاح`,
+      });
+      // console.log(data);
+      // add monthly plan locally
+      const plan = plans.value.find((p) => p.id === generalPlanId);
+      if (plan) {
+        if (!plan.months_plans) {
+          plan.months_plans = [];
+        }
+        plan.months_plans.push({
+          ...data[0],
+        });
+        // update the students monthly plan
+        studentsStore.studentsData = studentsStore.studentsData.map(
+          (student: Student) => {
+            if (
+              student.plan_id === generalPlanId &&
+              student.plan &&
+              Array.isArray(student.plan.months_plans)
+            ) {
+              return {
+                ...student,
+                plan: {
+                  ...student.plan,
+                  months_plans: [...student.plan.months_plans, data[0]],
+                },
+              };
+            }
+            return student;
+          }
+        );
+      }
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في إضافة الخطة",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const deleteMonthlyPlan = async (
+    monthlyPlanId: number,
+    generalPlanId: number
+  ) => {
+    try {
+      loading.value = true;
+      await api.delete(`plans/months_plans/${monthlyPlanId}`);
+
+      toastSuccess({
+        title: `:تم حذف الخطة بنجاح`,
+      });
+      // delete plan locally
+      const plan = getSpecificPlan(generalPlanId);
+      const planIndex = getSpecificPlanIndex(generalPlanId);
+
+      if (plan && plan.months_plans) {
+        const monthlyPlanIndex = plan.months_plans.findIndex(
+          (monthlyPlan) => monthlyPlan.id === monthlyPlanId
+        );
+        if (monthlyPlanIndex !== -1) {
+          plans.value[planIndex]?.months_plans?.splice(monthlyPlanIndex, 1);
+        }
+      }
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في حذف الخطة",
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const updateMonthlyPlan = async (
+    monthlyPlanId: number,
+    generalPlanId: number,
+    newPlan: MonthlyPlan
+  ) => {
+    try {
+      loading.value = true;
+      const { data } = await api.put(
+        `/plans/months_plans/${monthlyPlanId}`,
+        newPlan
+      );
+
+      toastSuccess({
+        title: `:تم تحديث بيانات الخطة بنجاح`,
+      });
+
+      console.log(data);
+
+      // update plan locally
+      const plan = plans.value.find((p) => p.id === generalPlanId);
+      if (plan && plan.months_plans) {
+        const monthlyPlanIndex = plan.months_plans.findIndex(
+          (monthlyPlan) => monthlyPlan.id === monthlyPlanId
+        );
+        if (monthlyPlanIndex !== -1) {
+          plan.months_plans[monthlyPlanIndex] = {
+            ...data[0],
+            ...newPlan,
+          };
+        }
+      }
+      // update the students monthly plan
+      studentsStore.studentsData = studentsStore.studentsData.map(
+        (student: Student) => {
+          if (
+            student.plan_id === generalPlanId &&
+            student.plan &&
+            Array.isArray(student.plan.months_plans)
+          ) {
+            return {
+              ...student,
+              plan: {
+                ...student.plan,
+                months_plans: student.plan.months_plans.map((mp) =>
+                  mp.id === monthlyPlanId ? { ...mp, ...data[0] } : mp
+                ),
+              },
+            };
+          }
+          return student;
+        }
+      );
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في تعديل بيانات الخطة",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const getPlanById = async (planId: number) => {
     try {
       loading.value = true;
@@ -230,6 +348,7 @@ export const usePlansStore = defineStore("plans", () => {
       "stage",
       "total_pages",
       "semester",
+      "students_type",
       "year",
       "created_at",
     ];
@@ -258,6 +377,7 @@ export const usePlansStore = defineStore("plans", () => {
 
     // months_plans
     deleteMonthlyPlan,
+    updateMonthlyPlan,
 
     assignPlanToStudents,
     // Getters

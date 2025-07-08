@@ -185,10 +185,8 @@ const items: DropdownMenuItem[] = [
             </UDropdownMenu>
           </div>
           <div>
-            <h2 class="text-xl font-bold text-white">جلال أبو صايمة</h2>
-            <p class="text-sm text-blue-200 dark:text-gray-400">
-              مدير مدرسة التابعين
-            </p>
+            <h2 class="text-xl font-bold text-white">اسم المدير</h2>
+            <p class="text-sm text-blue-200 dark:text-gray-400">اسم المدرسة</p>
           </div>
         </div>
 

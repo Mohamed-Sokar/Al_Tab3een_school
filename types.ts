@@ -21,12 +21,13 @@ interface Student {
   behavioral_issues: Array<BehavioralIssue> | undefined;
   plan?: Plan | undefined;
   plan_id?: number | undefined;
-  student_monthly_achievements?: StudentMonthlyAchievements[] | undefined;
+  quran_achievement_reports?: StudentMonthlyAchievements[] | undefined;
 }
 
 interface StudentMonthlyAchievements {
   id?: number | undefined;
   student_id?: string | undefined;
+  monthly_plan_id?: number | undefined;
   month: string | undefined;
   achieved_pages: number | undefined;
   status: "مكتمل" | "غير مكتمل" | undefined;
@@ -85,12 +86,22 @@ interface Plan {
   total_pages: number | undefined;
   semester: string | undefined;
   months_plans?: Array<MonthlyPlan> | undefined;
+  students_type?: string | undefined;
 }
 interface MonthlyPlan {
   id?: number | undefined;
   plan_id?: number | undefined;
   month: string | undefined;
   pages: number | undefined;
+  status?: string | undefined;
+}
+interface AchievmentReport {
+  id?: number | undefined;
+  monthly_plan_id: number | undefined;
+  student_id?: string | undefined;
+  month: string | undefined;
+  achieved_pages: number | undefined;
+  status?: string | undefined;
 }
 
 interface BehavioralIssue {
@@ -161,6 +172,7 @@ export type {
   Student,
   Class,
   Driver,
+  AchievmentReport,
   Plan,
   MonthlyPlan,
   BehavioralIssue,

@@ -1,11 +1,12 @@
-import type { Student, BehavioralIssue } from "~/types";
+import type { Student, BehavioralIssue, AchievmentReport } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 import { students } from "~/constants";
 
 export const useStudentStore = defineStore("students", () => {
+  const plansStore = usePlansStore();
   const { toastSuccess, toastError } = useAppToast();
-  const studentsData = ref<Student[]>(students);
+  const studentsData = ref<Student[]>([]);
   const behavioralIssuesStudentData = ref<BehavioralIssue[]>();
   const loading = ref(false);
   const tableKey = ref(Math.random());
@@ -272,12 +273,12 @@ export const useStudentStore = defineStore("students", () => {
         // const existingStudent = studentsData.value[studentIndex];
 
         // ensure exsisting the behavioral issues array
-        if (!targetedStudent.students_behavioral_issues) {
-          targetedStudent.students_behavioral_issues = [];
+        if (!targetedStudent.behavioral_issues) {
+          targetedStudent.behavioral_issues = [];
         }
 
         // add new behavioral Issue
-        targetedStudent.students_behavioral_issues.push({
+        targetedStudent.behavioral_issues.push({
           id: data[0].id, // المخالفة التي أرجعها السيرفر
           ...newIssue,
           // description: description,
@@ -400,6 +401,95 @@ export const useStudentStore = defineStore("students", () => {
     );
   };
 
+  const addQuranAchievmentReport = async (
+    generalPlanId: number,
+    newReport: AchievmentReport
+  ) => {
+    const targetedStudent = getSpesificStudent(newReport.student_id || "");
+    // check if student exists
+    if (!targetedStudent) {
+      toastError({
+        title: "الطالب غير موجود",
+        description: "يرجى التأكد من وجود الطالب قبل إضافة تقرير الإنجاز.",
+      });
+      return;
+    }
+    // check if monthly plan is exists
+    const generalPlan = plansStore.getSpecificPlan(generalPlanId);
+    const currentMonth = generalPlan?.months_plans?.find(
+      (monthPlan) => monthPlan.month === newReport.month
+    );
+    if (!currentMonth) {
+      toastError({
+        title: "لا يوجد خطة لهذا الشهر",
+        description: "يرجى التأكد من وجود خطة لهذا الشهر قبل إضافة التقرير.",
+      });
+      return;
+    }
+
+    // check if report for the same month already exists
+    if (
+      targetedStudent?.quran_achievement_reports?.find(
+        (report) =>
+          report.month === newReport.month &&
+          report.monthly_plan_id === newReport.monthly_plan_id
+      )
+    ) {
+      toastError({
+        title: "تقرير الإنجاز القرآني لهذا الشهر موجود بالفعل",
+        description: "لا يمكن إضافة تقرير جديد لنفس الشهر.",
+      });
+      return;
+    }
+
+    try {
+      loading.value = true;
+
+      const months_plans = generalPlan?.months_plans;
+      const targetedMonthPlan = months_plans
+        ? months_plans.find((monthPlan) => monthPlan.month === newReport.month)
+        : undefined;
+
+      const payload = {
+        ...newReport,
+        status:
+          targetedMonthPlan?.pages && newReport.achieved_pages
+            ? newReport.achieved_pages >= targetedMonthPlan.pages
+              ? "مكتمل"
+              : "غير مكتمل"
+            : "",
+      };
+      const { data } = await api.post(
+        "/students/quran-achievement-report",
+        payload
+      );
+      console.log(data);
+      toastSuccess({
+        title: "تم إضافة تقرير الإنجاز القرآني بنجاح",
+      });
+
+      navigateTo({ name: "students-view-students_table" });
+
+      // add report locally
+      const studentIndex = getSpesificStudentIndex(newReport.student_id || "");
+      if (studentsData.value && studentIndex !== -1) {
+        const existingReports =
+          studentsData.value[studentIndex].quran_achievement_reports || [];
+        studentsData.value[studentIndex].quran_achievement_reports = [
+          ...existingReports,
+          data[0],
+        ];
+      }
+    } catch (err) {
+      toastError({
+        title: "حدثت مشكلة أثناء إضافة تقرير الإنجاز القرآني",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+
   // helper Methods
   function cleanObject<T extends object>(obj: T): Partial<T> {
     return Object.fromEntries(
@@ -444,6 +534,7 @@ export const useStudentStore = defineStore("students", () => {
     editStudent,
     deleteStudent,
     deleteMultipleStudents,
+    addQuranAchievmentReport,
     // updateAcademicClassForStudents,
     // updatesDriverForStudents,
     // updateQuranClassForStudents,

@@ -113,8 +113,8 @@
 <script setup lang="ts">
 import { number, object, string } from "yup";
 import { grades_level_options, gradesReports, students } from "~/constants";
-import { type GradesReport } from "~/types";
-
+import { type GradesReport, type Student } from "~/types";
+import { useStudentStore } from "@/stores/students";
 const schema = object({
   arabic: number().required("اللغة العربية مطلوبة"),
   math: number().required("الرياضيات مطلوبة"),
@@ -126,6 +126,8 @@ const schema = object({
   minmumGrade: number().required("النهاية الدنيا مطلوبة"),
   type: string().required("نوع الكشف مطلوب"),
 });
+
+const studentsStore = useStudentStore();
 
 const state = reactive<GradesReport>({
   id: undefined,
@@ -149,10 +151,9 @@ const route = useRoute();
 const { toastSuccess } = useAppToast();
 const isLoading = ref(false);
 const form = ref();
-const studentsData = ref(students);
 
-const targetedStudent = studentsData.value.find(
-  (student) => student.id.toString() === route.params.id.toString()
+const targetedStudent = studentsStore.studentsData.find(
+  (student) => student?.id === route.params.id
 );
 
 // state = targetedStudent;

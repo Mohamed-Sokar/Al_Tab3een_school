@@ -6,6 +6,20 @@ import type { Plan } from "~/types";
 const UButton = resolveComponent("UButton");
 const plansStore = usePlansStore();
 const expanded = ref<Record<number, boolean>>({ 1: true });
+const route = useRoute();
+const queryPlanId =
+  route.query.planId !== null && route.query.planId !== undefined
+    ? +route.query.planId
+    : 1;
+
+watch(
+  route,
+  () => {
+    expandRow(queryPlanId);
+    console.log(queryPlanId);
+  },
+  { immediate: true }
+);
 
 const columns: TableColumn<Plan>[] = [
   {
@@ -42,6 +56,10 @@ const columns: TableColumn<Plan>[] = [
   {
     accessorKey: "stage",
     header: "المرحلة",
+  },
+  {
+    accessorKey: "students_type",
+    header: "نوع الطلاب",
   },
   {
     accessorKey: "total_pages",
@@ -96,8 +114,14 @@ const deleteMonthlyPlan = async (
   await plansStore.deleteMonthlyPlan(monthlyPlanId, generalPlanId);
   expandRow(generalPlanId); // ✅ expand the row after deleting
 };
-const editMonthlyPlan = (monthlyPlanId: number) => {
-  console.log("edit: ", monthlyPlanId);
+const editMonthlyPlan = (monthlyPlanId: number, generalPlanId: number) => {
+  navigateTo({
+    name: "plans-id-edit_monthly_plan",
+    params: { id: monthlyPlanId },
+    query: { generalPlanId: generalPlanId },
+  });
+  console.log("generalPlanId: ", generalPlanId);
+  console.log("monthlyPlanId: ", monthlyPlanId);
 };
 function expandRow(planId: number) {
   expanded.value = { [planId - 1]: true };
@@ -181,7 +205,12 @@ function expandRow(planId: number) {
                       variant="soft"
                       size="xs"
                       class="hover:cursor-pointer"
-                      @click="editMonthlyPlan(month_plan.id ?? 0)"
+                      @click="
+                        editMonthlyPlan(
+                          month_plan.id ?? 0,
+                          row.original.id ?? 0
+                        )
+                      "
                     />
                   </div>
                 </li>

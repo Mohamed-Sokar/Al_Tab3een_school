@@ -61,7 +61,9 @@ const showModal = ref(false);
 const selectedFlag = ref<Flag>();
 const selectedClassId = ref<number | undefined>(undefined);
 const selectedDriverId = ref<number | undefined>(undefined);
-const selectedPlanId = ref<number | undefined>(undefined);
+const selectedPlan = ref<
+  { label: string; value: number | undefined } | undefined
+>(undefined);
 const columns: TableColumn<Student>[] = [
   {
     accessorKey: "rowNumber",
@@ -183,7 +185,7 @@ const columns: TableColumn<Student>[] = [
     },
   },
   {
-    accessorKey: "student_monthly_achievements",
+    accessorKey: "quran_achievement_reports",
     header: "خطة الحفظ",
     cell: ({ row }) => {
       const currentMonth = months[new Date().getMonth()];
@@ -193,8 +195,12 @@ const columns: TableColumn<Student>[] = [
         student.plan?.months_plans?.find((plan) => plan.month === currentMonth)
           ?.pages ?? 0;
 
-      const achievedPages = getMonthAchievedPages(currentMonth, student);
+      const achievedReport = student.quran_achievement_reports?.find(
+        (report) => report.month === currentMonth
+      );
 
+      // const achievedPages = getMonthAchievedPages(currentMonth, student);
+      const status = achievedReport?.status ?? "غير مكتمل";
       // نتحقق إذا لم تُحمّل الخطة بعد
       if (requiredPages === 0) {
         return h(
@@ -203,24 +209,23 @@ const columns: TableColumn<Student>[] = [
           () => "لا توجد خطة"
         );
       }
-
-      // console.log("requiredPages", requiredPages);
-      // console.log("achievedPages", achievedPages);
-
-      const isAchieved = isPlanAchieved(requiredPages, achievedPages);
+      const color = {
+        مكتمل: "success",
+        "غير مكتمل": "error",
+      }[status];
 
       return h(
         UBadge,
         {
           class: "capitalize hover:cursor-pointer hover:outline",
           variant: "subtle",
-          color: isAchieved ? "success" : "error", // استخدم لون صريح بدلاً من "success"
+          color: color,
           onClick: (e: MouseEvent) => {
             e.stopPropagation();
             showBasedModal("plan", student);
           },
         },
-        () => (isAchieved ? "مكتمل" : "غير مكتمل")
+        () => status
       );
     },
   },
@@ -311,17 +316,34 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
           navigateTo(`/students/${student.id}/add_grades_report`);
         },
       },
+      {
+        label: "إضافة تقرير حفظ شهري",
+        icon: "i-lucide-book-open",
+        color: "info",
+        onSelect: () => {
+          navigateTo({
+            name: "students-id-add_quran_achievement_report",
+            params: { id: student.id },
+            query: {
+              general_plan_id: student.plan_id,
+            },
+          });
+          // navigateTo(
+          //   `/students/${student.id}/add_quran_achievement_plan?general_plan_id=${student.plan_id}`
+          // );
+        },
+      },
     ],
     [
       {
-        label: "Edit",
+        label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
           navigateTo(`/students/${student.id}/edit_student`);
         },
       },
       {
-        label: "Delete",
+        label: "حذف",
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
@@ -442,17 +464,17 @@ const assignStudentsToDriver = async () => {
   selectedDriverId.value = undefined;
 };
 const assignStudentsToPlan = async () => {
-  if (!selectedPlanId.value || selectedStudents.value.length === 0) return;
+  if (!selectedPlan.value?.value || selectedStudents.value.length === 0) return;
 
   await plansStore.assignPlanToStudents(
     selectedStudentsIds.value.filter(
       (id): id is string => typeof id === "string"
     ),
-    selectedPlanId.value
+    selectedPlan.value.value
   );
 
   rowSelection.value = {};
-  selectedDriverId.value = undefined;
+  selectedPlan.value = undefined;
 };
 
 async function onSubmit() {
@@ -547,8 +569,14 @@ const modelTitle = computed(() =>
 
 const getMonthAchievedPages = (month: string, student?: Student): number => {
   return (
-    student?.student_monthly_achievements?.find((p) => p.month === month)
+    student?.quran_achievement_reports?.find((p) => p.month === month)
       ?.achieved_pages ?? 0
+  );
+};
+const getMonthStatus = (month: string, student?: Student): string => {
+  return (
+    student?.student_monthly_achievements?.find((p) => p.month === month)
+      ?.status ?? "غير مكتمل"
   );
 };
 
@@ -560,6 +588,10 @@ const getAchievementColor = (month: string, planPages: number) => {
   const achievedPages = getMonthAchievedPages(month, selectedStudent.value);
   return isPlanAchieved(planPages, achievedPages) ? "success" : "error";
 };
+
+watch(selectedPlan, () => {
+  console.log(selectedPlan.value?.value);
+});
 </script>
 
 <template>
@@ -942,17 +974,18 @@ const getAchievementColor = (month: string, planPages: number) => {
         <div v-if="selectedFlag === 'assign_plan'">
           <UForm
             :schema="assignPlanSchema"
-            :state="{ selectedPlanId }"
+            :state="{ selectedPlanId: selectedPlan?.value }"
             class="space-y-4"
             @submit="onSubmit"
           >
             <UFormField label="اختر الخطة" required name="planId">
-              <USelect
+              <USelectMenu
                 class="w-full"
-                v-model="selectedPlanId"
+                v-model="selectedPlan"
+                icon="i-lucide-map"
                 :items="
                   plansStore.plansData.map((plan) => ({
-                    label: `${plan.semester} ${plan.year} - ${plan.stage} - عدد الصفحات: ( ${plan.total_pages} )`,
+                    label: `${plan.semester} ${plan.year} - ${plan.students_type} - ${plan.stage} - عدد الصفحات: ( ${plan.total_pages} )`,
                     value: plan.id,
                   }))
                 "
