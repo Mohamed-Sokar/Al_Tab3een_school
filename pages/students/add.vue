@@ -254,7 +254,7 @@ const createStudent = async () => {
           class="w-full"
         />
       </UFormField> -->
-      <div class="col-span-2 flex gap-2 mt-5">
+      <div class="lg:col-span-2 flex gap-2 mt-5">
         <UButton
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
