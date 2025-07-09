@@ -1,24 +1,32 @@
 interface Student {
   id?: string | undefined;
-  full_name: string | undefined;
+  // full_name: string | undefined;
+  full_name?: string | undefined;
+  first_name: string | undefined;
+  second_name: string | undefined;
+  third_name: string | undefined;
+  last_name: string | undefined;
+  guardian_name: string | undefined;
+  guardian_name_kinship?: string | undefined; // صلة قرابة ولي الأمر
   driver_id?: number | undefined;
 
   identity_number: string | undefined;
   father_identity_number: string | undefined;
   phone_number: string | undefined;
+  whatsapp_number: string | undefined;
   birth_date: string | undefined;
   address: string | undefined;
   masjed: string | undefined;
-  level: string | undefined;
-  class_group: string | undefined;
-  memorized_juz: string | undefined;
+  level_id: number | undefined;
+  // class_group: string | undefined;
+  memorized_juz: number | undefined;
   memorization_status: "غير حافظ" | "حافظ قوي" | "حافظ ضعيف" | undefined;
   daily_recitation: string | undefined;
   behavioral_issues_count?: number | undefined;
   academic_class?: Class | undefined;
   quran_class?: Class | undefined;
   driver?: Driver | undefined;
-  behavioral_issues: Array<BehavioralIssue> | undefined;
+  behavioral_issues?: Array<BehavioralIssue> | undefined;
   plan?: Plan | undefined;
   plan_id?: number | undefined;
   quran_achievement_reports?: StudentMonthlyAchievements[] | undefined;

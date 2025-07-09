@@ -33,7 +33,6 @@ const form = ref();
 
 const onSubmit = async () => {
   await plansStore.addPlan(state);
-  // await studentsStore.fetchStudents();
   await navigateTo({ name: "plans" });
 };
 </script>

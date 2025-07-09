@@ -99,7 +99,32 @@ export const plan_stage_options = [
   "الصف التاسع",
 ];
 export const students_type_options = ["طلاب قدامى", "طلاب جدد"];
-
+export const guardian_name_kinship_options = [
+  "الأب",
+  "الأم",
+  "الجد",
+  "الجدّة",
+  "العم",
+  "العمة",
+  "الخال",
+  "الخالة",
+  "أخ",
+  "أخت",
+  "أخرى",
+];
+export const daily_recitation_options = [
+  "نصف صفحة",
+  "صفحة",
+  "صفحتين",
+  "ربع حزب",
+  "ربعين حزب",
+  "حزب",
+  "جزء",
+  "جزأين",
+  "3 أجزاء",
+  "5 أجزاء",
+  "10 أجزاء",
+];
 export const students = [
   {
     // id: 1,

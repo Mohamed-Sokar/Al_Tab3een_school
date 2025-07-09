@@ -65,6 +65,10 @@ const selectedPlan = ref<
   { label: string; value: number | undefined } | undefined
 >(undefined);
 const columns: TableColumn<Student>[] = [
+  // {
+  //   accessorKey: "الرقم",
+  //   header: "الرقم",
+  // },
   {
     accessorKey: "rowNumber",
     header: "الرقم",
@@ -93,6 +97,21 @@ const columns: TableColumn<Student>[] = [
         class: "-mx-2.5",
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
+    },
+    cell: ({ row }) => {
+      const student = row.original;
+      return student.first_name &&
+        student.second_name &&
+        student.third_name &&
+        student.last_name
+        ? student.first_name +
+            " " +
+            student.second_name +
+            " " +
+            student.third_name +
+            " " +
+            student.last_name
+        : student.full_name;
     },
   },
   // {

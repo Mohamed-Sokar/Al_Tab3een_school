@@ -47,6 +47,7 @@ export const useStudentStore = defineStore("students", () => {
   };
   const addStudent = async (student: Student) => {
     loading.value = true;
+    console.log("student: ", student);
     try {
       const { data } = await api.post("/students", student);
       toastSuccess({
