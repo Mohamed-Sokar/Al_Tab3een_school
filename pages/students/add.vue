@@ -21,7 +21,8 @@ const schema = object({
   guardian_name_kinship: string().required("صلة قرابة ولي الأمر مطلوبة"),
   whatsapp_number: string()
     .required("رقم الواتس مطلوب")
-    .matches(/^\d{12}$/, "رقم الواتس يجب أن يتكون من 12 أرقام"),
+    .min(12, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+  // .matches(/^\d{12}$/, "رقم الواتس يجب أن يتكون من 12 أرقام"),
   identity_number: string()
     .required("رقم الهوية مطلوب")
     .min(9, "رقم الهوية يجب أن يتكون من 9 أرقام"),
@@ -134,7 +135,6 @@ const createStudent = async () => {
       <UFormField label="رقم الواتس" name="whatsapp_number">
         <UInput
           v-model="newStudentState.whatsapp_number"
-          type="number"
           placeholder="97xxxxxxxxxx"
           label="رقم الواتس"
           class="w-full"
