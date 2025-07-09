@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   ],
   devtools: { enabled: true },
   supabase: {
-    redirect: false,
+    redirect: true,
   },
   ssr: true,
   nitro: {
