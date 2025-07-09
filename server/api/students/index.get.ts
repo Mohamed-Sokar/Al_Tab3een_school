@@ -6,8 +6,9 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await client
     .from("students")
+    // .select("*")
     .select(
-      `*, behavioral_issues:students_behavioral_issues(id, date, description),
+      `*, behavioral_issues:students_behavioral_issues(id, description, created_at),
       academic_class:academic_classes(id,title,group,floor,wing),
       quran_class:quran_classes(id,title,group,floor,wing),
       driver:drivers(name, car_type, car_color, phone_no),

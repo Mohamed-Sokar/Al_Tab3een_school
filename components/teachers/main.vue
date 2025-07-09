@@ -15,6 +15,8 @@ const sorting = ref([
     desc: false,
   },
 ]);
+const rowSelection = ref({});
+
 const tableKey = ref(Math.random());
 const UBadge = resolveComponent("UBadge");
 const UButton = resolveComponent("UButton");
@@ -93,7 +95,10 @@ const columns: TableColumn<Teacher>[] = [
           }`,
           variant: `${issues.length > 0 ? "subtle" : "soft"}`,
           color: `${issues.length > 0 ? "error" : "success"}`,
-          onClick: () => showIssuesModal(row.original, "behavioral_issues"),
+          onClick: (e: Event) => {
+            e.stopPropagation();
+            showIssuesModal(row.original, "behavioral_issues");
+          },
         },
         () => `${issues.length} مخالفة`
       );
@@ -112,7 +117,10 @@ const columns: TableColumn<Teacher>[] = [
           }`,
           variant: `${loans.length ? "subtle" : "soft"}`,
           color: `${loans.length ? "error" : "success"}`,
-          onClick: () => showIssuesModal(row.original, "loans"),
+          onClick: (e: Event) => {
+            e.stopPropagation();
+            showIssuesModal(row.original, "loans");
+          },
         },
 
         () => `${loans.length} سلفة`
@@ -132,7 +140,10 @@ const columns: TableColumn<Teacher>[] = [
           }`,
           variant: `${absences.length ? "subtle" : "soft"}`,
           color: `${absences.length ? "error" : "success"}`,
-          onClick: () => showIssuesModal(row.original, "absence"),
+          onClick: (e: Event) => {
+            e.stopPropagation();
+            showIssuesModal(row.original, "absence");
+          },
         },
 
         () => `${absences.length} يوم`
@@ -294,6 +305,16 @@ const numberedTeachers = computed(() => {
     rowNumber: index + 1,
   }));
 });
+const selectedTeachers = computed(() =>
+  Object.keys(rowSelection.value).map((index) => numberedTeachers.value[+index])
+);
+const selectedStudentsIds = computed(() =>
+  selectedTeachers.value.map((student) => student?.id)
+);
+
+watch(rowSelection, () => {
+  console.log(selectedTeachers.value);
+});
 </script>
 
 <template>
@@ -315,7 +336,7 @@ const numberedTeachers = computed(() => {
           <div v-if="selectedTeacher?.teachers_behavioral_issues?.length">
             <ul>
               <li
-                class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2"
+                class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2 place-items-center"
               >
                 <span class="font-bold">اليوم</span>
                 <span class="font-bold">التاريخ</span>
@@ -326,7 +347,7 @@ const numberedTeachers = computed(() => {
                   issue, index
                 ) in selectedTeacher.teachers_behavioral_issues"
                 :key="index"
-                class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 mb-2"
+                class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
                 <span>
                   {{ getArabicDayName(issue.date + "") }}
@@ -350,7 +371,8 @@ const numberedTeachers = computed(() => {
           <div v-if="selectedTeacher?.teachers_loans?.length">
             <ul>
               <li
-                class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2"
+                class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2 place-items-center"
+                place-items-center
               >
                 <span class="font-bold">اليوم</span>
                 <span class="font-bold">التاريخ</span>
@@ -359,7 +381,7 @@ const numberedTeachers = computed(() => {
               <li
                 v-for="(loan, index) in selectedTeacher.teachers_loans"
                 :key="index"
-                class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 mb-2"
+                class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
                 <span>
                   {{ getArabicDayName(loan.date + "") }}
@@ -389,7 +411,7 @@ const numberedTeachers = computed(() => {
           <div v-if="selectedTeacher?.teachers_absence?.length">
             <ul>
               <li
-                class="grid grid-cols-4 justify-between items-center gap-2 border-b py-1"
+                class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
               >
                 <span class="font-bold">اليوم</span>
                 <span class="font-bold">التاريخ</span>
@@ -399,7 +421,7 @@ const numberedTeachers = computed(() => {
               <li
                 v-for="(report, index) in selectedTeacher.teachers_absence"
                 :key="index"
-                class="grid grid-cols-4 justify-center items-center gap-2 border-b border-dashed border-gray-200 py-2 mb-2"
+                class="grid grid-cols-4 justify-center items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
                 <span>
                   {{ getArabicDayName(report.date + "") }}
@@ -466,6 +488,7 @@ const numberedTeachers = computed(() => {
       :loading="teachersStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
+      v-model:row-selection="rowSelection"
       :ref="table"
       :data="numberedTeachers"
       :columns="columns"

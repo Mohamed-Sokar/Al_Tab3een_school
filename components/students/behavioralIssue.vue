@@ -8,42 +8,63 @@ const { getArabicDayName } = useDateUtils();
 const studentsStore = useStudentStore();
 
 const globalFilter = ref("");
-// const tableKey = ref(Math.random());
+const rowSelection = ref({});
+watch(rowSelection, () => {
+  console.log(rowSelection.value);
+  console.log(selectedIssues.value);
+});
 const table = ref();
 
 const columns: TableColumn<BehavioralIssue>[] = [
   {
-    accessorKey: "rowNumber",
+    accessorKey: "الرقم",
     header: "الرقم",
+    cell: ({ row }) => {
+      return row.original.rowNumber || "";
+    },
   },
 
   {
-    accessorKey: "student_name",
+    accessorKey: "اسم الطالب",
     header: "اسم الطالب",
+    cell: ({ row }) => {
+      const student = row.original.student;
+      if (!student) return "غير معروف";
+      return `${student.first_name} ${student.last_name}`;
+    },
   },
   {
-    accessorKey: "level",
+    accessorKey: "الصف",
     header: "الصف",
+    cell: ({ row }) => {
+      return row.original.student?.class?.title
+        ? `${row.original.student?.class?.title} - ${row.original.student.class.group}`
+        : "";
+    },
   },
+
   {
-    accessorKey: "class_group",
-    header: "الشعبة",
-  },
-  {
-    accessorKey: "date",
+    accessorKey: "اليوم",
     header: "اليوم",
     cell: ({ row }) => {
-      const day = getArabicDayName(String(row.original.date));
+      const day = getArabicDayName(String(row.original.created_at));
       return day;
     },
   },
   {
-    accessorKey: "date",
+    accessorKey: "التاريخ",
     header: "تاريخ المخالفة",
+    cell: ({ row }) => {
+      const date = new Date(row.original.created_at ?? "");
+      return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+    },
   },
   {
-    accessorKey: "description",
+    accessorKey: "الوصف",
     header: "الوصف",
+    cell: ({ row }) => {
+      return row.original.description || "لا يوجد وصف";
+    },
   },
   {
     id: "action",
@@ -54,19 +75,18 @@ function getDropdownActions(issue: BehavioralIssue): DropdownMenuItem[][] {
   return [
     [
       {
-        label: "Edit",
+        label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
           navigateTo(`/students/${issue.id}/edit_behavioral_issue`);
         },
       },
       {
-        label: "Delete",
+        label: "حذف",
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
           studentsStore.deleteStudentBehavioralIssue(issue.id || 1);
-          tableKey.value = Math.random();
         },
       },
     ],
@@ -81,6 +101,9 @@ const numberedIssues = computed(() =>
     ...issue,
     rowNumber: index + 1,
   }))
+);
+const selectedIssues = computed(() =>
+  Object.keys(rowSelection.value).map((index) => numberedIssues.value[+index])
 );
 </script>
 
@@ -138,6 +161,7 @@ const numberedIssues = computed(() =>
       :loading="studentsStore.loading"
       :key="studentsStore.tableKey"
       v-model:global-filter="globalFilter"
+      v-model:row-selection="rowSelection"
       :ref="table"
       :data="numberedIssues"
       :columns="columns"

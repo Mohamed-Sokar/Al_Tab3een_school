@@ -1,3 +1,48 @@
+<script setup lang="ts">
+import { object, string } from "yup";
+import { useStudentStore } from "@/stores/students";
+import type { BehavioralIssue } from "~/types";
+
+const studentsStore = useStudentStore();
+
+const route = useRoute();
+const issueId = +route.params.id;
+const isLoading = ref(false);
+const form = ref();
+
+const targetedIssue = ref<BehavioralIssue | undefined>(
+  studentsStore.getSpesificStudentBehavioralIssue(issueId)
+);
+const schema = object({
+  description: string().required("وصف المخالفة السلوكية مطلوب"),
+});
+const state = reactive<{
+  description: string | undefined;
+}>({
+  description: undefined,
+});
+// Assign targeted issue description to description state
+state.description = targetedIssue.value?.description;
+
+watchEffect(() => {
+  if (studentsStore.behavioralIssuesStudentData.length > 0) {
+    targetedIssue.value =
+      studentsStore.getSpesificStudentBehavioralIssue(issueId);
+    // Assign targeted issue description to description state
+    state.description = targetedIssue.value?.description;
+  }
+});
+
+const updateIssue = async () => {
+  // add issue to database
+  await studentsStore.editStudentBehavioralIssue(
+    issueId,
+    state.description + ""
+  );
+  navigateTo({ name: "students-view-behavioral_issues" });
+};
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -36,43 +81,5 @@
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { object, string } from "yup";
-import { useStudentStore } from "@/stores/students";
-
-const studentsStore = useStudentStore();
-
-const route = useRoute();
-const isLoading = ref(false);
-const form = ref();
-
-const schema = object({
-  description: string().required("وصف المخالفة السلوكية مطلوب"),
-});
-
-const issueId = +route.params.id;
-
-const targetedIssue = studentsStore.getSpesificStudentBehavioralIssue(issueId);
-
-console.log(targetedIssue);
-const state = reactive<{
-  description: string | undefined;
-}>({
-  description: undefined,
-});
-// Assign targeted issue description to description state
-state.description = targetedIssue?.description;
-
-const updateIssue = async () => {
-  // add issue to database
-  await studentsStore.editStudentBehavioralIssue(
-    issueId,
-    state.description + ""
-  );
-
-  navigateTo({ name: "students-view-behavioral_issues" });
-};
-</script>
 
 <style scoped></style>

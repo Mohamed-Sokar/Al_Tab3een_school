@@ -108,8 +108,6 @@ const columns: TableColumn<Student>[] = [
             " " +
             student.second_name +
             " " +
-            student.third_name +
-            " " +
             student.last_name
         : student.full_name;
     },
@@ -354,6 +352,13 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
       },
     ],
     [
+      {
+        label: "معاينة",
+        icon: "i-lucide-eye",
+        onSelect: () => {
+          navigateTo(`/students/${student.id}/view_student`);
+        },
+      },
       {
         label: "تعديل",
         icon: "i-lucide-edit",
@@ -611,6 +616,13 @@ const getAchievementColor = (month: string, planPages: number) => {
 watch(selectedPlan, () => {
   console.log(selectedPlan.value?.value);
 });
+
+const toDate = (date: string | Date): string => {
+  if (typeof date === "string") {
+    return new Date(date).toISOString().split("T")[0];
+  }
+  return date.toISOString().split("T")[0];
+};
 </script>
 
 <template>
@@ -621,7 +633,7 @@ watch(selectedPlan, () => {
           <div v-if="selectedStudent?.behavioral_issues?.length">
             <ul>
               <li
-                class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2"
+                class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2 place-items-center"
               >
                 <span class="font-bold">اليوم</span>
                 <span class="font-bold">التاريخ</span>
@@ -630,12 +642,14 @@ watch(selectedPlan, () => {
               <li
                 v-for="(issue, index) in selectedStudent.behavioral_issues"
                 :key="index"
-                class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 mb-2"
+                class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
                 <span>
-                  {{ dayNameArabic(issue.date + "") }}
+                  {{ dayNameArabic(issue.created_at + "") }}
                 </span>
-                <span> {{ issue.date }} </span>
+                <span>
+                  {{ toDate(issue.created_at ?? "") }}
+                </span>
                 <span> {{ issue.description }} </span>
               </li>
             </ul>
@@ -653,7 +667,7 @@ watch(selectedPlan, () => {
           <div v-if="selectedStudent?.academic_class">
             <ul>
               <li
-                class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2"
+                class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
               >
                 <span class="font-bold">الصف</span>
                 <span class="font-bold">الشعبة</span>
@@ -661,7 +675,7 @@ watch(selectedPlan, () => {
                 <span class="font-bold">الجهة</span>
               </li>
               <li
-                class="grid grid-cols-4 justify-between items-center gap-2 py-2"
+                class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center"
               >
                 <span class="font-bold">
                   {{ selectedStudent?.academic_class.title }}
@@ -685,7 +699,7 @@ watch(selectedPlan, () => {
           <div v-if="selectedStudent?.quran_class">
             <ul>
               <li
-                class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2"
+                class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
               >
                 <span class="font-bold">الصف</span>
                 <span class="font-bold">الشعبة</span>
@@ -693,7 +707,7 @@ watch(selectedPlan, () => {
                 <span class="font-bold">الجهة</span>
               </li>
               <li
-                class="grid grid-cols-4 justify-between items-center gap-2 py-2"
+                class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center"
               >
                 <span class="font-bold">
                   {{ selectedStudent?.quran_class.title }}
@@ -717,7 +731,7 @@ watch(selectedPlan, () => {
           <div v-if="selectedStudent?.driver">
             <ul>
               <li
-                class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2"
+                class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
               >
                 <span class="font-bold">الاسم</span>
                 <span class="font-bold">نوع السيارة</span>
@@ -725,7 +739,7 @@ watch(selectedPlan, () => {
                 <span class="font-bold">رقم الجوال</span>
               </li>
               <li
-                class="grid grid-cols-4 justify-between items-center gap-2 py-2"
+                class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center"
               >
                 <span class="font-bold">
                   {{ selectedStudent?.driver.name }}
@@ -747,74 +761,6 @@ watch(selectedPlan, () => {
         </div>
         <div v-if="selectedFlag === 'plan'">
           <div v-if="selectedStudent?.plan" class="text-sm">
-            <!-- general plan details -->
-            <!-- <div class="mb-3">
-              <h3
-                class="font-bold text-sm text-center p-2 rounded-tr-md rounded-tl-md text-secondary bg-secondary-100"
-              >
-                تفاصيل الخطة الفصلية
-              </h3>
-              <div class="bg-secondary-50 px-2">
-                <ul>
-                  <li
-                    class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
-                  >
-                    <span class="font-bold">السنة</span>
-                    <span class="font-bold">الفصل</span>
-                    <span class="font-bold">المرحلة</span>
-                    <span class="font-bold">عدد الصفحات الإجمالي</span>
-                  </li>
-                  <li
-                    class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center"
-                  >
-                    <span class="">
-                      {{ selectedStudent.plan.year }}
-                    </span>
-                    <span class="">
-                      {{ selectedStudent.plan.semester }}
-                    </span>
-                    <span class="">
-                      {{ selectedStudent.plan.stage }}
-                    </span>
-                    <span class="">
-                      {{ selectedStudent.plan.total_pages }}
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            </div> -->
-
-            <!-- monthly plan details -->
-            <!-- <div v-if="selectedStudent.plan.months_plans" class="mb-3">
-              <h3
-                class="font-bold text-sm text-center p-2 rounded-tr-md rounded-tl-md text-secondary bg-secondary-100"
-              >
-                تفاصيل الخطط الشهرية
-              </h3>
-              <div class="bg-secondary-50 px-2">
-                <ul>
-                  <li
-                    class="grid grid-cols-2 justify-between items-center gap-2 border-b py-2 place-items-center"
-                  >
-                    <span class="font-bold">الشهر</span>
-                    <span class="font-bold">عدد الصفحات المطلوبة</span>
-                  </li>
-                  <li
-                    class="grid grid-cols-2 justify-between items-center gap-2 py-2 place-items-center not-last:border-b border-gray-400 not-last:border-dashed"
-                    v-for="monthPlan in selectedStudent.plan.months_plans"
-                    :key="monthPlan.id"
-                  >
-                    <span class="">
-                      {{ monthPlan.month }}
-                    </span>
-                    <span class="">
-                      {{ monthPlan.pages }}
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            </div> -->
-
             <!-- achievment plan details -->
             <div
               v-if="selectedStudent.plan.months_plans?.length"

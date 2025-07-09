@@ -19,7 +19,9 @@ const schema = object({
   last_name: string().required("اسم العائلة مطلوب"),
   guardian_name: string().required("اسم ولي الأمر مطلوب"),
   guardian_name_kinship: string().required("صلة قرابة ولي الأمر مطلوبة"),
-  whatsapp_number: string().required("رقم الواتس مطلوب"),
+  whatsapp_number: string()
+    .required("رقم الواتس مطلوب")
+    .matches(/^\d{12}$/, "رقم الواتس يجب أن يتكون من 12 أرقام"),
   identity_number: string()
     .required("رقم الهوية مطلوب")
     .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
@@ -131,11 +133,7 @@ const createStudent = async () => {
         <UInput
           v-model="newStudentState.whatsapp_number"
           type="number"
-          :rules="[
-            (value: string) =>
-              value.length === 9 || 'رقم الواتس يجب أن يتكون من9 أرقام',
-          ]"
-          placeholder="رقم الواتس"
+          placeholder="97xxxxxxxxxx"
           label="رقم الواتس"
           class="w-full"
         />

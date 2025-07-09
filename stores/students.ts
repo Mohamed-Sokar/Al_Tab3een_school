@@ -7,7 +7,7 @@ export const useStudentStore = defineStore("students", () => {
   const plansStore = usePlansStore();
   const { toastSuccess, toastError } = useAppToast();
   const studentsData = ref<Student[]>([]);
-  const behavioralIssuesStudentData = ref<BehavioralIssue[]>();
+  const behavioralIssuesStudentData = ref<BehavioralIssue[]>([]);
   const loading = ref(false);
   const tableKey = ref(Math.random());
 
@@ -51,7 +51,7 @@ export const useStudentStore = defineStore("students", () => {
     try {
       const { data } = await api.post("/students", student);
       toastSuccess({
-        title: `:تم إضافة الطالب ${data[0].full_name} بنجاح`,
+        title: `:تم إضافة الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
       });
       // add student locally
       (studentsData.value || []).unshift({ ...student });
@@ -252,13 +252,17 @@ export const useStudentStore = defineStore("students", () => {
 
     if (!targetedStudent) return;
 
+    const classTitle = targetedStudent.academic_class?.title; // add new behavioral Issue
+    const classGroup = targetedStudent.academic_class?.group; // add new behavioral Issue
+
     const newIssue = {
       student_id: targetedStudent.id,
-      level: targetedStudent.level,
-      class_group: targetedStudent.class_group,
       description: description,
-      student_name: targetedStudent?.full_name,
-      date: new Date().toISOString().split("T")[0],
+      class: {
+        title: classTitle,
+        group: classGroup,
+      },
+      // date: new Date().toISOString().split("T")[0],
     };
 
     try {
@@ -268,7 +272,7 @@ export const useStudentStore = defineStore("students", () => {
       toastSuccess({
         title: "تم إضافة المخالفة السلوكية",
       });
-
+      console.log(data);
       // const studentIndex = getSpesificStudentIndex(studentId);
       if (studentsData.value && !!targetedStudent) {
         // const existingStudent = studentsData.value[studentIndex];
@@ -278,16 +282,9 @@ export const useStudentStore = defineStore("students", () => {
           targetedStudent.behavioral_issues = [];
         }
 
-        // add new behavioral Issue
         targetedStudent.behavioral_issues.push({
           id: data[0].id, // المخالفة التي أرجعها السيرفر
           ...newIssue,
-          // description: description,
-          // date: newIssue.date,
-          // student_name: targetedStudent?.full_name,
-          // student_id: targetedStudent?.id,
-          // level: targetedStudent?.level,
-          // class_group: targetedStudent?.class_group,
         });
       }
 

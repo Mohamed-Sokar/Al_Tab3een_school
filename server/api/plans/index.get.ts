@@ -6,7 +6,8 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await client
     .from("plans")
-    .select("*, months_plans(id,month, pages)");
+    .select("*, months_plans(id,month, pages)")
+    .order("total_pages", { ascending: false });
   if (error) {
     throw createError({ statusCode: 500, message: error.message });
   }

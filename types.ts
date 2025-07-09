@@ -111,14 +111,24 @@ interface AchievmentReport {
   achieved_pages: number | undefined;
   status?: string | undefined;
 }
-
+type StudentBehavioralIssue = {
+  first_name: string | undefined;
+  last_name: string | undefined;
+  class: {
+    title: string | undefined;
+    group: string | undefined;
+  };
+};
 interface BehavioralIssue {
+  rowNumber?: number | undefined; // For display purposes, not in the database
   id?: number | undefined;
-  student_name: string | undefined;
+  created_at?: string | undefined | Date;
+  // student_name: string | undefined;
   student_id: string | undefined;
-  level: string | undefined;
-  class_group: string | undefined;
-  date: string | undefined | Date;
+  student?: StudentBehavioralIssue | undefined;
+  // level: string | undefined;
+  // class_group: string | undefined;
+  // date: string | undefined | Date;
   description: string | undefined;
 }
 

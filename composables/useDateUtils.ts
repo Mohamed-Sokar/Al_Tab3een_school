@@ -5,5 +5,12 @@ export const useDateUtils = () => {
     });
   };
 
-  return { getArabicDayName };
+  const getDate = (date: string | Date): string => {
+    if (typeof date === "string") {
+      return new Date(date).toISOString().split("T")[0];
+    }
+    return date.toISOString().split("T")[0];
+  };
+
+  return { getArabicDayName, getDate };
 };

@@ -55,7 +55,6 @@ const state = reactive({
 });
 const studentId = typeof route.params.id === "string" ? route.params.id : "";
 // get student based on his id
-
 const onSubmit = async () => {
   // add issue to database
   await studentsStore.addStudentBehavioralIssue(
