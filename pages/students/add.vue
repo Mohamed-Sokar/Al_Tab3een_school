@@ -33,7 +33,8 @@ const schema = object({
   // .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
   phone_number: string()
     .required("رقم الجوال مطلوب")
-    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
+    .min(10, "رقم الجوال يجب أن يتكون من 10 أرقام"),
+  // .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
   birth_date: string().required("تاريخ الميلاد مطلوب"),
   address: string().required("العنوان مطلوب"),
   masjed: string().required("المسجد مطلوب"),
