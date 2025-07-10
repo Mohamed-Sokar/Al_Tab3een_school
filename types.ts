@@ -44,7 +44,12 @@ interface StudentMonthlyAchievements {
 interface Teacher {
   id?: string | undefined;
   manager_id?: string | undefined | null;
-  full_name: string | undefined;
+  // full_name: string | undefined;
+  full_name?: string | undefined;
+  first_name: string | undefined;
+  second_name: string | undefined;
+  third_name: string | undefined;
+  last_name: string | undefined;
   identity_number: string | undefined;
   phone_number: string | undefined;
   birth_date: string | undefined;
@@ -123,12 +128,8 @@ interface BehavioralIssue {
   rowNumber?: number | undefined; // For display purposes, not in the database
   id?: number | undefined;
   created_at?: string | undefined | Date;
-  // student_name: string | undefined;
   student_id: string | undefined;
   student?: StudentBehavioralIssue | undefined;
-  // level: string | undefined;
-  // class_group: string | undefined;
-  // date: string | undefined | Date;
   description: string | undefined;
 }
 

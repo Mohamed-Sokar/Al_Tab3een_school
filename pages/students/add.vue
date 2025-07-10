@@ -26,15 +26,12 @@ const schema = object({
   identity_number: string()
     .required("رقم الهوية مطلوب")
     .min(9, "رقم الهوية يجب أن يتكون من 9 أرقام"),
-  // .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
   father_identity_number: string()
     .required("رقم هوية الأب مطلوب")
     .min(9, "رقم الهوية يجب أن يتكون من 9 أرقام"),
-  // .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
   phone_number: string()
     .required("رقم الجوال مطلوب")
     .min(10, "رقم الجوال يجب أن يتكون من 10 أرقام"),
-  // .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
   birth_date: string().required("تاريخ الميلاد مطلوب"),
   address: string().required("العنوان مطلوب"),
   masjed: string().required("المسجد مطلوب"),

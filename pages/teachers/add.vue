@@ -1,20 +1,27 @@
 <script setup lang="ts">
 import { object, string } from "yup";
-import { courses_options, teachers } from "~/constants";
-import { type Teacher } from "~/types";
+import { courses_options } from "~/constants";
+import type { Teacher } from "~/types";
 import { useTeachersStore } from "@/stores/teachers";
 const teachersStore = useTeachersStore();
 
 const form = ref();
 
 const schema = object({
-  full_name: string().required("الاسم مطلوب"),
+  // full_name: string().required("الاسم مطلوب"),
+  first_name: string().required("الاسم الأول مطلوب"),
+  second_name: string().required("اسم الوالد مطلوب"),
+  third_name: string().required("اسم الجد مطلوب"),
+  last_name: string().required("اسم العائلة مطلوب"),
   identity_number: string()
     .required("رقم الهوية مطلوب")
-    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+    .min(12, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+  whatsapp_number: string()
+    .required("رقم الواتس مطلوب")
+    .min(12, "رقم الهوية يجب أن يتكون من 12 أرقام"),
   phone_number: string()
     .required("رقم الجوال مطلوب")
-    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
+    .min(9, "رقم الهوية يجب أن يتكون من 9 أرقام"),
   birth_date: string().required("تاريخ الميلاد مطلوب"),
   subject: string().required("المادة التي يتم تدريسها مطلوبة"),
 });
@@ -22,6 +29,10 @@ const schema = object({
 const state = reactive<Teacher>({
   // id: undefined,
   full_name: undefined,
+  first_name: undefined,
+  second_name: undefined,
+  third_name: undefined,
+  last_name: undefined,
   identity_number: undefined,
   phone_number: undefined,
   birth_date: undefined,
@@ -89,7 +100,7 @@ const createTeacher = async () => {
         />
       </UFormField>
 
-      <div class="col-span-2 flex gap-2 mt-5">
+      <div class="lg:col-span-2 flex gap-2 mt-5">
         <UButton
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"

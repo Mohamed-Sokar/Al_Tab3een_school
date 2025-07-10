@@ -9,10 +9,10 @@ const studentsStore = useStudentStore();
 
 const globalFilter = ref("");
 const rowSelection = ref({});
-watch(rowSelection, () => {
-  console.log(rowSelection.value);
-  console.log(selectedIssues.value);
-});
+// watch(rowSelection, () => {
+//   console.log(rowSelection.value);
+//   console.log(selectedIssues.value);
+// });
 const table = ref();
 
 const columns: TableColumn<BehavioralIssue>[] = [

@@ -2,6 +2,7 @@ import type { Student, BehavioralIssue, AchievmentReport } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 import { students } from "~/constants";
+import { first } from "lodash";
 
 export const useStudentStore = defineStore("students", () => {
   const plansStore = usePlansStore();
@@ -255,24 +256,32 @@ export const useStudentStore = defineStore("students", () => {
     const classTitle = targetedStudent.academic_class?.title; // add new behavioral Issue
     const classGroup = targetedStudent.academic_class?.group; // add new behavioral Issue
 
-    const newIssue = {
+    const payload = {
       student_id: targetedStudent.id,
       description: description,
-      class: {
-        title: classTitle,
-        group: classGroup,
+    };
+
+    const newIssue = {
+      ...payload,
+      student: {
+        first_name: targetedStudent.first_name,
+        last_name: targetedStudent.last_name,
+        class: {
+          title: classTitle,
+          group: classGroup,
+        },
       },
       // date: new Date().toISOString().split("T")[0],
     };
 
     try {
       loading.value = true;
-      const { data } = await api.post("/students/behavioral-issues", newIssue);
+      const { data } = await api.post("/students/behavioral-issues", payload);
 
       toastSuccess({
         title: "تم إضافة المخالفة السلوكية",
       });
-      console.log(data);
+      console.log(data[0]);
       // const studentIndex = getSpesificStudentIndex(studentId);
       if (studentsData.value && !!targetedStudent) {
         // const existingStudent = studentsData.value[studentIndex];
@@ -283,12 +292,16 @@ export const useStudentStore = defineStore("students", () => {
         }
 
         targetedStudent.behavioral_issues.push({
-          id: data[0].id, // المخالفة التي أرجعها السيرفر
           ...newIssue,
+          ...data[0], // المخالفة التي أرجعها السيرفر
         });
       }
-
-      (behavioralIssuesStudentData.value || []).unshift(data[0]);
+      const newData = {
+        ...newIssue,
+        ...data[0],
+      };
+      console.log(newData);
+      behavioralIssuesStudentData.value.unshift(newData);
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة المخالفة السلوكية",

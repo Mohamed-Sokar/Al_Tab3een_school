@@ -82,7 +82,7 @@ const columns: TableColumn<Student>[] = [
   //   header: "هوية الأب",
   // },
   {
-    accessorKey: "full_name",
+    accessorKey: "الاسم الرباعي",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
       return h(UButton, {

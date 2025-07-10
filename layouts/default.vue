@@ -44,15 +44,15 @@ onMounted(async () => {
   await studentsStore.fetchStudents();
   await studentsStore.fetchBehavioralIssues();
   await teachersStore.fetchTeachers();
-  await levelsStore.fetchLevels();
-  await plansStore.fetchPlans();
-  await academicClassesStore.fetchClasses();
-  await quranClassesStore.fetchClasses();
-  await driversStore.fetchDrivers();
-  await teachersStore.fetchAbsenceReports();
-  await teachersStore.fetchTeachersLoans();
-  await teachersStore.fetchTeachersBehavioralIssues();
-  await paymentsStore.fetchPayments();
+  // await levelsStore.fetchLevels();
+  // await plansStore.fetchPlans();
+  // await academicClassesStore.fetchClasses();
+  // await quranClassesStore.fetchClasses();
+  // await driversStore.fetchDrivers();
+  // await teachersStore.fetchAbsenceReports();
+  // await teachersStore.fetchTeachersLoans();
+  // await teachersStore.fetchTeachersBehavioralIssues();
+  // await paymentsStore.fetchPayments();
 });
 
 // import { useStudentStore } from "@/stores/students";

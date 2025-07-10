@@ -58,6 +58,19 @@ const columns: TableColumn<Teacher>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
       });
     },
+    cell: ({ row }) => {
+      const teacher = row.original;
+      return teacher.first_name &&
+        teacher.second_name &&
+        teacher.third_name &&
+        teacher.last_name
+        ? teacher.first_name +
+            " " +
+            teacher.second_name +
+            " " +
+            teacher.last_name
+        : teacher.full_name;
+    },
   },
   {
     accessorKey: "phone_number",
@@ -150,46 +163,7 @@ const columns: TableColumn<Teacher>[] = [
       );
     },
   },
-  // {
-  //   accessorKey: "upsent_reports_count",
-  //   header: "عدد أيام الغياب",
-  //   cell: ({ row }) => {
-  //     const days_count = row.original.upsent_reports_count ?? 0;
 
-  //     return h(
-  //       UBadge,
-  //       {
-  //         class: `capitalize ${days_count ? "font-bold" : "font-normal"}`,
-  //         variant: `${days_count === 0 ? "soft" : "subtle"}`,
-
-  //         color: `${
-  //           days_count === 1 || days_count === 2
-  //             ? "warning"
-  //             : days_count >= 3
-  //             ? "error"
-  //             : "success"
-  //         }`,
-  //       },
-  //       () => days_count
-  //     );
-  //   },
-  // },
-  // {
-  //   accessorKey: "loans_count",
-  //   header: "عدد السلف",
-  //   cell: ({ row }) => {
-  //     const loansCount = row.original.loans_count ?? 0;
-  //     return h(
-  //       UBadge,
-  //       {
-  //         class: `capitalize ${loansCount ? "font-bold" : "font-normal"}`,
-  //         variant: `${loansCount ? "subtle" : "soft"}`,
-  //         color: `${loansCount ? "error" : "success"}`,
-  //       },
-  //       () => loansCount
-  //     );
-  //   },
-  // },
   {
     id: "action",
   },
@@ -280,14 +254,14 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
     ],
     [
       {
-        label: "Edit",
+        label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
           navigateTo(`/teachers/${teacher.id}/edit_teacher`);
         },
       },
       {
-        label: "Delete",
+        label: "حذف",
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {

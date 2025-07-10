@@ -6,11 +6,12 @@ import type {
 } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
+import { teachers } from "~/constants";
 
 export const useTeachersStore = defineStore("teachers", () => {
   const { toastSuccess, toastError } = useAppToast();
 
-  const teachersData = ref<Teacher[]>([]);
+  const teachersData = ref<Teacher[]>(teachers);
   const loading = ref(false);
   const behavioralIssuesTeachersData = ref<BehavioralIssueTeacher[]>([]);
   const teachersLoansData = ref<TeacherLoan[]>([]);
