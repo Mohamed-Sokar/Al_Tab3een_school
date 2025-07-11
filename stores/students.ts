@@ -54,8 +54,9 @@ export const useStudentStore = defineStore("students", () => {
       toastSuccess({
         title: `:تم إضافة الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
       });
+      console.log("student from backend: ", data[0]);
       // add student locally
-      (studentsData.value || []).unshift({ ...student });
+      studentsData.value.unshift({ ...data[0] });
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة الطالب",

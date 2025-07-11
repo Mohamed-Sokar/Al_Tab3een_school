@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await client
     .from("teachers_absence")
-    .select()
+    .select("*, teacher:teachers(first_name, last_name)")
     .order("date", { ascending: false });
   if (error) {
     throw createError({ statusCode: 500, message: error.message });

@@ -9,14 +9,14 @@ const links = [
   },
   {
     label: "المخالفات السلوكية",
-    icon: "i-lucide-user",
+    icon: "i-heroicons-exclamation-triangle",
     to: "/students/view/behavioral_issues",
   },
-  {
-    label: "كشف الدرجات",
-    icon: "i-lucide-user",
-    to: "/students/view/grades",
-  },
+  // {
+  //   label: "كشف الدرجات",
+  //   icon: "i-lucide-user",
+  //   to: "/students/view/grades",
+  // },
 ];
 // onMounted(() => {
 //   watch(

@@ -436,6 +436,7 @@ function getHeader(column: Column<Student>, label: string) {
       })
   );
 }
+const { getArabicDayName } = useDateUtils();
 const dayNameArabic = (date: string) =>
   new Date(date).toLocaleDateString("ar-EG", { weekday: "long" });
 const deleteSelectedStudents = async () => {
@@ -645,7 +646,7 @@ const toDate = (date: string | Date): string => {
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
                 <span>
-                  {{ dayNameArabic(issue.created_at + "") }}
+                  {{ getArabicDayName(issue.created_at + "") }}
                 </span>
                 <span>
                   {{ toDate(issue.created_at ?? "") }}

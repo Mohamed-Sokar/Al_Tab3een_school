@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { number, object, string } from "yup";
+import { number, object, string, date } from "yup";
 import {
   memorization_status_options,
   guardian_name_kinship_options,
@@ -21,18 +21,33 @@ const schema = object({
   guardian_name_kinship: string().required("صلة قرابة ولي الأمر مطلوبة"),
   whatsapp_number: string()
     .required("رقم الواتس مطلوب")
-    .min(12, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+    .matches(
+      /^[0-9٠-٩]{12}$/,
+      "يجب إدخال 12 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
   // .matches(/^\d{12}$/, "رقم الواتس يجب أن يتكون من 12 أرقام"),
   identity_number: string()
     .required("رقم الهوية مطلوب")
-    .min(9, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+    .matches(
+      /^[0-9٠-٩]{9}$/,
+      "يجب إدخال 9 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
   father_identity_number: string()
     .required("رقم هوية الأب مطلوب")
-    .min(9, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+    .matches(
+      /^[0-9٠-٩]{9}$/,
+      "يجب إدخال 9 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
   phone_number: string()
     .required("رقم الجوال مطلوب")
-    .min(10, "رقم الجوال يجب أن يتكون من 10 أرقام"),
-  birth_date: string().required("تاريخ الميلاد مطلوب"),
+    .matches(
+      /^[0-9٠-٩]{10}$/,
+      "يجب إدخال 10 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
+  birth_date: date()
+    .required("تاريخ الميلاد مطلوب")
+    .min(new Date("2009-01-01"), "يجب أن يكون التاريخ بعد عام 2009"),
+  // birth_date: string().required("تاريخ الميلاد مطلوب"),
   address: string().required("العنوان مطلوب"),
   masjed: string().required("المسجد مطلوب"),
   level_id: number().required("الصف الدراسي مطلوب"),
@@ -70,6 +85,30 @@ const createStudent = async () => {
   await studentsStore.addStudent({ ...newStudentState });
   navigateTo("/students/view/students_table");
 };
+const birth_date_string = computed({
+  get() {
+    if (!newStudentState.birth_date) return "";
+    if (typeof newStudentState.birth_date === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(newStudentState.birth_date)) {
+        return newStudentState.birth_date;
+      }
+      // Try to parse and format
+      const d = new Date(newStudentState.birth_date);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (newStudentState.birth_date instanceof Date) {
+      return newStudentState.birth_date.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    newStudentState.birth_date = val;
+  },
+});
 </script>
 
 <template>
@@ -157,7 +196,7 @@ const createStudent = async () => {
       </UFormField>
       <UFormField label="تاريخ الميلاد" name="birth_date">
         <UInput
-          v-model="newStudentState.birth_date"
+          v-model="birth_date_string"
           type="date"
           class="w-full"
           placeholder="تاريخ الميلاد"

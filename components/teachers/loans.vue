@@ -3,14 +3,21 @@ import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { TeacherLoan } from "~/types";
 import { months } from "~/constants";
 import { useTeachersStore } from "@/stores/teachers";
-const { getArabicDayName } = useDateUtils();
+const { getArabicDayName, getDate } = useDateUtils();
 const teachersStore = useTeachersStore();
 
 const globalFilter = ref("");
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
+const rowSelection = ref({});
 
+const sorting = ref([
+  {
+    id: "id",
+    desc: false,
+  },
+]);
 const columns: TableColumn<TeacherLoan>[] = [
   {
     accessorKey: "rowNumber",
@@ -18,20 +25,29 @@ const columns: TableColumn<TeacherLoan>[] = [
   },
 
   {
-    accessorKey: "teacher_name",
+    accessorKey: "اسم المعلم",
     header: "اسم المعلم",
+    cell: ({ row }) => {
+      return (
+        row.original.teacher.first_name + " " + row.original.teacher.last_name
+      );
+    },
   },
   {
-    accessorKey: "date",
+    accessorKey: "يوم السلفة",
     header: "اليوم",
     cell: ({ row }) => {
-      const day = getArabicDayName(String(row.original.date));
+      const day = getArabicDayName(String(row.original.created_at));
       return day;
     },
   },
   {
-    accessorKey: "date",
-    header: "تاريخ السلفة",
+    accessorKey: "تاريخ المخالفة",
+    header: "تاريخ المخالفة",
+    cell: ({ row }) => {
+      const day = getDate(String(row.original.created_at));
+      return day;
+    },
   },
   {
     accessorKey: "amount",
@@ -41,12 +57,11 @@ const columns: TableColumn<TeacherLoan>[] = [
     id: "action",
   },
 ];
-
 function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
   return [
     [
       {
-        label: "Edit",
+        label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
           // console.log("Edit action for user:", student);
@@ -54,7 +69,7 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
         },
       },
       {
-        label: "Delete",
+        label: "حذف",
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
@@ -66,22 +81,33 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
     ],
   ];
 }
-
 const filteredLoans = computed(() => {
-  tableKey.value = Math.random();
+  tableKey.value = Math.random(); // Reset table key to force re-render
+  if (selectedMonth.value === "كل الأشهر") {
+    return teachersStore.sortedLoans;
+  }
   return teachersStore.sortedLoans.filter(
     (loan) =>
-      new Date(loan.date || new Date()).getMonth() ===
+      new Date(loan.created_at || new Date()).getMonth() ===
       months.indexOf(selectedMonth.value)
   );
 });
-
 const numberedLoans = computed(() =>
   filteredLoans.value.map((loan, index) => ({
     ...loan,
     rowNumber: index + 1,
   }))
 );
+const selectedLoans = computed(() =>
+  Object.keys(rowSelection.value).map((index) => numberedLoans.value[+index])
+);
+const selectedLoansIds = computed(() =>
+  selectedLoans.value.map((loan) => loan?.id)
+);
+
+watch(rowSelection, () => {
+  console.log(selectedLoans.value);
+});
 </script>
 
 <template>
@@ -134,7 +160,18 @@ const numberedLoans = computed(() =>
     </div>
     <!-- end Export -->
 
-    <UTable
+    <!-- Start Table -->
+    <BaseTable
+      :loading="teachersStore.loading"
+      :key="tableKey"
+      v-model:global-filter="globalFilter"
+      v-model:row-selection="rowSelection"
+      :data="numberedLoans"
+      :columns="columns"
+      v-model:sorting="sorting"
+      :get-dropdown-actions="getDropdownActions"
+    />
+    <!-- <UTable
       :loading="teachersStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
@@ -153,6 +190,6 @@ const numberedLoans = computed(() =>
           />
         </UDropdownMenu>
       </template>
-    </UTable>
+    </UTable> -->
   </div>
 </template>

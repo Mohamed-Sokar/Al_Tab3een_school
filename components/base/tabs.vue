@@ -4,7 +4,7 @@
       v-for="link in links"
       :key="link.to"
       :to="link.to"
-      class="flex items-center justify-center gap-2 w-full h-full p-2 rounded-md hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white hover:font-bold"
+      class="flex items-center justify-center gap-2 w-full h-full p-2 rounded-md hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white"
       :class="{
         'bg-secondary dark:bg-secondary-600 text-white font-bold':
           link.to === route.path,

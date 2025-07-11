@@ -9,7 +9,7 @@ const globalFilter = ref("");
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
-
+const { getDate } = useDateUtils();
 const columns: TableColumn<BehavioralIssueTeacher>[] = [
   {
     accessorKey: "rowNumber",
@@ -17,20 +17,29 @@ const columns: TableColumn<BehavioralIssueTeacher>[] = [
   },
 
   {
-    accessorKey: "teacher_name",
+    accessorKey: "اسم المعلم",
     header: "اسم المعلم",
+    cell: ({ row }) => {
+      return (
+        row.original.teacher.first_name + " " + row.original.teacher.last_name
+      );
+    },
   },
   {
-    accessorKey: "date",
+    accessorKey: "التاريخ",
     header: "اليوم",
     cell: ({ row }) => {
-      const day = getArabicDayName(String(row.original.date));
+      const day = getArabicDayName(String(row.original.created_at));
       return day;
     },
   },
   {
-    accessorKey: "date",
+    accessorKey: "created_at",
     header: "تاريخ المخالفة",
+    cell: ({ row }) => {
+      const day = getDate(String(row.original.created_at));
+      return day;
+    },
   },
   {
     accessorKey: "description",
@@ -70,7 +79,7 @@ const filteredIssues = computed(() => {
   // tableKey.value = Math.random();
   return teachersStore.sortedIssues.filter(
     (issue) =>
-      new Date(issue.date ?? new Date()).getMonth() ===
+      new Date(issue.created_at ?? new Date()).getMonth() ===
       months.indexOf(selectedMonth.value)
   );
 });

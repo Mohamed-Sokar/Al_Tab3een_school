@@ -162,11 +162,14 @@ const items: DropdownMenuItem[] = [
                 content: 'w-60',
               }"
             >
-              <UAvatar
-                :src="url ?? '/images/avatar.avif'"
-                size="xl"
-                class="border"
-              />
+              <UChip inset>
+                <UAvatar
+                  :src="url ?? '/images/avatar.avif'"
+                  alt="Jalal Abo Sayma"
+                  size="xl"
+                  class="border"
+                />
+              </UChip>
               <template #account="{ item }">
                 <div class="text-left w-full">
                   <p class="text-muted">تم تسجيل الدخول بحساب</p>

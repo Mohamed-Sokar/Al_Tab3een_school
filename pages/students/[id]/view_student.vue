@@ -27,6 +27,7 @@ const newStudentState = reactive<Student>({
   memorization_status: undefined,
   memorized_juz: undefined as number | undefined,
   daily_recitation: undefined,
+  created_at: undefined,
 });
 
 const route = useRoute();
@@ -46,6 +47,31 @@ watchEffect(() => {
 });
 const { getArabicDayName, getDate } = useDateUtils();
 
+const createdAtString = computed({
+  get() {
+    if (!newStudentState.created_at) return "";
+    if (typeof newStudentState.created_at === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(newStudentState.created_at)) {
+        return newStudentState.created_at;
+      }
+      // Try to parse and format
+      const d = new Date(newStudentState.created_at);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (newStudentState.created_at instanceof Date) {
+      return newStudentState.created_at.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: string) {
+    newStudentState.created_at = val;
+  },
+});
+
 const getMonthAchievedPages = (month: string, student?: Student): number => {
   return (
     student?.quran_achievement_reports?.find((p) => p.month === month)
@@ -59,6 +85,30 @@ const getAchievementColor = (month: string, planPages: number) => {
   const achievedPages = getMonthAchievedPages(month, targetedStudent.value);
   return isPlanAchieved(planPages, achievedPages) ? "success" : "error";
 };
+const birth_date_string = computed({
+  get() {
+    if (!newStudentState.birth_date) return "";
+    if (typeof newStudentState.birth_date === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(newStudentState.birth_date)) {
+        return newStudentState.birth_date;
+      }
+      // Try to parse and format
+      const d = new Date(newStudentState.birth_date);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (newStudentState.birth_date instanceof Date) {
+      return newStudentState.birth_date.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    newStudentState.birth_date = val;
+  },
+});
 </script>
 
 <template>
@@ -155,7 +205,7 @@ const getAchievementColor = (month: string, planPages: number) => {
           <UFormField label="تاريخ الميلاد" name="birth_date">
             <UInput
               disabled
-              v-model="newStudentState.birth_date"
+              v-model="birth_date_string"
               type="date"
               class="w-full"
               placeholder="تاريخ الميلاد"
@@ -178,6 +228,16 @@ const getAchievementColor = (month: string, planPages: number) => {
               placeholder="العنوان"
               label="العنوان"
               class="w-full"
+            />
+          </UFormField>
+          <UFormField label="تاريخ إضافة الطالب" name="created_at">
+            <UInput
+              disabled
+              v-model="createdAtString"
+              placeholder="تاريخ إضافة الطالب"
+              label="تاريخ إضافة الطالب"
+              class="w-full"
+              type="date"
             />
           </UFormField>
           <UFormField label="المسجد" name="masjed">

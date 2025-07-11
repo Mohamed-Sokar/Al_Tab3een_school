@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { object, string } from "yup";
-import { courses_options } from "~/constants";
+import { array, date, object, string } from "yup";
+import { courses_options, marital_status_options } from "~/constants";
 import type { Teacher } from "~/types";
 import { useTeachersStore } from "@/stores/teachers";
 const teachersStore = useTeachersStore();
@@ -15,20 +15,32 @@ const schema = object({
   last_name: string().required("اسم العائلة مطلوب"),
   identity_number: string()
     .required("رقم الهوية مطلوب")
-    .min(12, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+    .matches(
+      /^[0-9٠-٩]{9}$/,
+      "يجب إدخال 9 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
   whatsapp_number: string()
     .required("رقم الواتس مطلوب")
-    .min(12, "رقم الهوية يجب أن يتكون من 12 أرقام"),
+    .matches(
+      /^[0-9٠-٩]{12}$/,
+      "يجب إدخال 12 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
   phone_number: string()
     .required("رقم الجوال مطلوب")
-    .min(9, "رقم الهوية يجب أن يتكون من 9 أرقام"),
-  birth_date: string().required("تاريخ الميلاد مطلوب"),
-  subject: string().required("المادة التي يتم تدريسها مطلوبة"),
+    .matches(
+      /^[0-9٠-٩]{10}$/,
+      "يجب إدخال 10 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
+  enrollment_date: date().required("تاريخ التسجيل مطلوب"),
+  birth_date: date().required("تاريخ الميلاد مطلوب"),
+  subject: array().required("المادة التي يتم تدريسها مطلوبة"),
+  children_count: string()
+    .required("عدد الأطفال مطلوب")
+    .matches(/^[0-9٠-٩]/, "يجب إدخال أرقام عربية أو إنجليزية"),
+  marital_status: string().required("الحالة الاجتماعية مطلوبة"),
 });
 
 const state = reactive<Teacher>({
-  // id: undefined,
-  full_name: undefined,
   first_name: undefined,
   second_name: undefined,
   third_name: undefined,
@@ -36,16 +48,68 @@ const state = reactive<Teacher>({
   identity_number: undefined,
   phone_number: undefined,
   birth_date: undefined,
+  enrollment_date: undefined,
   subject: undefined,
-  // has_behavioral_issues: undefined,
-  // ubsent_days_count: undefined,
-  // loans: undefined,
+  whatsapp_number: undefined,
+  children_count: undefined,
+  marital_status: undefined,
+  address: undefined,
 });
 
 const createTeacher = async () => {
   await teachersStore.addTeacher({ ...state, manager_id: null });
   navigateTo({ name: "teachers-view-teachers_table" });
 };
+
+// Getters
+const birth_date_string = computed({
+  get() {
+    if (!state.birth_date) return "";
+    if (typeof state.birth_date === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.birth_date)) {
+        return state.birth_date;
+      }
+      // Try to parse and format
+      const d = new Date(state.birth_date);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (state.birth_date instanceof Date) {
+      return state.birth_date.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    state.birth_date = val;
+  },
+});
+const enrollment_date_string = computed({
+  get() {
+    if (!state.enrollment_date) return "";
+    if (typeof state.enrollment_date === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.enrollment_date)) {
+        return state.enrollment_date;
+      }
+      // Try to parse and format
+      const d = new Date(state.enrollment_date);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (state.enrollment_date instanceof Date) {
+      return state.enrollment_date.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    state.enrollment_date = val;
+  },
+});
 </script>
 
 <template>
@@ -57,11 +121,35 @@ const createTeacher = async () => {
       class="grid grid-cols-1 lg:grid-cols-2 gap-4"
       @submit="createTeacher"
     >
-      <UFormField label="الاسم رباعي" name="full_name">
+      <UFormField label="الاسم الأول" name="first_name">
         <UInput
-          v-model="state.full_name"
-          placeholder="الاسم رباعي"
-          label="الاسم"
+          v-model="state.first_name"
+          placeholder="الاسم الأول"
+          label="الاسم الأول"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="الاسم الثاني" name="second_name">
+        <UInput
+          v-model="state.second_name"
+          placeholder="الاسم الثاني"
+          label="الاسم الثاني"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="الاسم الثالث" name="third_name">
+        <UInput
+          v-model="state.third_name"
+          placeholder="الاسم الثالث"
+          label="الاسم الثالث"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="الاسم الرابع" name="last_name">
+        <UInput
+          v-model="state.last_name"
+          placeholder="الاسم الرابع"
+          label="الاسم الرابع"
           class="w-full"
         />
       </UFormField>
@@ -75,28 +163,71 @@ const createTeacher = async () => {
       </UFormField>
       <UFormField label="رقم الجوال" name="phone_number">
         <UInput
-          v-model.number="state.phone_number"
+          v-model="state.phone_number"
           placeholder="05xxxxxxxx"
           label="رقم الجوال"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="رقم الواتس" name="whatsapp_number">
+        <UInput
+          v-model="state.whatsapp_number"
+          placeholder="97xxxxxxxxxx"
+          label="رقم الواتس"
           class="w-full"
         />
       </UFormField>
       <UFormField label="تاريخ الميلاد" name="birth_date">
         <UInput
           type="date"
-          v-model="state.birth_date"
+          v-model="birth_date_string"
           class="w-full"
           placeholder="تاريخ الميلاد"
           icon="heroicons-calendar-days-solid"
         />
       </UFormField>
+      <UFormField label="تاريخ التسجيل" name="enrollment_date">
+        <UInput
+          type="date"
+          v-model="enrollment_date_string"
+          class="w-full"
+          placeholder="تاريخ التسجيل"
+          icon="heroicons-calendar-days-solid"
+        />
+      </UFormField>
       <UFormField label="المادة" name="subject">
         <USelect
+          multiple
           v-model="state.subject"
           :items="courses_options"
           type="text"
           class="w-full"
           placeholder="المواد التي يتم تدريسها"
+        />
+      </UFormField>
+      <UFormField label="الحالة الاجتماعية" name="marital_status">
+        <USelect
+          v-model="state.marital_status"
+          :items="marital_status_options"
+          placeholder="الحالة الاجتماعية"
+          label="الحالة الاجتماعية"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="العنوان" name="address">
+        <UInput
+          v-model="state.address"
+          placeholder="العنوان"
+          label="العنوان"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="عدد الأطفال" name="children_count">
+        <UInput
+          v-model="state.children_count"
+          placeholder="عدد الأطفال"
+          label="عدد الأطفال"
+          class="w-full"
         />
       </UFormField>
 

@@ -15,21 +15,45 @@ const excuse_status_options = ["بعذر", "بغير عذر"];
 
 const schema = object({
   reason: string(),
-  date: string().required("التاريخ مطلوب"),
+  date: date().required("التاريخ مطلوب"),
   excuse_status: string().required("حالة العذر مطلوبة"),
 });
 
 const state = reactive<TeacherAbsenceReport>({
   reason: undefined,
-  date: new Date().toISOString().split("T")[0],
+  date: undefined,
   excuse_status: excuse_status_options[0],
 });
 
 const onSubmit = async () => {
-  // add absence report to database
   await teachersStore.addTeacherAbsenceReport(teacherId, state);
   navigateTo({ name: "teachers-view-absence" });
 };
+
+const date_string = computed({
+  get() {
+    if (!state.date) return "";
+    if (typeof state.date === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.date)) {
+        return state.date;
+      }
+      // Try to parse and format
+      const d = new Date(state.date);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (state.date instanceof Date) {
+      return state.date.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    state.date = val;
+  },
+});
 </script>
 
 <template>
@@ -53,7 +77,7 @@ const onSubmit = async () => {
       <UFormField label="التاريخ" name="date" required>
         <UInput
           type="date"
-          v-model="state.date"
+          v-model="date_string"
           placeholder="أدخل التاريخ..."
           label="التاريخ"
           class="w-full mt-2"

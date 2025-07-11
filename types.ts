@@ -1,6 +1,5 @@
 interface Student {
   id?: string | undefined;
-  // full_name: string | undefined;
   full_name?: string | undefined;
   first_name: string | undefined;
   second_name: string | undefined;
@@ -10,11 +9,12 @@ interface Student {
   guardian_name_kinship?: string | undefined; // صلة قرابة ولي الأمر
   driver_id?: number | undefined;
 
+  created_at?: string | undefined | Date;
   identity_number: string | undefined;
   father_identity_number: string | undefined;
   phone_number: string | undefined;
   whatsapp_number: string | undefined;
-  birth_date: string | undefined;
+  birth_date: Date | undefined;
   address: string | undefined;
   masjed: string | undefined;
   level_id: number | undefined;
@@ -52,12 +52,19 @@ interface Teacher {
   last_name: string | undefined;
   identity_number: string | undefined;
   phone_number: string | undefined;
-  birth_date: string | undefined;
-  subject: string | undefined;
+  address: string | undefined;
+  whatsapp_number: string | undefined;
+  enrollment_date: Date | undefined;
+  children_count?: string | undefined;
+  marital_status: "متزوج" | "أعزب" | "مطلق" | "أرمل" | undefined;
+  birth_date: Date | undefined;
+  subject: string[] | undefined;
+  created_at?: string | undefined | Date;
 
-  teachers_behavioral_issues?: Array<BehavioralIssueTeacher> | undefined;
-  teachers_loans?: Array<TeacherLoan> | undefined;
-  teachers_absence?: Array<TeacherAbsenceReport> | undefined;
+  behavioral_issues?: Array<BehavioralIssueTeacher> | undefined;
+  loans?: Array<TeacherLoan> | undefined;
+  absence?: Array<TeacherAbsenceReport> | undefined;
+  academic_classes?: Array<Class> | undefined;
 
   // behavioral_issues_count?: number | undefined;
   // loans_count?: number | undefined;
@@ -76,10 +83,11 @@ interface Class {
   id?: number | undefined;
   title: string | undefined;
   group: string | undefined;
-  floor: string | undefined;
-  wing: string | undefined;
-  maximum_capacity: number | undefined;
+  floor?: string | undefined;
+  wing?: string | undefined;
+  maximum_capacity?: number | undefined;
   studentsCount?: number | undefined;
+  class?: { title: string; group: string };
 }
 
 interface Driver {
@@ -135,25 +143,35 @@ interface BehavioralIssue {
 
 interface BehavioralIssueTeacher {
   id: number | undefined;
-  teacher_name: string | undefined;
   teacher_id: string | undefined;
-  date: string | undefined | Date;
+  teacher: {
+    first_name: string | undefined;
+    last_name: string | undefined;
+  };
   description: string | undefined;
+  created_at?: string | undefined | Date;
 }
 
 interface TeacherLoan {
   id: number | undefined;
-  teacher_name: string | undefined;
   teacher_id: string | undefined;
-  date: string | undefined | Date;
+  teacher: {
+    first_name: string | undefined;
+    last_name: string | undefined;
+  };
   amount: number;
+  created_at?: Date | undefined;
 }
 
 interface TeacherAbsenceReport {
   id?: number | undefined;
   teacher_id?: string | undefined;
-  teacher_name?: string | undefined;
-  date: string | undefined;
+  teacher?: {
+    first_name: string | undefined;
+    last_name: string | undefined;
+  };
+  date?: Date | undefined;
+  created_at?: Date | undefined;
   reason: string | undefined;
   excuse_status: string | undefined;
 }

@@ -35,18 +35,18 @@ const links = [
     to: "/teachers/view/teachers_table",
   },
   {
-    label: "القروض",
-    icon: "i-lucide-user",
-    to: "/teachers/view/loans",
-  },
-  {
     label: "المخالفات الإدارية",
-    icon: "i-lucide-user",
+    icon: "i-heroicons-exclamation-triangle",
     to: "/teachers/view/behavioral_issues",
   },
   {
+    label: "القروض",
+    icon: "i-heroicons-banknotes",
+    to: "/teachers/view/loans",
+  },
+  {
     label: "الحضور والغياب",
-    icon: "i-lucide-user",
+    icon: "i-lucide-user-minus",
     to: "/teachers/view/absence",
   },
 ];

@@ -5,8 +5,9 @@ import { useTeachersStore } from "@/stores/teachers";
 import type { Column } from "@tanstack/vue-table";
 
 const teachersStore = useTeachersStore();
-const { getArabicDayName } = useDateUtils();
-type Flag = "behavioral_issues" | "loans" | "absence";
+const { getArabicDayName, getDate } = useDateUtils();
+
+type Flag = "behavioral_issues" | "loans" | "absence" | "academic_classes";
 
 const globalFilter = ref("");
 const sorting = ref([
@@ -31,16 +32,15 @@ function showIssuesModal(teacher: Teacher, flag: Flag) {
   selectedTeacher.value = teacher;
   showModal.value = true;
 }
-
 const columns: TableColumn<Teacher>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
   },
-  {
-    accessorKey: "identity_number",
-    header: "الهوية",
-  },
+  // {
+  //   accessorKey: "identity_number",
+  //   header: "الهوية",
+  // },
   {
     accessorKey: "full_name",
     header: ({ column }) => {
@@ -72,34 +72,56 @@ const columns: TableColumn<Teacher>[] = [
         : teacher.full_name;
     },
   },
-  {
-    accessorKey: "phone_number",
-    header: "رقم الجوال",
-  },
-  {
-    accessorKey: "birth_date",
-    // header: "تاريخ الميلاد",
-    header: ({ column }) => getHeader(column, "تاريخ الميلاد"),
-    cell: ({ row }) => {
-      // return new Date(row.getValue("birth_date")).toLocaleString("en-US", {
-      //   day: "numeric",
-      //   month: "short",
-      //   hour: "2-digit",
-      //   minute: "2-digit",
-      //   hour12: false,
-      // });
-      return row.original.birth_date;
-    },
-  },
+  // {
+  //   accessorKey: "phone_number",
+  //   header: "رقم الجوال",
+  // },
+  // {
+  //   accessorKey: "birth_date",
+  //   // header: "تاريخ الميلاد",
+  //   header: ({ column }) => getHeader(column, "تاريخ الميلاد"),
+  //   cell: ({ row }) => {
+  //     // return new Date(row.getValue("birth_date")).toLocaleString("en-US", {
+  //     //   day: "numeric",
+  //     //   month: "short",
+  //     //   hour: "2-digit",
+  //     //   minute: "2-digit",
+  //     //   hour12: false,
+  //     // });
+  //     return row.original.birth_date;
+  //   },
+  // },
   {
     accessorKey: "subject",
     header: "المادة",
+    cell: ({ row }) => {
+      let subject: string | string[] = row.original.subject || "";
+      if (typeof row.original.subject === "string") {
+        try {
+          subject = JSON.parse(row.original.subject).join(" | ");
+        } catch (e) {
+          subject = row.original.subject;
+        }
+      }
+      if (Array.isArray(subject)) {
+        subject = subject.join(" | ");
+      }
+      return h(
+        UBadge,
+        {
+          class: `capitalize`,
+          variant: "soft",
+          color: `neutral`,
+        },
+        () => `${subject || "غير محدد"}`
+      );
+    },
   },
   {
     accessorKey: "teachers_behavioral_issues",
     header: "المخالفات الإدارية",
     cell: ({ row }) => {
-      const issues = row.original.teachers_behavioral_issues || [];
+      const issues = row.original.behavioral_issues || [];
       return h(
         UBadge,
         {
@@ -121,7 +143,7 @@ const columns: TableColumn<Teacher>[] = [
     accessorKey: "teachers_loans",
     header: "السلف المستحقة",
     cell: ({ row }) => {
-      const loans = row.original.teachers_loans || [];
+      const loans = row.original.loans || [];
       return h(
         UBadge,
         {
@@ -144,7 +166,7 @@ const columns: TableColumn<Teacher>[] = [
     accessorKey: "teachers_absence",
     header: "أيام الغياب",
     cell: ({ row }) => {
-      const absences = row.original.teachers_absence || [];
+      const absences = row.original.absence || [];
       return h(
         UBadge,
         {
@@ -163,67 +185,90 @@ const columns: TableColumn<Teacher>[] = [
       );
     },
   },
+  {
+    accessorKey: "academic_classes",
+    header: "الصفوف الدراسية",
+    cell: ({ row }) => {
+      const academic_classes = row.original.academic_classes || [];
+      return h(
+        UBadge,
+        {
+          class: `capitalize hover:cursor-pointer hover:outline ${
+            academic_classes.length > 0 ? "font-bold" : "font-normal"
+          }`,
+          variant: `${academic_classes.length ? "subtle" : "soft"}`,
+          color: `${academic_classes.length ? "error" : "success"}`,
+          onClick: (e: Event) => {
+            e.stopPropagation();
+            showIssuesModal(row.original, "academic_classes");
+          },
+        },
+
+        () => `${academic_classes.length} صف`
+      );
+    },
+  },
 
   {
     id: "action",
   },
 ];
-function getHeader(column: Column<Teacher>, label: string) {
-  const isSorted = column.getIsSorted();
+// function getHeader(column: Column<Teacher>, label: string) {
+//   const isSorted = column.getIsSorted();
 
-  return h(
-    UDropdownMenu,
-    {
-      content: {
-        align: "start",
-      },
-      "aria-label": "Actions dropdown",
-      items: [
-        {
-          label: "Asc",
-          type: "checkbox",
-          icon: "i-lucide-arrow-up-narrow-wide",
-          checked: isSorted === "asc",
-          onSelect: () => {
-            if (isSorted === "asc") {
-              column.clearSorting();
-            } else {
-              column.toggleSorting(false);
-            }
-          },
-        },
-        {
-          label: "Desc",
-          icon: "i-lucide-arrow-down-wide-narrow",
-          type: "checkbox",
-          checked: isSorted === "desc",
-          onSelect: () => {
-            if (isSorted === "desc") {
-              column.clearSorting();
-            } else {
-              column.toggleSorting(true);
-            }
-          },
-        },
-      ],
-    },
-    () =>
-      h(UButton, {
-        color: "neutral",
-        variant: "ghost",
-        label,
-        icon: isSorted
-          ? isSorted === "asc"
-            ? "i-lucide-arrow-up-narrow-wide"
-            : "i-lucide-arrow-down-wide-narrow"
-          : "i-lucide-arrow-up-down",
-        class: "-mx-2.5 data-[state=open]:bg-elevated",
-        "aria-label": `Sort by ${
-          isSorted === "asc" ? "descending" : "ascending"
-        }`,
-      })
-  );
-}
+//   return h(
+//     UDropdownMenu,
+//     {
+//       content: {
+//         align: "start",
+//       },
+//       "aria-label": "Actions dropdown",
+//       items: [
+//         {
+//           label: "Asc",
+//           type: "checkbox",
+//           icon: "i-lucide-arrow-up-narrow-wide",
+//           checked: isSorted === "asc",
+//           onSelect: () => {
+//             if (isSorted === "asc") {
+//               column.clearSorting();
+//             } else {
+//               column.toggleSorting(false);
+//             }
+//           },
+//         },
+//         {
+//           label: "Desc",
+//           icon: "i-lucide-arrow-down-wide-narrow",
+//           type: "checkbox",
+//           checked: isSorted === "desc",
+//           onSelect: () => {
+//             if (isSorted === "desc") {
+//               column.clearSorting();
+//             } else {
+//               column.toggleSorting(true);
+//             }
+//           },
+//         },
+//       ],
+//     },
+//     () =>
+//       h(UButton, {
+//         color: "neutral",
+//         variant: "ghost",
+//         label,
+//         icon: isSorted
+//           ? isSorted === "asc"
+//             ? "i-lucide-arrow-up-narrow-wide"
+//             : "i-lucide-arrow-down-wide-narrow"
+//           : "i-lucide-arrow-up-down",
+//         class: "-mx-2.5 data-[state=open]:bg-elevated",
+//         "aria-label": `Sort by ${
+//           isSorted === "asc" ? "descending" : "ascending"
+//         }`,
+//       })
+//   );
+// }
 function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
   return [
     [
@@ -254,6 +299,13 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
     ],
     [
       {
+        label: "معاينة",
+        icon: "i-lucide-eye",
+        onSelect: () => {
+          navigateTo(`/teachers/${teacher.id}/view_teacher`);
+        },
+      },
+      {
         label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
@@ -272,7 +324,6 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
     ],
   ];
 }
-
 const numberedTeachers = computed(() => {
   return teachersStore.sortedTeachers.map((teacher, index) => ({
     ...teacher,
@@ -286,9 +337,9 @@ const selectedStudentsIds = computed(() =>
   selectedTeachers.value.map((student) => student?.id)
 );
 
-watch(rowSelection, () => {
-  console.log(selectedTeachers.value);
-});
+// watch(rowSelection, () => {
+//   console.log(selectedTeachers.value);
+// });
 </script>
 
 <template>
@@ -302,12 +353,14 @@ watch(rowSelection, () => {
           ? 'تفاصيل السلف'
           : selectedArrayFlag === 'absence'
           ? 'تفاصيل أيام الغياب'
+          : selectedArrayFlag === 'academic_classes'
+          ? 'تفاصيل الصفوف الدراسية'
           : ''
       "
     >
       <template #body>
         <div v-if="selectedArrayFlag === 'behavioral_issues'">
-          <div v-if="selectedTeacher?.teachers_behavioral_issues?.length">
+          <div v-if="selectedTeacher?.behavioral_issues?.length">
             <ul>
               <li
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2 place-items-center"
@@ -317,32 +370,61 @@ watch(rowSelection, () => {
                 <span class="font-bold">المخالفة</span>
               </li>
               <li
-                v-for="(
-                  issue, index
-                ) in selectedTeacher.teachers_behavioral_issues"
+                v-for="(issue, index) in selectedTeacher.behavioral_issues"
                 :key="index"
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
                 <span>
-                  {{ getArabicDayName(issue.date + "") }}
+                  {{ getArabicDayName(issue.created_at + "") }}
                 </span>
-                <span> {{ issue.date }} </span>
+                <span>
+                  {{ getDate(issue.created_at ?? "") }}
+                </span>
                 <span> {{ issue.description }} </span>
               </li>
             </ul>
             <div class="pt-3">
               <span> المجموع: </span>
               <span class="font-bold">
-                {{ selectedTeacher.teachers_behavioral_issues.length }}
+                {{ selectedTeacher.behavioral_issues.length }}
               </span>
             </div>
           </div>
 
           <p v-else>لا توجد مخالفات.</p>
         </div>
+        <div v-if="selectedArrayFlag === 'academic_classes'">
+          <div v-if="selectedTeacher?.academic_classes?.length">
+            <ul>
+              <li
+                class="grid grid-cols-2 justify-between items-center gap-2 border-b py-2 place-items-center"
+              >
+                <span class="font-bold">الصف</span>
+                <span class="font-bold">الشعبة</span>
+              </li>
+              <li
+                v-for="(
+                  academicClass, index
+                ) in selectedTeacher.academic_classes"
+                :key="index"
+                class="grid grid-cols-2 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
+              >
+                <span> {{ academicClass?.class?.title }} </span>
+                <span> {{ academicClass?.class?.group }} </span>
+              </li>
+            </ul>
+            <div class="pt-3">
+              <span> المجموع: </span>
+              <span class="font-bold">
+                {{ selectedTeacher.academic_classes.length }}
+              </span>
+            </div>
+          </div>
 
+          <p v-else>لا توجد صفوف.</p>
+        </div>
         <div v-else-if="selectedArrayFlag === 'loans'">
-          <div v-if="selectedTeacher?.teachers_loans?.length">
+          <div v-if="selectedTeacher?.loans?.length">
             <ul>
               <li
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2 place-items-center"
@@ -353,14 +435,14 @@ watch(rowSelection, () => {
                 <span class="font-bold">القيمة</span>
               </li>
               <li
-                v-for="(loan, index) in selectedTeacher.teachers_loans"
+                v-for="(loan, index) in selectedTeacher.loans"
                 :key="index"
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
                 <span>
-                  {{ getArabicDayName(loan.date + "") }}
+                  {{ getArabicDayName(loan.created_at + "") }}
                 </span>
-                <span> {{ loan.date }} </span>
+                <span> {{ getDate(loan.created_at ?? "") }} </span>
                 <span> {{ loan.amount }} ₪ </span>
               </li>
             </ul>
@@ -368,7 +450,7 @@ watch(rowSelection, () => {
               <span> المجموع: </span>
               <span class="font-bold">
                 {{
-                  selectedTeacher.teachers_loans.reduce(
+                  selectedTeacher.loans.reduce(
                     (previousValue, loan) => previousValue + (loan.amount || 0),
                     0
                   )
@@ -380,9 +462,8 @@ watch(rowSelection, () => {
 
           <p v-else>لا توجد سلف مستحقة.</p>
         </div>
-
         <div v-else-if="selectedArrayFlag === 'absence'">
-          <div v-if="selectedTeacher?.teachers_absence?.length">
+          <div v-if="selectedTeacher?.absence?.length">
             <ul>
               <li
                 class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
@@ -393,7 +474,7 @@ watch(rowSelection, () => {
                 <span class="font-bold">سبب الغياب</span>
               </li>
               <li
-                v-for="(report, index) in selectedTeacher.teachers_absence"
+                v-for="(report, index) in selectedTeacher.absence"
                 :key="index"
                 class="grid grid-cols-4 justify-center items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
@@ -408,7 +489,7 @@ watch(rowSelection, () => {
             <div class="pt-3">
               <span> المجموع: </span>
               <span class="font-bold">
-                {{ selectedTeacher.teachers_absence.length }}
+                {{ selectedTeacher.absence.length }}
               </span>
             </div>
           </div>

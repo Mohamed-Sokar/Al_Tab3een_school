@@ -6,12 +6,11 @@ import type {
 } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
-import { teachers } from "~/constants";
 
 export const useTeachersStore = defineStore("teachers", () => {
   const { toastSuccess, toastError } = useAppToast();
 
-  const teachersData = ref<Teacher[]>(teachers);
+  const teachersData = ref<Teacher[]>([]);
   const loading = ref(false);
   const behavioralIssuesTeachersData = ref<BehavioralIssueTeacher[]>([]);
   const teachersLoansData = ref<TeacherLoan[]>([]);
@@ -22,13 +21,15 @@ export const useTeachersStore = defineStore("teachers", () => {
   // Getters
   const sortedTeachers = computed(() => {
     return teachersData.value.sort((a, b) =>
-      (a.full_name ?? "").localeCompare(b.full_name ?? "")
+      (a.first_name ?? "").localeCompare(b.first_name ?? "")
     );
   });
   const sortedIssues = computed(() => {
-    return behavioralIssuesTeachersData.value.sort((a, b) =>
-      (a.teacher_name ?? "").localeCompare(b.teacher_name ?? "")
-    );
+    return behavioralIssuesTeachersData.value.sort((a, b) => {
+      const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return aDate - bDate;
+    });
   });
   const sortedLoans = computed(() => {
     return teachersLoansData.value.sort(
@@ -70,10 +71,10 @@ export const useTeachersStore = defineStore("teachers", () => {
       loading.value = true;
       const { data } = await api.post("/teachers", teacher);
       toastSuccess({
-        title: `:تم إضافة المعلم ${data[0].full_name} بنجاح`,
+        title: `:تم إضافة المعلم ${data[0].first_name} ${data[0].last_name} بنجاح`,
       });
       // add teacher locally
-      teachersData.value.unshift({ ...teacher });
+      teachersData.value.unshift({ ...data[0] });
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة المعلم",
@@ -92,7 +93,7 @@ export const useTeachersStore = defineStore("teachers", () => {
       const { data } = await api.put(`teachers/${teacherId}`, cleaned);
 
       toastSuccess({
-        title: `:تم تحديث بيانات المعلم ${data[0].full_name} بنجاح`,
+        title: `:تم تحديث بيانات المعلم ${data[0].first_name} ${data[0].last_name} بنجاح`,
       });
       // update teacher locally
       const teacherIndex = getSpesificTeacherIndex(teacherId);
@@ -101,12 +102,12 @@ export const useTeachersStore = defineStore("teachers", () => {
       // Keep existing behavioral_issues from old data
       if (teachersData.value && teacherIndex !== -1 && !!targetedTeacher) {
         // ensure exsisting the behavioral issues array
-        if (!targetedTeacher.teachers_behavioral_issues) {
-          targetedTeacher.teachers_behavioral_issues = [];
+        if (!targetedTeacher.behavioral_issues) {
+          targetedTeacher.behavioral_issues = [];
         }
 
         const existingIssues =
-          teachersData.value[teacherIndex].teachers_behavioral_issues;
+          teachersData.value[teacherIndex].behavioral_issues;
         // Merge new data and keep behavioral_issues field
 
         if (!!existingIssues) {
@@ -166,11 +167,10 @@ export const useTeachersStore = defineStore("teachers", () => {
       toastSuccess({
         title: "تم تحميل المخالفات بنجاح",
       });
-      // tableKey.value = Math.random();
     } catch (err) {
       toastError({
-        title: err.message,
-        description: "تحقق من الاتصال بالنترنت",
+        title: "حدث مشكلة في تحميل المخالفات الإدارية",
+        description: err instanceof Error ? err.message : String(err),
       });
       throw Error(err instanceof Error ? err.message : String(err));
     } finally {
@@ -185,16 +185,14 @@ export const useTeachersStore = defineStore("teachers", () => {
 
     if (!targetedTeacher) return;
 
-    const newIssue = {
+    const issue = {
       teacher_id: targetedTeacher.id,
-      teacher_name: targetedTeacher?.full_name,
       description: description,
-      date: new Date().toISOString().split("T")[0],
     };
 
     try {
       loading.value = true;
-      const { data } = await api.post("/teachers/behavioral-issues", newIssue);
+      const { data } = await api.post("/teachers/behavioral-issues", issue);
       console.log(data);
       toastSuccess({
         title: "تم إضافة المخالفة السلوكية",
@@ -202,24 +200,29 @@ export const useTeachersStore = defineStore("teachers", () => {
 
       if (teachersData.value && !!targetedTeacher) {
         // ensure exsisting the behavioral issues array
-        if (!targetedTeacher.teachers_behavioral_issues) {
-          targetedTeacher.teachers_behavioral_issues = [];
+        if (!targetedTeacher.behavioral_issues) {
+          targetedTeacher.behavioral_issues = [];
         }
 
         // add new behavioral Issue
-        targetedTeacher.teachers_behavioral_issues.push({
-          id: data[0].id, // المخالفة التي أرجعها السيرفر
-          ...newIssue,
+        targetedTeacher.behavioral_issues.push({
+          ...data[0], // المخالفة التي أرجعها السيرفر
         });
       }
 
-      behavioralIssuesTeachersData.value.unshift(data[0]);
+      const newIssue = {
+        ...issue,
+        teacher: {
+          first_name: targetedTeacher.first_name,
+          last_name: targetedTeacher.last_name,
+        },
+      };
+      behavioralIssuesTeachersData.value.unshift({ ...newIssue, ...data[0] });
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة المخالفة السلوكية",
-        description: "تحقق من الاتصال بالنترنت",
+        description: err instanceof Error ? err.message : String(err),
       });
-      // throw Error(err instanceof Error ? err.message : String(err));s
     } finally {
       loading.value = false;
     }
@@ -254,21 +257,21 @@ export const useTeachersStore = defineStore("teachers", () => {
       if (
         teachersData.value &&
         teachersData.value[teacherIndex] &&
-        teachersData.value[teacherIndex].teachers_behavioral_issues
+        teachersData.value[teacherIndex].behavioral_issues
       ) {
         // You can safely access students_behavioral_issues[issueIndex] here
         const issueIndex =
-          targetedTeacher?.teachers_behavioral_issues?.findIndex(
+          targetedTeacher?.behavioral_issues?.findIndex(
             (issue) => issue.id === issueId
           ) || 0;
 
         // For example, update the description:
-        teachersData.value[teacherIndex].teachers_behavioral_issues[
+        teachersData.value[teacherIndex].behavioral_issues[
           issueIndex
         ].description = description;
       }
 
-      tableKey.value = Math.random();
+      // tableKey.value = Math.random();
 
       toastSuccess({
         title: "تم تعديل المخالفة بنجاح",
@@ -276,7 +279,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     } catch (err) {
       toastError({
         title: "حدثت مشكلة أثناء تعديل المخالفة",
-        description: "تحقق من الاتصال بالنترنت",
+        description: err instanceof Error ? err.message : String(err),
       });
       throw Error(err instanceof Error ? err.message : String(err));
     } finally {
@@ -304,20 +307,16 @@ export const useTeachersStore = defineStore("teachers", () => {
 
       // delete issue from the student behavioral issues array
       if (!!targetedTeacher) {
-        const targetedIssueIndex =
-          targetedTeacher.teachers_behavioral_issues?.findIndex(
-            (issue) => issue.id === issueId
-          );
-
-        targetedTeacher.teachers_behavioral_issues?.splice(
-          targetedIssueIndex ?? 0,
-          1
+        const targetedIssueIndex = targetedTeacher.behavioral_issues?.findIndex(
+          (issue) => issue.id === issueId
         );
+
+        targetedTeacher.behavioral_issues?.splice(targetedIssueIndex ?? 0, 1);
       }
     } catch (err) {
       toastError({
         title: "حدث مشكلة في حذف المخالفة",
-        description: "تحقق من الاتصال بالنترنت",
+        description: err instanceof Error ? err.message : String(err),
       });
     } finally {
       loading.value = false;
@@ -362,16 +361,14 @@ export const useTeachersStore = defineStore("teachers", () => {
 
     if (!targetedTeacher) return;
 
-    const newLoan = {
+    const loan = {
       teacher_id: targetedTeacher.id,
-      teacher_name: targetedTeacher?.full_name,
       amount: amount,
-      date: new Date().toISOString().split("T")[0],
     };
 
     try {
       loading.value = true;
-      const { data } = await api.post("/teachers/loans", newLoan);
+      const { data } = await api.post("/teachers/loans", loan);
       console.log(data);
       toastSuccess({
         title: "تم إضافة السلفة",
@@ -385,16 +382,21 @@ export const useTeachersStore = defineStore("teachers", () => {
 
         // add new loan
         targetedTeacher.teachers_loans.unshift({
-          id: data[0].id,
-          ...newLoan,
+          ...data[0],
         });
       }
-
-      teachersLoansData.value.unshift(data[0]);
+      const newLoan = {
+        ...loan,
+        teacher: {
+          first_name: targetedTeacher.first_name,
+          last_name: targetedTeacher.last_name,
+        },
+      };
+      teachersLoansData.value.unshift({ ...newLoan, ...data[0] });
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة السلفة",
-        description: "تحقق من الاتصال بالنترنت",
+        description: err instanceof Error ? err.message : String(err),
       });
       // throw Error(err instanceof Error ? err.message : String(err));s
     } finally {
@@ -429,19 +431,14 @@ export const useTeachersStore = defineStore("teachers", () => {
       if (
         teachersData.value &&
         teachersData.value[teacherIndex] &&
-        teachersData.value[teacherIndex].teachers_loans
+        teachersData.value[teacherIndex].loans
       ) {
         // You can safely access teachers_loans[loanIndex] here
         const loanIndex =
-          targetedTeacher?.teachers_loans?.findIndex(
-            (loan) => loan.id === loanId
-          ) || 0;
+          targetedTeacher?.loans?.findIndex((loan) => loan.id === loanId) || 0;
 
-        teachersData.value[teacherIndex].teachers_loans[loanIndex].amount =
-          amount;
+        teachersData.value[teacherIndex].loans[loanIndex].amount = amount;
       }
-
-      tableKey.value = Math.random();
 
       toastSuccess({
         title: "تم تعديل السلفة بنجاح",
@@ -449,9 +446,8 @@ export const useTeachersStore = defineStore("teachers", () => {
     } catch (err) {
       toastError({
         title: "حدثت مشكلة أثناء تعديل السلفة",
-        description: "تحقق من الاتصال بالنترنت",
+        description: err instanceof Error ? err.message : String(err),
       });
-      throw Error(err instanceof Error ? err.message : String(err));
     } finally {
       loading.value = false;
     }
@@ -474,16 +470,16 @@ export const useTeachersStore = defineStore("teachers", () => {
 
       // delete issue from the student behavioral issues array
       if (!!targetedTeacher) {
-        const targetedLoanIndex = targetedTeacher.teachers_loans?.findIndex(
+        const targetedLoanIndex = targetedTeacher.loans?.findIndex(
           (loan) => loan.id === loanId
         );
 
-        targetedTeacher.teachers_loans?.splice(targetedLoanIndex ?? 0, 1);
+        targetedTeacher.loans?.splice(targetedLoanIndex ?? 0, 1);
       }
     } catch (err) {
       toastError({
         title: "حدث مشكلة في حذف السلفة",
-        description: "تحقق من الاتصال بالنترنت",
+        description: err instanceof Error ? err.message : String(err),
       });
     } finally {
       loading.value = false;
@@ -495,6 +491,7 @@ export const useTeachersStore = defineStore("teachers", () => {
   const getSpesificTeacherLoanIndex = (loanId: number) => {
     return teachersLoansData.value.findIndex((loan) => loan.id === loanId);
   };
+
   const fetchAbsenceReports = async () => {
     loading.value = true;
     try {
@@ -510,7 +507,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     } catch (err) {
       toastError({
         title: "حدث مشكلة في تحميل تقارير الغياب",
-        description: err.message,
+        description: err instanceof Error ? err.message : String(err),
       });
     } finally {
       loading.value = false;
@@ -527,10 +524,7 @@ export const useTeachersStore = defineStore("teachers", () => {
 
     const newReport = {
       teacher_id: targetedTeacher.id,
-      teacher_name: targetedTeacher?.full_name,
-      reason: report.reason,
-      excuse_status: report.excuse_status,
-      date: report.date,
+      ...report,
     };
 
     try {
@@ -543,22 +537,31 @@ export const useTeachersStore = defineStore("teachers", () => {
 
       if (teachersData.value && !!targetedTeacher) {
         // ensure exsisting the loans array
-        if (!targetedTeacher.teachers_absence) {
-          targetedTeacher.teachers_absence = [];
+        if (!targetedTeacher.absence) {
+          targetedTeacher.absence = [];
         }
 
         // add new loan
-        targetedTeacher.teachers_absence.unshift({
-          id: data[0].id,
-          ...newReport,
+        targetedTeacher.absence.unshift({
+          ...data[0],
         });
       }
-
-      teachersAbsenceReportsData.value.unshift(data[0]);
+      const newAbsenceReport = {
+        ...newReport,
+        teacher: {
+          first_name: targetedTeacher.first_name,
+          last_name: targetedTeacher.last_name,
+        },
+      };
+      // add report locally
+      teachersAbsenceReportsData.value.unshift({
+        ...newAbsenceReport,
+        ...data[0],
+      });
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة التقرير",
-        description: err.message,
+        description: err instanceof Error ? err.message : String(err),
       });
     } finally {
       loading.value = false;
@@ -584,58 +587,39 @@ export const useTeachersStore = defineStore("teachers", () => {
 
       // delete report from the student absence reports array
       if (!!targetedTeacher) {
-        const targetedReportIndex = targetedTeacher.teachers_absence?.findIndex(
+        const targetedReportIndex = targetedTeacher.absence?.findIndex(
           (loan) => loan.id === reportId
         );
 
-        targetedTeacher.teachers_loans?.splice(targetedReportIndex ?? 0, 1);
+        targetedTeacher.loans?.splice(targetedReportIndex ?? 0, 1);
       }
     } catch (err) {
       toastError({
         title: "حدث مشكلة في حذف التقرير",
-        description: err.message,
+        description: err instanceof Error ? err.message : String(err),
       });
     } finally {
       loading.value = false;
     }
   };
-  // const toggleTeacherAbsenceReport = async (
-  //   teacherId: number,
-  //   report: TeacherUpsentReport
-  // ) => {
-  //   // const reportIndex = getSpesificTeacherUpsentReportIndex(report.id);
-  //   const reportIndex = teachersAbsenceReportsData.value.findIndex(
-  //     (r) => r.teacher_id === teacherId && r.date === report.date
-  //   );
-  //   if (reportIndex !== -1) {
-  //     // If the report already exists, remove it
-  //     deleteTeacherUpsentReport(
-  //       teachersUpsentReportsData.value[reportIndex].id || 0
-  //     );
-  //   } else {
-  //     // If the report does not exist, add it
-  //     addTeacherUpsentReport(teacherId, report);
-  //   }
-  // };
-
   const editTeacherAbsenceReport = async (
     reportId: number,
     newReport: TeacherAbsenceReport
   ) => {
     try {
       loading.value = true;
-      const targetedreport = getSpesificTeacherAbsenceReport(reportId);
+      const targetedReport = getSpesificTeacherAbsenceReport(reportId);
       const reportIndex = getSpesificTeacherAbsenceReportIndex(reportId);
       const teacherIndex = getSpesificTeacherIndex(
-        targetedreport?.teacher_id ?? ""
+        targetedReport?.teacher_id ?? ""
       );
       const targetedTeacher = getSpesificTeacher(
-        targetedreport?.teacher_id || ""
+        targetedReport?.teacher_id || ""
       );
 
-      const { data } = await api.put(`/teachers/absence/${reportId}`, {
+      const { data } = await api.put(`teachers/absence/${reportId}`, {
         // ...behavioralIssuesTeachersData.value[loanIndex],
-        ...targetedreport,
+        // ...targetedReport,
         ...newReport,
       });
       console.log(data);
@@ -650,27 +634,23 @@ export const useTeachersStore = defineStore("teachers", () => {
       if (
         teachersData.value &&
         teachersData.value[teacherIndex] &&
-        teachersData.value[teacherIndex].teachers_absence
+        teachersData.value[teacherIndex].absence
       ) {
         // You can safely access teachers_loans[loanIndex] here
         const reportIndex =
-          targetedTeacher?.teachers_absence?.findIndex(
+          targetedTeacher?.absence?.findIndex(
             (report) => report.id === reportId
           ) || 0;
 
-        teachersData.value[teacherIndex].teachers_absence[reportIndex] =
-          data[0];
+        teachersData.value[teacherIndex].absence[reportIndex] = data[0];
       }
-
-      tableKey.value = Math.random();
-
       toastSuccess({
         title: "تم تعديل التقرير بنجاح",
       });
     } catch (err) {
       toastError({
         title: "حدثت مشكلة أثناء تعديل التقرير",
-        description: err.message,
+        description: err instanceof Error ? err.message : String(err),
       });
     } finally {
       loading.value = false;
@@ -702,19 +682,19 @@ export const useTeachersStore = defineStore("teachers", () => {
     );
   }
 
-  const totalTeacherAbsence = computed(() => (teacherId: number) => {
-    return teachersUpsentReportsData.value.filter(
-      (report) => report.teacher_id === teacherId
-    ).length;
-  });
-  const totalTeacherLoans = computed(() => (teacherId: number) => {
-    return teachersLoansData.value.reduce((total, loan): number => {
-      if (loan.teacher_id === teacherId) {
-        return total + loan.amount;
-      }
-      return total;
-    }, 0);
-  });
+  // const totalTeacherAbsence = computed(() => (teacherId: string) => {
+  //   return teachersAbsenceReportsData.value.filter(
+  //     (report) => report.teacher_id === teacherId
+  //   ).length;
+  // });
+  // const totalTeacherLoans = computed(() => (teacherId: string) => {
+  //   return teachersLoansData.value.reduce((total, loan): number => {
+  //     if (loan.teacher_id === teacherId) {
+  //       return total + loan.amount;
+  //     }
+  //     return total;
+  //   }, 0);
+  // });
 
   return {
     // Data
@@ -753,8 +733,8 @@ export const useTeachersStore = defineStore("teachers", () => {
     getSpesificTeacherAbsenceReport,
     getSpesificTeacherAbsenceReportIndex,
     // computed properties ==> Getters
-    totalTeacherAbsence,
-    totalTeacherLoans,
+    // totalTeacherAbsence,
+    // totalTeacherLoans,
     sortedTeachers,
     sortedLoans,
     sortedIssues,

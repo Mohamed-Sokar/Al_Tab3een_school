@@ -11,19 +11,24 @@ const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
-
+const rowSelection = ref({});
+const { getDate } = useDateUtils();
 const columns: TableColumn<TeacherAbsenceReport>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
   },
-
   {
-    accessorKey: "teacher_name",
+    accessorKey: "اسم المعلم",
     header: "اسم المعلم",
+    cell: ({ row }) => {
+      return (
+        row.original.teacher?.first_name + " " + row.original.teacher?.last_name
+      );
+    },
   },
   {
-    accessorKey: "date",
+    accessorKey: "اليوم",
     header: "اليوم",
     cell: ({ row }) => {
       const day = getArabicDayName(String(row.original.date));
@@ -31,8 +36,12 @@ const columns: TableColumn<TeacherAbsenceReport>[] = [
     },
   },
   {
-    accessorKey: "date",
+    accessorKey: "التاريخ",
     header: "التاريخ",
+    cell: ({ row }) => {
+      const day = getDate(String(row.original.date));
+      return day;
+    },
   },
   {
     accessorKey: "excuse_status",
@@ -51,14 +60,14 @@ function getDropdownActions(report: TeacherAbsenceReport): DropdownMenuItem[] {
   return [
     [
       {
-        label: "Edit",
+        label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
           navigateTo(`/teachers/${report.id}/edit_absence_report`);
         },
       },
       {
-        label: "Delete",
+        label: "حذف",
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
@@ -89,6 +98,18 @@ const numberedAbsenceReports = computed(() =>
     })
   )
 );
+const selectedReport = computed(() =>
+  Object.keys(rowSelection.value).map(
+    (index) => numberedAbsenceReports.value[+index]
+  )
+);
+const selectedReportsIds = computed(() =>
+  selectedReport.value.map((report) => report?.id)
+);
+
+// watch(rowSelection, () => {
+//   console.log(selectedReport.value);
+// });
 </script>
 
 <template>
@@ -152,6 +173,7 @@ const numberedAbsenceReports = computed(() =>
       :loading="teachersStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
+      v-model:row-selection="rowSelection"
       :data="numberedAbsenceReports"
       :columns="columns"
       :get-dropdown-actions="getDropdownActions"

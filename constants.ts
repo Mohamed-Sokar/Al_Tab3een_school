@@ -72,6 +72,7 @@ export const payment_type_options = ["صادر", "وارد"];
 export const modeOptions = ref(["light", "dark"]);
 
 export const months = [
+  "كل الأشهر",
   "يناير",
   "فبراير",
   "مارس",
@@ -125,6 +126,8 @@ export const daily_recitation_options = [
   "5 أجزاء",
   "10 أجزاء",
 ];
+
+export const marital_status_options = ["متزوج", "أعزب", "مطلق", "أرمل"];
 export const students = [
   {
     // id: 1,
