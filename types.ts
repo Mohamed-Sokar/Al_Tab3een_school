@@ -110,6 +110,7 @@ interface Plan {
   semester: string | undefined;
   months_plans?: Array<MonthlyPlan> | undefined;
   students_type?: string | undefined;
+  rowNumber?: number | undefined; // For display purposes, not in the database
 }
 interface MonthlyPlan {
   id?: number | undefined;

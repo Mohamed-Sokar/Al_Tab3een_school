@@ -205,7 +205,7 @@ const columns: TableColumn<Student>[] = [
     accessorKey: "quran_achievement_reports",
     header: "خطة الحفظ",
     cell: ({ row }) => {
-      const currentMonth = months[new Date().getMonth()];
+      const currentMonth = months[new Date().getMonth() + 1]; // because I addes "كل الأشهر" to months array
       const student = row.original;
 
       const requiredPages =
@@ -215,7 +215,6 @@ const columns: TableColumn<Student>[] = [
       const achievedReport = student.quran_achievement_reports?.find(
         (report) => report.month === currentMonth
       );
-
       // const achievedPages = getMonthAchievedPages(currentMonth, student);
       const status = achievedReport?.status ?? "غير مكتمل";
       // نتحقق إذا لم تُحمّل الخطة بعد
@@ -223,7 +222,7 @@ const columns: TableColumn<Student>[] = [
         return h(
           UBadge,
           { color: "gray", variant: "subtle" },
-          () => "لا توجد خطة"
+          () => "لا توجد خطة لهذا الشهر"
         );
       }
       const color = {

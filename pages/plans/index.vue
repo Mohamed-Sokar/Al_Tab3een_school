@@ -10,13 +10,21 @@ const route = useRoute();
 const queryPlanId =
   route.query.planId !== null && route.query.planId !== undefined
     ? +route.query.planId
-    : 1;
+    : -1;
+
+const numberedPlans = computed(() =>
+  plansStore.plansData.map((plan, index) => {
+    return {
+      ...plan,
+      rowNumber: index + 1,
+    };
+  })
+);
 
 watch(
   route,
   () => {
     expandRow(queryPlanId);
-    console.log(queryPlanId);
   },
   { immediate: true }
 );
@@ -41,9 +49,9 @@ const columns: TableColumn<Plan>[] = [
       }),
   },
   {
-    accessorKey: "id",
+    accessorKey: "rowNumber",
     header: "#",
-    cell: ({ row }) => `#${row.getValue("id")}`,
+    cell: ({ row }) => row.original.rowNumber,
   },
   {
     accessorKey: "year",
@@ -146,7 +154,7 @@ function expandRow(planId: number) {
 
     <UTable
       v-model:expanded="expanded"
-      :data="plansStore.plansData"
+      :data="numberedPlans"
       :columns="columns"
       :loading="plansStore.loading"
       :ui="{ tr: 'data-[expanded=true]:bg-elevated/50' }"

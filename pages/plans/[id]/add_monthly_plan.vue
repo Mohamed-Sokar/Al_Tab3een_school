@@ -12,7 +12,7 @@ const schema = object({
 });
 
 const state = reactive({
-  month: months[new Date().getMonth()],
+  month: months[new Date().getMonth() + 1], // Default to current month
   pages: undefined as number | undefined,
 });
 const route = useRoute();
