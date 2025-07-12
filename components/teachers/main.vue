@@ -67,16 +67,13 @@ const columns: TableColumn<Teacher>[] = [
     },
     cell: ({ row }) => {
       const teacher = row.original;
-      return teacher.first_name &&
-        teacher.second_name &&
-        teacher.third_name &&
-        teacher.last_name
+      return teacher.first_name
         ? teacher.first_name +
             " " +
             teacher.second_name +
             " " +
             teacher.last_name
-        : teacher.full_name;
+        : "";
     },
   },
   // {
@@ -290,6 +287,7 @@ function showIssuesModal(teacher: Teacher, flag: Flag) {
   selectedTeacher.value = teacher;
   showModal.value = true;
 
+  console.log(selectedTeacher.value.academic_classes);
   // assign to select the prev academic classes
   selectedAcademicClassesIds.value =
     selectedTeacher.value?.academic_classes
@@ -298,6 +296,9 @@ function showIssuesModal(teacher: Teacher, flag: Flag) {
 
   // buffer perv classes id's
   prevAcademicClassesIds.value = [...selectedAcademicClassesIds.value];
+
+  console.log("prevAcademicClassesIds", prevAcademicClassesIds.value);
+  console.log("selectedAcademicClassesIds", selectedAcademicClassesIds.value);
 }
 const assignAcademicClass = async () => {
   // get just new academic classes
@@ -308,8 +309,6 @@ const assignAcademicClass = async () => {
     (id) => !selectedAcademicClassesIds.value.includes(id)
   );
 
-  console.log("newClassIds", newClassIds);
-  console.log("removedClassIds", removedClassIds);
   // adding new classes
   if (newClassIds.length > 0) {
     await academicClassesStore.assignAcademicClassesForTeacher(
@@ -327,6 +326,7 @@ const assignAcademicClass = async () => {
   }
   selectedAcademicClassesIds.value = [];
   prevAcademicClassesIds.value = [];
+  console.log(selectedTeacher.value);
   showModal.value = false;
 };
 // Getters

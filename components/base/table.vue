@@ -90,9 +90,11 @@ const columnVisibility = ref({
 <template>
   <div class="flex flex-col flex-1 w-full">
     <!-- {{ table?.tableApi?.getAllColumns()[1].columnDef.header }} -->
-    <div class="flex justify-start px-4 py-3.5">
-      <UDropdownMenu
-        :items="
+    <div class="flex items-center justify-between gap-2">
+      <!-- columns choice -->
+      <div class="flex justify-start self-end">
+        <UDropdownMenu
+          :items="
           table?.tableApi
             ?.getAllColumns()
             .filter((column) => column.getCanHide())
@@ -108,15 +110,20 @@ const columnVisibility = ref({
               }
             }))
         "
-        :content="{ align: 'end' }"
-      >
-        <UButton
-          label="الأعمدة"
-          color="neutral"
-          variant="outline"
-          trailing-icon="i-lucide-chevron-down"
-        />
-      </UDropdownMenu>
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            label="الأعمدة"
+            color="neutral"
+            variant="outline"
+            trailing-icon="i-lucide-chevron-down"
+          />
+        </UDropdownMenu>
+      </div>
+
+      <TransitionGroup :duration="300" mode="out-in" name="fade">
+        <slot name="actions"></slot>
+      </TransitionGroup>
     </div>
     <UTable
       ref="table"

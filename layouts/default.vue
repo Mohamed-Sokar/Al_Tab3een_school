@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 // import { students, teachers } from "~/constants";
-const supabase = useSupabaseClient();
+// const supabase = useSupabaseClient();
 useHead({
   title: "Al Tabeen School",
   htmlAttrs: {
@@ -28,7 +28,7 @@ useHead({
 });
 
 const colorMode = useColorMode();
-colorMode.preference = "system"; // Set default color mode
+// colorMode.preference = "system"; // Set default color mode
 
 const studentsStore = useStudentStore();
 const paymentsStore = usePaymentsStore();
@@ -41,18 +41,18 @@ const plansStore = usePlansStore();
 
 onMounted(async () => {
   // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
-  await studentsStore.fetchBehavioralIssues();
+  // await studentsStore.fetchBehavioralIssues();
   await studentsStore.fetchStudents();
-  await teachersStore.fetchTeachers();
   await levelsStore.fetchLevels();
   await plansStore.fetchPlans();
+  // await quranClassesStore.fetchClasses();
+  // await driversStore.fetchDrivers();
+  // await paymentsStore.fetchPayments();
   await academicClassesStore.fetchClasses();
-  await quranClassesStore.fetchClasses();
-  await driversStore.fetchDrivers();
+  await teachersStore.fetchTeachers();
   await teachersStore.fetchAbsenceReports();
   await teachersStore.fetchTeachersLoans();
   await teachersStore.fetchTeachersBehavioralIssues();
-  await paymentsStore.fetchPayments();
 });
 
 // import { useStudentStore } from "@/stores/students";

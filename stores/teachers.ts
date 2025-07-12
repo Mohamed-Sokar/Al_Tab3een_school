@@ -9,7 +9,7 @@ import { useAppToast } from "@/composables/useAppToast";
 
 export const useTeachersStore = defineStore("teachers", () => {
   const { toastSuccess, toastError } = useAppToast();
-
+  // const user = useSupabaseUser();
   const teachersData = ref<Teacher[]>([]);
   const loading = ref(false);
   const behavioralIssuesTeachersData = ref<BehavioralIssueTeacher[]>([]);
@@ -78,9 +78,8 @@ export const useTeachersStore = defineStore("teachers", () => {
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة المعلم",
-        description: "تحقق من الاتصال بالنترنت",
+        description: err instanceof Error ? err.message : String(err),
       });
-      throw Error(err instanceof Error ? err.message : String(err));
     } finally {
       loading.value = false;
     }
@@ -376,12 +375,12 @@ export const useTeachersStore = defineStore("teachers", () => {
 
       if (teachersData.value && !!targetedTeacher) {
         // ensure exsisting the loans array
-        if (!targetedTeacher.teachers_loans) {
-          targetedTeacher.teachers_loans = [];
+        if (!targetedTeacher.loans) {
+          targetedTeacher.loans = [];
         }
 
         // add new loan
-        targetedTeacher.teachers_loans.unshift({
+        targetedTeacher.loans.unshift({
           ...data[0],
         });
       }

@@ -188,8 +188,12 @@ const items: DropdownMenuItem[] = [
             </UDropdownMenu>
           </div>
           <div>
-            <h2 class="text-xl font-bold text-white">اسم المدير</h2>
-            <p class="text-sm text-blue-200 dark:text-gray-400">اسم المدرسة</p>
+            <h2 class="text-xl font-bold text-white">
+              {{ user?.user_metadata?.full_name || "المدير" }}
+            </h2>
+            <p class="text-sm text-blue-200 dark:text-gray-400">
+              {{ user?.user_metadata?.school_name || "المدرسة" }}
+            </p>
           </div>
         </div>
 

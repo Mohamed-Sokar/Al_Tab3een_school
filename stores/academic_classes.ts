@@ -148,7 +148,6 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
       (level) => level.title === levelTitle
     )?.studentsCount;
   };
-
   const assignAcademicClassesForTeacher = async (
     academicClassesIds: number[],
     teacherId: string
@@ -187,6 +186,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
           }
           targetedTeacher.academic_classes.push({
             class: {
+              id: targetedClass.id,
               title: targetedClass.title ?? "",
               group: targetedClass.group ?? "",
             },
@@ -240,7 +240,10 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
           if (!Array.isArray(targetedTeacher.academic_classes)) {
             targetedTeacher.academic_classes = [];
           }
-
+          targetedTeacher.academic_classes =
+            targetedTeacher.academic_classes.filter(
+              (c) => !academicClassesIds.includes(c.class?.id ?? 0)
+            );
           // targetedTeacher.academic_classes.push({
           //   class: {
           //     title: targetedClass.title ?? "",

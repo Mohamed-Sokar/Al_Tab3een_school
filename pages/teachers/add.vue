@@ -57,7 +57,7 @@ const state = reactive<Teacher>({
 });
 
 const createTeacher = async () => {
-  await teachersStore.addTeacher({ ...state, manager_id: null });
+  await teachersStore.addTeacher(state);
   navigateTo({ name: "teachers-view-teachers_table" });
 };
 

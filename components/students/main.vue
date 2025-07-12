@@ -595,17 +595,15 @@ const getMonthAchievedPages = (month: string, student?: Student): number => {
       ?.achieved_pages ?? 0
   );
 };
-const getMonthStatus = (month: string, student?: Student): string => {
-  return (
-    student?.student_monthly_achievements?.find((p) => p.month === month)
-      ?.status ?? "غير مكتمل"
-  );
-};
-
+// const getMonthStatus = (month: string, student?: Student): string => {
+//   return (
+//     student?.student_monthly_achievements?.find((p) => p.month === month)
+//       ?.status ?? "غير مكتمل"
+//   );
+// };
 const isPlanAchieved = (required: number, achieved: number): boolean => {
   return achieved >= required;
 };
-
 const getAchievementColor = (month: string, planPages: number) => {
   const achievedPages = getMonthAchievedPages(month, selectedStudent.value);
   return isPlanAchieved(planPages, achievedPages) ? "success" : "error";
@@ -976,23 +974,34 @@ const toDate = (date: string | Date): string => {
       </template>
     </UModal>
 
-    <!-- Start actions -->
-    <div class="w-full flex justify-between gap-2 mt-5 mb-5">
-      <TransitionGroup :duration="300" mode="out-in" name="fade">
-        <!-- input filter -->
-        <UInput
-          icon="i-lucide-search"
-          size="md"
-          color="secondary"
-          variant="outline"
-          v-model="globalFilter"
-          placeholder="البحث عن طالب..."
-          class="w-full md:col-span-4"
-        />
-        <!-- actions -->
+    <!-- start filters -->
+    <div class="mb-10">
+      <UInput
+        icon="i-lucide-search"
+        size="md"
+        color="secondary"
+        variant="outline"
+        v-model="globalFilter"
+        placeholder="البحث عن طالب..."
+        class="w-full md:col-span-4"
+      />
+    </div>
+
+    <BaseTable
+      :loading="studentsStore.loading"
+      :key="studentsStore.tableKey"
+      v-model:global-filter="globalFilter"
+      v-model:row-selection="rowSelection"
+      :ref="table"
+      :data="numberedStudents"
+      :columns="columns"
+      v-model:sorting="sorting"
+      :get-dropdown-actions="getDropdownActions"
+    >
+      <template #actions>
         <div
-          class="flex items-center justify-end gap-2"
           v-if="selectedStudents.length"
+          class="flex flex-wrap justify-end gap-2 items-center"
         >
           <!-- delete button -->
           <UButton
@@ -1089,28 +1098,9 @@ const toDate = (date: string | Date): string => {
             <span> PDF </span>
           </UButton>
         </div>
-        <!-- <div class="space-x-2 flex items-center">
-          <UBadge
-            :label="selectedStudents.length"
-            color="secondary"
-            class="font-bold"
-          />
-          <span> طلاب محددين </span>
-        </div> -->
-      </TransitionGroup>
-    </div>
-
-    <BaseTable
-      :loading="studentsStore.loading"
-      :key="studentsStore.tableKey"
-      v-model:global-filter="globalFilter"
-      v-model:row-selection="rowSelection"
-      :ref="table"
-      :data="numberedStudents"
-      :columns="columns"
-      v-model:sorting="sorting"
-      :get-dropdown-actions="getDropdownActions"
-    />
+      </template>
+      <!-- </div> -->
+    </BaseTable>
     <!-- <UTable
       :loading="studentsStore.loading"
       :key="studentsStore.tableKey"

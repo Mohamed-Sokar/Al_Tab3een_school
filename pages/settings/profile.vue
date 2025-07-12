@@ -1,3 +1,59 @@
+<script setup lang="ts">
+import { object, string, type InferType } from "yup";
+import type { FormSubmitEvent } from "@nuxt/ui";
+type Schema = InferType<typeof schema>;
+const { toastError, toastSuccess } = useAppToast();
+
+type Data = {
+  email?: string;
+  data: {
+    full_name: string | null;
+    school_name: string | null;
+  };
+};
+const user = useSupabaseUser();
+const supabase = useSupabaseClient();
+const pending = ref(false);
+
+const schema = object({
+  full_name: string()
+    .min(2, "الاسم يجب أن يكون على الأقل 2 أحرف")
+    .required("الاسم مطلوب"),
+  school_name: string()
+    .min(2, "الاسم يجب أن يكون على الأقل 2 أحرف")
+    .required("الاسم مطلوب"),
+});
+const state = reactive({
+  full_name: user.value?.user_metadata?.full_name || "",
+  school_name: user.value?.user_metadata?.school_name || "",
+});
+
+const saveProfile = async (event: FormSubmitEvent<Schema>) => {
+  pending.value = true;
+  try {
+    const data: Data = {
+      data: {
+        full_name: state.full_name,
+        school_name: state.school_name,
+      },
+    };
+    const { error } = await supabase.auth.updateUser(data);
+    if (error) throw error;
+
+    toastSuccess({
+      title: "تم تغيير الاسم بنجاح",
+    });
+  } catch (error) {
+    toastError({
+      title: "خطأ في تغيير الاسم",
+      description: error instanceof Error ? error.message : String(error),
+    });
+  } finally {
+    pending.value = false;
+  }
+};
+</script>
+
 <template>
   <div>
     <h2 class="mb-4 font-bold">تغيير المعلومات الشخصية</h2>
@@ -8,11 +64,18 @@
         class="space-y-4"
         @submit="saveProfile"
       >
-        <UFormField label="الاسم الرباعي" name="name">
+        <UFormField label="الاسم الرباعي" name="full_name">
           <UInput
-            v-model="state.name"
+            v-model="state.full_name"
             class="w-full"
             placeholder="الاسم الرباعي"
+          />
+        </UFormField>
+        <UFormField label="اسم المدرسة" name="school_name">
+          <UInput
+            v-model="state.school_name"
+            class="w-full"
+            placeholder="اسم المدرسة"
           />
         </UFormField>
 
@@ -23,66 +86,5 @@
     </UCard>
   </div>
 </template>
-
-<script setup lang="ts">
-import { object, string, type InferType } from "yup";
-import type { FormSubmitEvent } from "@nuxt/ui";
-type Schema = InferType<typeof schema>;
-
-type Data = {
-  email?: string;
-  data: {
-    full_name: string | null;
-  };
-};
-
-const user = useSupabaseUser();
-// const supabase = useSupabaseClient();
-
-const schema = object({
-  name: string()
-    .min(2, "String must contain at least 2 charachter")
-    .required("Required"),
-});
-const state = reactive({
-  name: user.value?.user_metadata?.full_name || "",
-});
-// email schema and state
-
-const pending = ref(false);
-// const passwordPending = ref(false);
-
-// const { toastSuccess, toastError } = useAppToast();
-
-const saveProfile = async (event: FormSubmitEvent<Schema>) => {
-  console.log("Save Profile");
-  // pending.value = true;
-  // try {
-  //   const data: Data = {
-  //     data: {
-  //       full_name: state.name,
-  //     },
-  //   };
-  //   // If the email hasn't changed, we don't need to update it
-  //   if (user.value?.email !== state.email) {
-  //     data.email = state.email;
-  //   }
-  //   console.log(data);
-  //   const { error } = await supabase.auth.updateUser(data);
-  //   if (error) throw error;
-  //   toastSuccess({
-  //     title: "Success",
-  //     description: "The form has been submitted.",
-  //   });
-  // } catch (error) {
-  //   toastError({
-  //     title: "Error",
-  //     description: error.message,
-  //   });
-  // } finally {
-  //   pending.value = false;
-  // }
-};
-</script>
 
 <style scoped></style>
