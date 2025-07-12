@@ -4,6 +4,7 @@ import { useStudentStore } from "@/stores/students";
 
 export const useAcademicClassesStore = defineStore("academic_classes", () => {
   const studentsStore = useStudentStore();
+  const teachersStore = useTeachersStore();
   // helper composables
   const { toastError, toastSuccess } = useAppToast();
   // Data
@@ -148,6 +149,115 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
     )?.studentsCount;
   };
 
+  const assignAcademicClassesForTeacher = async (
+    academicClassesIds: number[],
+    teacherId: string
+  ) => {
+    try {
+      loading.value = true;
+
+      const { data } = await api.post(
+        "academic_classes/assign-academic-class",
+        {
+          academicClassesIds,
+          teacherId,
+        }
+      );
+      console.log(data);
+      toastSuccess({ title: "تم تعيين الصفوف الدراسية للمعلم بنجاح" });
+
+      // تحديث البيانات محليًا إذا لزم الأمر
+      const targetedTeacher = teachersStore.getSpesificTeacher(teacherId);
+
+      for (const classId of academicClassesIds) {
+        const classIndex = getSpecificClassIndex(classId);
+        if (classIndex === -1) {
+          console.error(`Class with ID ${classId} not found.`);
+          continue;
+        }
+        const targetedClass = getSpecificClass(classId);
+        if (!targetedClass) {
+          console.error(`Class with ID ${classId} not found.`);
+          continue;
+        }
+        // Add the class to the teacher's academic classes
+        if (targetedTeacher) {
+          if (!Array.isArray(targetedTeacher.academic_classes)) {
+            targetedTeacher.academic_classes = [];
+          }
+          targetedTeacher.academic_classes.push({
+            class: {
+              title: targetedClass.title ?? "",
+              group: targetedClass.group ?? "",
+            },
+          });
+        }
+      }
+    } catch (error) {
+      toastError({
+        title: "فشل في تعيين الصفوف الدراسية للمعلم",
+        // description: error instanceof Error ? error.message : String(error),
+        description: "تم تعيين هذا الصف مسبقا",
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const removeAcademicClassesFromTeacher = async (
+    academicClassesIds: number[],
+    teacherId: string
+  ) => {
+    try {
+      loading.value = true;
+
+      const { data } = await api.post(
+        "academic_classes/unassign-academic-class",
+        {
+          academicClassesIds,
+          teacherId,
+        }
+      );
+
+      console.log(data);
+
+      toastSuccess({ title: "تم إلغاء تعيين الصفوف الدراسية للمعلم بنجاح" });
+      // تحديث البيانات محليًا إذا لزم الأمر
+      const targetedTeacher = teachersStore.getSpesificTeacher(teacherId);
+
+      for (const classId of academicClassesIds) {
+        const classIndex = getSpecificClassIndex(classId);
+        if (classIndex === -1) {
+          console.error(`Class with ID ${classId} not found.`);
+          continue;
+        }
+        const targetedClass = getSpecificClass(classId);
+        if (!targetedClass) {
+          console.error(`Class with ID ${classId} not found.`);
+          continue;
+        }
+        // remove the class from the teacher's academic classes
+        if (targetedTeacher) {
+          if (!Array.isArray(targetedTeacher.academic_classes)) {
+            targetedTeacher.academic_classes = [];
+          }
+
+          // targetedTeacher.academic_classes.push({
+          //   class: {
+          //     title: targetedClass.title ?? "",
+          //     group: targetedClass.group ?? "",
+          //   },
+          // });
+        }
+      }
+    } catch (error) {
+      toastError({
+        title: "فشل في تعيين الصفوف الدراسية للمعلم",
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
   const updateAcademicClassForStudents = async (
     studentIds: string[],
     classId: number
@@ -165,11 +275,19 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
       toastSuccess({ title: "تم نقل الطلاب للصف الدراسي الجديد بنجاح" });
 
       // تحديث البيانات محليًا إذا لزم الأمر
-      studentsStore.studentsData = studentsStore.studentsData.map((student) =>
-        studentIds.includes(student.id || "")
-          ? { ...student, academic_class_id: classId }
-          : student
-      );
+      // studentsStore.studentsData.forEach((student) => {
+      //   if (studentIds.includes(student.id || "")) {
+      //     student.academic_class_id = classId;
+      //   }
+      // });
+
+      studentsStore.studentsData = studentsStore.studentsData
+        .map((student) =>
+          studentIds.includes(student.id || "")
+            ? { ...student, academic_class_id: classId }
+            : student
+        )
+        .sort((a, b) => (a.first_name || "").localeCompare(b.first_name || ""));
     } catch (error) {
       toastError({ title: "فشل في نقل الطلاب" });
     } finally {
@@ -194,5 +312,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
     classStudentsCount,
 
     updateAcademicClassForStudents,
+    assignAcademicClassesForTeacher,
+    removeAcademicClassesFromTeacher,
   };
 });

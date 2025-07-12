@@ -3,11 +3,18 @@ import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { Teacher } from "~/types";
 import { useTeachersStore } from "@/stores/teachers";
 import type { Column } from "@tanstack/vue-table";
+import { array, number, object } from "yup";
 
 const teachersStore = useTeachersStore();
+const academicClassesStore = useAcademicClassesStore();
 const { getArabicDayName, getDate } = useDateUtils();
 
-type Flag = "behavioral_issues" | "loans" | "absence" | "academic_classes";
+type Flag =
+  | "behavioral_issues"
+  | "loans"
+  | "absence"
+  | "academic_classes"
+  | "assign_academic_class";
 
 const globalFilter = ref("");
 const sorting = ref([
@@ -17,21 +24,21 @@ const sorting = ref([
   },
 ]);
 const rowSelection = ref({});
-
 const tableKey = ref(Math.random());
 const UBadge = resolveComponent("UBadge");
 const UButton = resolveComponent("UButton");
-const UDropdownMenu = resolveComponent("UDropdownMenu");
+// const UDropdownMenu = resolveComponent("UDropdownMenu");
 const selectedTeacher = ref<Teacher>();
 const selectedArrayFlag = ref<Flag>();
 const showModal = ref(false);
+const selectedAcademicClassesIds = ref<number[]>([]);
+const prevAcademicClassesIds = ref<number[]>([]);
 const table = ref();
 
-function showIssuesModal(teacher: Teacher, flag: Flag) {
-  selectedArrayFlag.value = flag;
-  selectedTeacher.value = teacher;
-  showModal.value = true;
-}
+const schema = object({
+  selectedAcademicClassesIds: array().required("الصف مطلوب"),
+});
+
 const columns: TableColumn<Teacher>[] = [
   {
     accessorKey: "rowNumber",
@@ -213,65 +220,26 @@ const columns: TableColumn<Teacher>[] = [
     id: "action",
   },
 ];
-// function getHeader(column: Column<Teacher>, label: string) {
-//   const isSorted = column.getIsSorted();
-
-//   return h(
-//     UDropdownMenu,
-//     {
-//       content: {
-//         align: "start",
-//       },
-//       "aria-label": "Actions dropdown",
-//       items: [
-//         {
-//           label: "Asc",
-//           type: "checkbox",
-//           icon: "i-lucide-arrow-up-narrow-wide",
-//           checked: isSorted === "asc",
-//           onSelect: () => {
-//             if (isSorted === "asc") {
-//               column.clearSorting();
-//             } else {
-//               column.toggleSorting(false);
-//             }
-//           },
-//         },
-//         {
-//           label: "Desc",
-//           icon: "i-lucide-arrow-down-wide-narrow",
-//           type: "checkbox",
-//           checked: isSorted === "desc",
-//           onSelect: () => {
-//             if (isSorted === "desc") {
-//               column.clearSorting();
-//             } else {
-//               column.toggleSorting(true);
-//             }
-//           },
-//         },
-//       ],
-//     },
-//     () =>
-//       h(UButton, {
-//         color: "neutral",
-//         variant: "ghost",
-//         label,
-//         icon: isSorted
-//           ? isSorted === "asc"
-//             ? "i-lucide-arrow-up-narrow-wide"
-//             : "i-lucide-arrow-down-wide-narrow"
-//           : "i-lucide-arrow-up-down",
-//         class: "-mx-2.5 data-[state=open]:bg-elevated",
-//         "aria-label": `Sort by ${
-//           isSorted === "asc" ? "descending" : "ascending"
-//         }`,
-//       })
-//   );
-// }
 function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
   return [
     [
+      {
+        label: "إضافة صف دراسي",
+        color: "info",
+        icon: "i-heroicons-presentation-chart-bar",
+        onSelect: () => {
+          showIssuesModal(teacher, "assign_academic_class");
+          // navigateTo(`/teachers/${teacher.id}/add_absence_report`);
+        },
+      },
+      {
+        label: "إضافة سلفة",
+        color: "info",
+        icon: "i-heroicons-banknotes",
+        onSelect: () => {
+          navigateTo(`/teachers/${teacher.id}/add_loan`);
+        },
+      },
       {
         label: "إضافة تقرير غياب",
         color: "error",
@@ -286,14 +254,6 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
         icon: "i-heroicons-exclamation-triangle",
         onSelect: () => {
           navigateTo(`/teachers/${teacher.id}/add_behavioral_issue`);
-        },
-      },
-      {
-        label: "إضافة سلفة",
-        color: "info",
-        icon: "i-heroicons-banknotes",
-        onSelect: () => {
-          navigateTo(`/teachers/${teacher.id}/add_loan`);
         },
       },
     ],
@@ -324,6 +284,52 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
     ],
   ];
 }
+// Actions
+function showIssuesModal(teacher: Teacher, flag: Flag) {
+  selectedArrayFlag.value = flag;
+  selectedTeacher.value = teacher;
+  showModal.value = true;
+
+  // assign to select the prev academic classes
+  selectedAcademicClassesIds.value =
+    selectedTeacher.value?.academic_classes
+      ?.map((c) => c?.class?.id)
+      .filter((id): id is number => typeof id === "number") || [];
+
+  // buffer perv classes id's
+  prevAcademicClassesIds.value = [...selectedAcademicClassesIds.value];
+}
+const assignAcademicClass = async () => {
+  // get just new academic classes
+  const newClassIds = selectedAcademicClassesIds.value.filter(
+    (id) => !prevAcademicClassesIds.value.includes(id)
+  );
+  const removedClassIds = prevAcademicClassesIds.value.filter(
+    (id) => !selectedAcademicClassesIds.value.includes(id)
+  );
+
+  console.log("newClassIds", newClassIds);
+  console.log("removedClassIds", removedClassIds);
+  // adding new classes
+  if (newClassIds.length > 0) {
+    await academicClassesStore.assignAcademicClassesForTeacher(
+      newClassIds,
+      selectedTeacher.value?.id || ""
+    );
+  }
+
+  // delete classes which unselected
+  if (removedClassIds.length > 0) {
+    await academicClassesStore.removeAcademicClassesFromTeacher(
+      removedClassIds,
+      selectedTeacher.value?.id || ""
+    );
+  }
+  selectedAcademicClassesIds.value = [];
+  prevAcademicClassesIds.value = [];
+  showModal.value = false;
+};
+// Getters
 const numberedTeachers = computed(() => {
   return teachersStore.sortedTeachers.map((teacher, index) => ({
     ...teacher,
@@ -495,6 +501,46 @@ const selectedStudentsIds = computed(() =>
           </div>
 
           <p v-else>لا يوجد أيام غياب.</p>
+        </div>
+
+        <div v-if="selectedArrayFlag === 'assign_academic_class'">
+          <UForm
+            :schema="schema"
+            :state="{ selectedAcademicClassesIds }"
+            class="space-y-4"
+            @submit="assignAcademicClass"
+          >
+            <UFormField label="اختر الصف الدراسي" required name="classId">
+              <USelect
+                class="w-full"
+                multiple
+                v-model="selectedAcademicClassesIds"
+                :items="
+                  academicClassesStore.classesData.map((c) => ({
+                    label: `${c.title} - شعبة ${c.group}`,
+                    value: c.id,
+                  }))
+                "
+                placeholder="اختر الصف الدراسي"
+              />
+            </UFormField>
+            <div class="flex gap-3 items-center">
+              <UButton
+                type="submit"
+                label="نقل"
+                color="secondary"
+                :loading="academicClassesStore.loading"
+                class="w-30 flex justify-center mt-5 hover:cursor-pointer font-bold"
+              />
+              <UButton
+                label="إلغاء"
+                color="neutral"
+                variant="soft"
+                class="w-30 flex justify-center mt-5 hover:cursor-pointer"
+                @click="showModal = false"
+              />
+            </div>
+          </UForm>
         </div>
       </template>
     </UModal>

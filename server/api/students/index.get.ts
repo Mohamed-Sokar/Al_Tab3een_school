@@ -14,9 +14,9 @@ export default defineEventHandler(async (event) => {
       driver:drivers(name, car_type, car_color, phone_no),
       plan:plans(year,semester,stage,total_pages, months_plans(id,month, pages, plan_id)),
       quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id,month,achieved_pages,status)`
-    )
-    // .eq("id", "0630f76b-c80f-48f0-b3b2-55392f60e2e4");
-    .order("full_name", { ascending: true });
+    );
+  // .eq("id", "0630f76b-c80f-48f0-b3b2-55392f60e2e4");
+  // .order("first_name", { ascending: false });
   if (error) {
     throw createError({ statusCode: 500, message: error.message });
   }

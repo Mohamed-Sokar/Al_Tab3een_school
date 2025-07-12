@@ -329,11 +329,13 @@ export const usePlansStore = defineStore("plans", () => {
       toastSuccess({ title: "تم تعيين الخطة للطلاب بنجاح" });
 
       // update studentsData locally
-      studentsStore.studentsData = studentsStore.studentsData.map((student) =>
-        studentIds.includes(student.id || "")
-          ? { ...student, plan_id: planId }
-          : student
-      );
+      studentsStore.studentsData = studentsStore.studentsData
+        .map((student) =>
+          studentIds.includes(student.id || "")
+            ? { ...student, plan_id: planId }
+            : student
+        )
+        .sort((a, b) => (a.first_name || "").localeCompare(b.first_name || ""));
     } catch (error) {
       toastError({ title: "فشل تعيين الخطة", description: String(error) });
     } finally {

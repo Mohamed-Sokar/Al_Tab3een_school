@@ -159,11 +159,13 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
       toastSuccess({ title: "تم نقل الطلاب للصف القرآني الجديد بنجاح" });
 
       // تحديث البيانات محليًا إذا لزم الأمر
-      studentsStore.studentsData = studentsStore.studentsData.map((student) =>
-        studentIds.includes(student.id || "")
-          ? { ...student, academic_class_id: classId }
-          : student
-      );
+      studentsStore.studentsData = studentsStore.studentsData
+        .map((student) =>
+          studentIds.includes(student.id || "")
+            ? { ...student, academic_class_id: classId }
+            : student
+        )
+        .sort((a, b) => (a.first_name || "").localeCompare(b.first_name || ""));
     } catch (error) {
       toastError({ title: "فشل في نقل الطلاب" });
     } finally {

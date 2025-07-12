@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
     `*, behavioral_issues:teachers_behavioral_issues(id, description,created_at),
       loans:teachers_loans(id,amount,created_at),
       absence:teachers_absence(id, date, reason, excuse_status),
-      academic_classes:teachers_academic_classes(class:academic_classes(title, group))`
+      academic_classes:teachers_academic_classes(class:academic_classes(id,title, group))`
   );
   // .order("full_name", { ascending: true });
   if (error) {

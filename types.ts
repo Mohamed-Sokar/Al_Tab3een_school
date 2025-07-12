@@ -29,6 +29,8 @@ interface Student {
   behavioral_issues?: Array<BehavioralIssue> | undefined;
   plan?: Plan | undefined;
   plan_id?: number | undefined;
+  academic_class_id?: number | undefined;
+  quran_class_id?: number | undefined;
   quran_achievement_reports?: StudentMonthlyAchievements[] | undefined;
 }
 
@@ -81,13 +83,13 @@ interface Payment {
 
 interface Class {
   id?: number | undefined;
-  title: string | undefined;
-  group: string | undefined;
+  title?: string | undefined;
+  group?: string | undefined;
   floor?: string | undefined;
   wing?: string | undefined;
   maximum_capacity?: number | undefined;
   studentsCount?: number | undefined;
-  class?: { title: string; group: string };
+  class?: { id?: number; title: string; group: string };
 }
 
 interface Driver {

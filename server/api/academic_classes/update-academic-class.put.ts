@@ -1,6 +1,5 @@
 import { defineEventHandler, readBody, createError } from "h3";
 import { serverSupabaseClient } from "#supabase/server";
-import { number } from "zod/v4";
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event);

@@ -162,11 +162,13 @@ export const useDriversStore = defineStore("drivers", () => {
       toastSuccess({ title: "تم تعيين سائق للطلاب بنجاح" });
 
       // تحديث البيانات محليًا إذا لزم الأمر
-      studentsStore.studentsData = studentsStore.studentsData.map((student) =>
-        studentIds.includes(student.id || "")
-          ? { ...student, driver_id: driverId }
-          : student
-      );
+      studentsStore.studentsData = studentsStore.studentsData
+        .map((student) =>
+          studentIds.includes(student.id || "")
+            ? { ...student, driver_id: driverId }
+            : student
+        )
+        .sort((a, b) => (a.first_name || "").localeCompare(b.first_name || ""));
     } catch (error) {
       toastError({ title: "فشل في تعيين السائق" });
     } finally {

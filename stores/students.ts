@@ -1,8 +1,7 @@
 import type { Student, BehavioralIssue, AchievmentReport } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
-import { students } from "~/constants";
-import { first } from "lodash";
+// import { students } from "~/constants";
 
 export const useStudentStore = defineStore("students", () => {
   const plansStore = usePlansStore();
@@ -14,8 +13,9 @@ export const useStudentStore = defineStore("students", () => {
 
   // Getters
   const sortedStudents = computed(() => {
-    return [...(studentsData.value ?? [])].sort((a, b) =>
-      (a.full_name ?? "").localeCompare(b.full_name ?? "")
+    // return studentsData.value;
+    return studentsData.value.sort((a, b) =>
+      (b.first_name ?? "").localeCompare(a.first_name ?? "")
     );
   });
   const sortedIssues = computed(() => {
@@ -74,7 +74,7 @@ export const useStudentStore = defineStore("students", () => {
       const { data } = await api.put(`students/${studentId}`, cleaned);
 
       toastSuccess({
-        title: `:تم تحديث بيانات الطالب ${data[0].full_name} بنجاح`,
+        title: `:تم تحديث بيانات الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
       });
       // update student locally
       const studentIndex = getSpesificStudentIndex(studentId);
@@ -412,7 +412,6 @@ export const useStudentStore = defineStore("students", () => {
       (issue) => issue.id !== undefined && +issue.id === +issueId
     );
   };
-
   const addQuranAchievmentReport = async (
     generalPlanId: number,
     newReport: AchievmentReport
@@ -511,7 +510,11 @@ export const useStudentStore = defineStore("students", () => {
   function removeInvalidFields(student: Student): Partial<Student> {
     const allowedFields = [
       "id",
-      "full_name",
+      // "full_name",
+      "first_name",
+      "second_name",
+      "third_name",
+      "last_name",
       "identity_number",
       "father_identity_number",
       "phone_number",
