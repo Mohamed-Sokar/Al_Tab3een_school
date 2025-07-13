@@ -544,11 +544,12 @@ const selectedStudentsIds = computed(() =>
         </div>
       </template>
     </UModal>
+
     <!-- Start Filters -->
-    <div class="w-full grid md:grid-cols-6 gap-3 mt-5">
+    <div class="w-full mb-10">
       <UInput
         icon="i-lucide-search"
-        size="lg"
+        size="md"
         color="secondary"
         variant="outline"
         v-model="globalFilter"
@@ -557,33 +558,6 @@ const selectedStudentsIds = computed(() =>
       />
     </div>
     <!-- End Filters -->
-
-    <!-- start Export -->
-    <div class="flex items-center justify-end gap-2 mt-8 mb-2">
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="secondary"
-        size="sm"
-        class="p-2 font-bold text-blue-700"
-      >
-        <span>تصدير</span>
-        <span>({{ numberedTeachers.length }})</span>
-        <span> PDF </span>
-      </UButton>
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="primary"
-        size="sm"
-        class="p-2 font-bold text-green-700"
-      >
-        <span>تصدير</span>
-        <span>({{ numberedTeachers.length }})</span>
-        <span> Excel </span>
-      </UButton>
-    </div>
-    <!-- end Export -->
 
     <BaseTable
       :loading="teachersStore.loading"
@@ -595,7 +569,37 @@ const selectedStudentsIds = computed(() =>
       :columns="columns"
       v-model:sorting="sorting"
       :get-dropdown-actions="getDropdownActions"
-    />
+    >
+      <template #actions>
+        <div
+          v-if="selectedTeachers.length"
+          class="flex flex-wrap justify-end gap-2 items-center"
+        >
+          <UButton
+            icon="heroicons-document-chart-bar-solid"
+            variant="outline"
+            color="secondary"
+            size="sm"
+            class="p-2 font-bold text-blue-700"
+          >
+            <span>تصدير</span>
+            <span>({{ numberedTeachers.length }})</span>
+            <span> PDF </span>
+          </UButton>
+          <UButton
+            icon="heroicons-document-chart-bar-solid"
+            variant="outline"
+            color="primary"
+            size="sm"
+            class="p-2 font-bold text-green-700"
+          >
+            <span>تصدير</span>
+            <span>({{ numberedTeachers.length }})</span>
+            <span> Excel </span>
+          </UButton>
+        </div>
+      </template>
+    </BaseTable>
     <!-- <UTable
       :loading="teachersStore.loading"
       :key="tableKey"

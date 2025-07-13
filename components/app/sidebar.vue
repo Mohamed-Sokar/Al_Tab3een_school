@@ -8,7 +8,7 @@ const isLargeScreen = ref(false);
 const loading = ref(false);
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
-
+const { url } = useAvatarUrl();
 function updateScreen() {
   isLargeScreen.value = window.innerWidth >= 1024;
 }
@@ -188,11 +188,13 @@ const items: DropdownMenuItem[] = [
             </UDropdownMenu>
           </div>
           <div>
-            <h2 class="text-xl font-bold text-white">
-              {{ user?.user_metadata?.full_name || "المدير" }}
+            <h2 class="text-md font-bold text-white">
+              {{ user?.user_metadata?.full_name || "لم يتم تعيين اسم للمدير" }}
             </h2>
             <p class="text-sm text-blue-200 dark:text-gray-400">
-              {{ user?.user_metadata?.school_name || "المدرسة" }}
+              {{
+                user?.user_metadata?.school_name || "لم يتم تعيين اسم للمدرسة"
+              }}
             </p>
           </div>
         </div>

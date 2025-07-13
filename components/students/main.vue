@@ -1072,7 +1072,6 @@ const toDate = (date: string | Date): string => {
             <span>خطة</span>
             <span>({{ selectedStudents.length }})</span>
           </UButton>
-
           <!-- Excel export button -->
           <UButton
             icon="heroicons-document-chart-bar-solid"

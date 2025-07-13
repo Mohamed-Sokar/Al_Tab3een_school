@@ -66,7 +66,7 @@ const saveEmail = async () => {
   } catch (error) {
     toastError({
       title: "حدث خطأ في تغيير الحساب",
-      description: error instanceof Error ? error.message : String(error),
+      description: (error as Error).message,
     });
   } finally {
     pending.value = false;

@@ -15,7 +15,6 @@
       >
         <!-- there is a bug with using UInput -->
         <!-- <UInput type="file" ref="fileInput" /> -->
-
         <input
           type="file"
           ref="fileInput"
@@ -39,65 +38,69 @@
 <script setup>
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
-// We need to get the actual avatar URL
-const { toastSuccess, toastError } = useAppToast();
-
 const uploading = ref(false);
 const fileInput = ref(); // Reference to an input with ref="fileInput" attribute
 
-//const { url } = useAvatarUrl();
-// const avatarUrl = computed(() => url ?? "/images/avatar.png");
-const avatarUrl = computed(() => "/images/avatar.avif");
+const { toastSuccess, toastError } = useAppToast();
+
+const { url } = useAvatarUrl();
+const avatarUrl = computed(() => url.value ?? "/images/avatar.avif");
 
 const saveAvatar = async () => {
   // 1. Get the uploaded file
   const file = fileInput.value.files[0]; // Access the file from the input element
 
-  //    a) If no file uploaded, show toast error
-  if (!file) {
-    toastError({ title: "Select a file to upload first" });
+  // a) If no file uploaded, show toast error
+  if (!file && !user.value) {
+    toastError({
+      title: "اختر صورة أولاً",
+      description: "يجب أن تختار صورة أولا قبل التسليم",
+    });
     return;
   }
 
   // 2. Generate the new filename
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${Math.random()}.${fileExt}`;
+  // const fileExt = file.name.split(".").pop();
+  // const fileName = `${Math.random()}.${fileExt}`;
+  const filePath = `${user.value.id}/${file.name}`;
 
   try {
     uploading.value = true;
-    // 1. Grab the current avatar URL
-    const currentAvatarUrl = user.value?.user_metadata?.avatar_url;
 
-    // 2. Upload the image to avatars bucket
+    // 1. Upload the image to avatars bucket
     const { data, error } = await supabase.storage
       .from("avatars")
-      .upload(fileName, file);
+      .upload(filePath, file, {
+        upsert: true,
+        cacheControl: "3600",
+        contentType: file.type,
+      });
     if (error) throw error;
 
-    // 3. Update the user metadata with the avatar URL
+    // 2. Update the user metadata with the avatar URL
     await supabase.auth.updateUser({
       data: {
         avatar_url: data.path, // Use the path returned from the upload
       },
     });
 
-    // 4. (OPTIONALLY) remove the old avatar file
-    if (currentAvatarUrl) {
-      const { error: deleteError } = await supabase.storage
-        .from("avatars")
-        .remove([currentAvatarUrl]);
-      if (deleteError) throw deleteError;
-    }
+    // 3. (OPTIONALLY) remove the old avatar file
+    // if (currentAvatarUrl) {
+    //   const { error: deleteError } = await supabase.storage
+    //     .from("avatars")
+    //     .remove([currentAvatarUrl]);
+    //   if (deleteError) throw deleteError;
+    // }
 
-    // 5. Reset the file input
+    // 4. Reset the file input
     fileInput.value.value = ""; // Clear the input field
 
     toastSuccess({
-      title: "Avatar uploaded",
+      title: "تم تحميل الصورة الشخصية بنجاح",
     });
   } catch (error) {
     toastError({
-      title: "Error uploading avatar",
+      title: "حدث خطأ في تحميل الصورة الشخصية",
       description: error.message,
     });
   } finally {
