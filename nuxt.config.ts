@@ -3,7 +3,12 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   app: {
     head: {
-      meta: [{ name: "google-site-verification", content: "0d0189358504d035" }],
+      meta: [
+        {
+          name: "google-site-verification",
+          content: "C-UKtSnT0hK7aUzO337wOFBNWVZoqi-DRR5ep1wSOQM",
+        },
+      ],
     },
   },
   modules: [
