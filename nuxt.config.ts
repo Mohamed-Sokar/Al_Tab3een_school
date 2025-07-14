@@ -2,13 +2,22 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   sitemap: { xsl: false },
+  routeRules: {
+    "/sitemap.xml": {
+      cors: true,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+    },
+  },
   app: {
     head: {
+      // google-site-verification=C-UKtSnT0hK7aUzO337wOFBNWVZoqi-DRR5ep1wSOQM
       // <meta name="google-site-verification" content="us9703idIc3jQXdDeC4boohCsP9hUNsfBVWcI__Uvt0" />
       meta: [
         {
           name: "google-site-verification",
-          content: "us9703idIc3jQXdDeC4boohCsP9hUNsfBVWcI__Uvt0",
+          content: "C-UKtSnT0hK7aUzO337wOFBNWVZoqi-DRR5ep1wSOQM",
         },
       ],
     },

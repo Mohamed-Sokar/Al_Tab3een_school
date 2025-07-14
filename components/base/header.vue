@@ -4,9 +4,9 @@
       class="flex flex-wrap gap-4 p-7 shadow-sm rounded-md bg-gradient-to-l from-blue-800 to-purple-500 dark:from-gray-900 dark:to-gray-800 items-center justify-between bg-blue-600 dark:bg-gray-800 text-white"
     >
       <div>
-        <h2 class="text-2xl font-bold">
+        <h1 class="text-2xl font-bold">
           {{ title }}
-        </h2>
+        </h1>
         <p class="text-sm text-blue-200 dark:text-gray-400">
           {{ description }}
         </p>
