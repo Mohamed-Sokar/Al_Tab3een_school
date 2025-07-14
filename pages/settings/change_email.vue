@@ -59,7 +59,9 @@ const saveEmail = async () => {
       {
         email: state.newEmail,
       },
-      { emailRedirectTo: `${redirectUrl}/auth/email-change-callback` }
+      {
+        emailRedirectTo: `https://altab3een-schoole.netlify.app/auth/email-change-callback`,
+      }
     );
     if (error) throw error;
 
