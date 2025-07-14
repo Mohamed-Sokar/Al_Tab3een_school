@@ -8,6 +8,7 @@ const paymentsStore = usePaymentsStore();
 
 const schema = object({
   type: string().required("نوع الدفعة مطلوب"),
+  invoice_number: string().required("رقم الوصل مطلوب"),
   description: string().required("وصف الدفعة مطلوب"),
   date: date().required("تاريخ الدفعة مطلوب"),
   amount: number().required("القيمة مطلوبة"),
@@ -16,22 +17,42 @@ const schema = object({
 const state = reactive<Payment>({
   type: undefined,
   description: undefined,
-  date: undefined,
+  date: new Date(),
   amount: undefined,
+  invoice_number: undefined,
 });
 
 const form = ref();
 
 const onSubmit = async () => {
-  console.log("submited");
-  // Convert date string to Date object before submitting
-  const payload = {
-    ...state,
-    date: state.date ? new Date(state.date) : undefined,
-  };
-  await paymentsStore.addPayment(payload);
+  await paymentsStore.addPayment(state);
   navigateTo({ name: "payments" });
 };
+
+const date_string = computed({
+  get() {
+    if (!state.date) return "";
+    if (typeof state.date === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.date)) {
+        return state.date;
+      }
+      // Try to parse and format
+      const d = new Date(state.date);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (state.date instanceof Date) {
+      return state.date.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    state.date = val;
+  },
+});
 </script>
 
 <template>
@@ -52,11 +73,19 @@ const onSubmit = async () => {
           class="w-full"
         />
       </UFormField>
+      <UFormField label="رقم الوصل" name="invoice_number">
+        <UInput
+          v-model="state.invoice_number"
+          placeholder="رقم الوصل"
+          label="رقم الوصل"
+          class="w-full"
+        />
+      </UFormField>
 
       <UFormField label="تاريخ الدفعة" name="date">
         <UInput
           type="date"
-          v-model="state.date"
+          v-model="date_string"
           placeholder="تاريخ الدفعة"
           label="تاريخ الدفعة"
           class="w-full"

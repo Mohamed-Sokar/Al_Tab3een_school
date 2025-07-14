@@ -29,6 +29,7 @@ const academicClassesStore = useAcademicClassesStore();
 const driversStore = useDriversStore();
 const plansStore = usePlansStore();
 
+const { exportToExcel } = useExportToExcel();
 const route = useRoute();
 const UButton = resolveComponent("UButton");
 // const UDropdownMenu = resolveComponent("UDropdownMenu");
@@ -498,6 +499,40 @@ const assignStudentsToPlan = async () => {
   rowSelection.value = {};
   selectedPlan.value = undefined;
 };
+const exportStudents = () => {
+  exportToExcel({
+    data: selectedStudents.value.map((s, i) => ({
+      الرقم: i + 1,
+      "الاسم الكامل":
+        s?.first_name +
+        " " +
+        s?.last_name +
+        " " +
+        s.third_name +
+        " " +
+        s.last_name,
+      // "الاسم الأول": s.first_name,
+      // "الاسم الثاني": s.second_name,
+      // "الاسم الثالث": s.third_name,
+      // "الاسم الأخير": s.last_name,
+      العنوان: s.address,
+      المسجد: s.masjed,
+      "اسم ولي الأمر": s.guardian_name,
+      "صلة قرابة ولي الأمر": s.guardian_name_kinship,
+      الهوية: s.identity_number,
+      "هوية الأب": s.father_identity_number,
+      الهاتف: s.phone_number,
+      "رقم الواتس": s.whatsapp_number,
+      "تاريخ الميلاد": s.birth_date,
+      "حالة الحفظ": s.memorization_status,
+      "عدد الأجزاء المحفوظة": s.memorized_juz,
+      "مقدار التسميع اليومي": s.daily_recitation,
+      "عدد المخالفات السلوكية": s.behavioral_issues?.length,
+    })),
+    fileName: "الطلاب",
+    sheetName: "الطلاب",
+  });
+};
 
 async function onSubmit() {
   if (selectedFlag.value === "move_academic_class") {
@@ -608,7 +643,6 @@ const getAchievementColor = (month: string, planPages: number) => {
   const achievedPages = getMonthAchievedPages(month, selectedStudent.value);
   return isPlanAchieved(planPages, achievedPages) ? "success" : "error";
 };
-
 watch(selectedPlan, () => {
   console.log(selectedPlan.value?.value);
 });
@@ -1079,23 +1113,23 @@ const toDate = (date: string | Date): string => {
             color="primary"
             size="xs"
             class="p-2 font-bold text-green-700 h-full"
+            @click="exportStudents"
           >
             <!-- <span>تصدير</span> -->
             <span>({{ selectedStudents.length }})</span>
             <span> Excel </span>
           </UButton>
           <!-- PDF export button -->
-          <UButton
+          <!-- <UButton
             icon="heroicons-document-chart-bar-solid"
             variant="outline"
             color="secondary"
             size="sm"
             class="p-2 font-bold text-blue-700 h-full"
           >
-            <!-- <span>تصدير</span> -->
             <span>({{ selectedStudents.length }})</span>
             <span> PDF </span>
-          </UButton>
+          </UButton> -->
         </div>
       </template>
       <!-- </div> -->

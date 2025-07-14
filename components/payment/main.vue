@@ -5,7 +5,8 @@ import { months } from "~/constants";
 import { usePaymentsStore } from "@/stores/paymnets";
 
 const paymentsStore = usePaymentsStore();
-const { getArabicDayName } = useDateUtils();
+const { exportToExcel } = useExportToExcel();
+const { getArabicDayName, getDate } = useDateUtils();
 
 const UBadge = resolveComponent("UBadge");
 // const table = useTemplateRef("table");
@@ -13,6 +14,7 @@ const globalFilter = ref("");
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
 const tableKey = ref(Math.random());
+const rowSelection = ref({});
 // const selectedDate = ref(new Date().toISOString().split("T")[0]);
 
 watch(selectedMonth, () => (tableKey.value = Math.random()));
@@ -85,7 +87,26 @@ function getDropdownActions(payment: Payment): DropdownMenuItem[] {
   ];
 }
 
+// Actions
+const exportReports = () => {
+  exportToExcel({
+    data: selectedReports.value.map((report, i) => ({
+      الرقم: i + 1,
+      "نوع الدفعة": report.type,
+      "رقم الوصل": report.invoice_number,
+      اليوم: getArabicDayName(report.date ?? ""),
+      التاريخ: getDate(report.date ?? ""),
+      القيمة: report.amount,
+      الوصف: report.description,
+    })),
+    fileName: "تقارير الغياب",
+    sheetName: "تقارير الغياب",
+  });
+};
+
+// Computed
 const filteredPayments = computed(() => {
+  if (selectedMonth.value === "كل الأشهر") return paymentsStore.sortedPayment;
   // tableKey.value = Math.random();
   return paymentsStore.sortedPayment.filter((payment) =>
     // payment.date === selectedDate.value &&
@@ -97,14 +118,15 @@ const filteredPayments = computed(() => {
     }
   );
 });
-
 const numberedPayments = computed(() =>
   filteredPayments.value.map((payment, index) => ({
     ...payment,
     rowNumber: index + 1,
   }))
 );
-
+const selectedReports = computed(() =>
+  Object.keys(rowSelection.value).map((index) => numberedPayments.value[+index])
+);
 const total = computed(() =>
   numberedPayments.value.reduce((sum: any, payment: Payment) => {
     if (payment.type === "وارد") {
@@ -119,7 +141,7 @@ const total = computed(() =>
 <template>
   <div>
     <!-- Start Filters -->
-    <div class="w-full grid md:grid-cols-6 gap-3 mt-5">
+    <div class="my-10 gap-2 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
       <UInput
         icon="i-lucide-search"
         size="lg"
@@ -127,7 +149,7 @@ const total = computed(() =>
         variant="outline"
         v-model="globalFilter"
         placeholder="البحث عن دفعة..."
-        class="w-full md:col-span-4"
+        class="md:col-span-2 lg:col-span-3"
       />
       <USelect
         v-model="selectedMonth"
@@ -136,32 +158,6 @@ const total = computed(() =>
         color="secondary"
         class="w-full"
       />
-    </div>
-
-    <!-- start Export -->
-    <div class="flex items-center justify-end gap-2 mt-8 mb-2">
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="secondary"
-        size="sm"
-        class="p-2 font-bold text-blue-700"
-      >
-        <span>تصدير</span>
-        <span>({{ paymentsStore.paymentsData?.length }})</span>
-        <span> PDF </span>
-      </UButton>
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="primary"
-        size="sm"
-        class="p-2 font-bold text-green-700"
-      >
-        <span>تصدير</span>
-        <span>({{ paymentsStore.paymentsData?.length }})</span>
-        <span> Excel </span>
-      </UButton>
     </div>
 
     <div class="flex items-center gap-4 mb-5">
@@ -189,29 +185,30 @@ const total = computed(() =>
       :loading="paymentsStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
+      v-model:row-selection="rowSelection"
       :data="numberedPayments"
       :columns="columns"
       :get-dropdown-actions="getDropdownActions"
-    />
-    <!-- <UTable
-      :loading="paymentsStore.loading"
-      :key="tableKey"
-      v-model:global-filter="globalFilter"
-      ref="table"
-      :data="numberedPayments"
-      :columns="columns"
     >
-      <template #action-cell="{ row }">
-        <UDropdownMenu :items="getDropdownActions(row.original)">
+      <template #actions>
+        <div
+          v-if="selectedReports.length"
+          class="flex flex-wrap justify-end gap-2 items-center"
+        >
           <UButton
-            icon="i-lucide-ellipsis-vertical"
-            color="neutral"
-            variant="soft"
-            aria-label="Actions"
-            class="p-2"
-          />
-        </UDropdownMenu>
+            icon="heroicons-document-chart-bar-solid"
+            variant="outline"
+            color="primary"
+            size="sm"
+            class="p-2 font-bold text-green-700"
+            @click="exportReports"
+          >
+            <span>تصدير</span>
+            <span>({{ selectedReports.length }})</span>
+            <span> Excel </span>
+          </UButton>
+        </div>
       </template>
-    </UTable> -->
+    </BaseTable>
   </div>
 </template>

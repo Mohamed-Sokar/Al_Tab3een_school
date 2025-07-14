@@ -11,12 +11,12 @@ const {
   // teachersUpsentReportsData,
   teachersLoansData,
 } = useTeachersStore();
+
 const paymentsStore = usePaymentsStore();
 const { levelsData } = useLevelsStore();
-
 const totalPayments = computed(() =>
   paymentsStore.totalPayments.reduce((sum: any, payment: Payment) => {
-    if (payment.type === "دخل") {
+    if (payment.type === "وارد") {
       return (sum += payment.amount);
     } else {
       return (sum -= payment.amount ?? 0);

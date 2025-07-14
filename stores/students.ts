@@ -1,3 +1,4 @@
+import { behavioralIssues } from "./../constants";
 import type { Student, BehavioralIssue, AchievmentReport } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
@@ -230,7 +231,7 @@ export const useStudentStore = defineStore("students", () => {
     loading.value = true;
     try {
       const { data } = await api.get("/students/behavioral-issues");
-      console.log(data);
+      console.log("behavioralIssues: ", data);
       // set behavioral Issues data to ref locally
       behavioralIssuesStudentData.value = data;
       toastSuccess({

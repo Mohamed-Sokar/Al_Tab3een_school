@@ -3,9 +3,10 @@ import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { BehavioralIssue } from "~/types";
 import { months } from "~/constants";
 import { useStudentStore } from "@/stores/students";
-const { getArabicDayName } = useDateUtils();
+const { getArabicDayName, getDate } = useDateUtils();
 
 const studentsStore = useStudentStore();
+const { exportToExcel } = useExportToExcel();
 
 const globalFilter = ref("");
 const rowSelection = ref({});
@@ -14,7 +15,6 @@ const rowSelection = ref({});
 //   console.log(selectedIssues.value);
 // });
 const table = ref();
-
 const columns: TableColumn<BehavioralIssue>[] = [
   {
     accessorKey: "الرقم",
@@ -92,9 +92,24 @@ function getDropdownActions(issue: BehavioralIssue): DropdownMenuItem[][] {
     ],
   ];
 }
-
 const currentMonthIndex = new Date().getMonth();
 const selectedMonth = ref(months[currentMonthIndex]);
+
+// actions
+const exportIssues = () => {
+  exportToExcel({
+    data: selectedIssues.value.map((issue, i) => ({
+      الرقم: i + 1,
+      الاسم: issue.student?.first_name + " " + issue.student?.last_name,
+      الصف: issue.student?.class,
+      اليوم: getArabicDayName(issue.created_at ?? ""),
+      التاريخ: getDate(issue.created_at ?? ""),
+      الوصف: issue.description,
+    })),
+    fileName: "المخالفات الإدارية",
+    sheetName: "المخالفات الإدارية",
+  });
+};
 
 const numberedIssues = computed(() =>
   studentsStore.sortedIssues.map((issue, index) => ({
@@ -110,52 +125,25 @@ const selectedIssues = computed(() =>
 <template>
   <div>
     <!-- Start Filters -->
-    <div class="w-full grid md:grid-cols-6 gap-3 mt-5">
+    <div class="mb-10">
       <UInput
         icon="i-lucide-search"
-        size="lg"
+        size="md"
         color="secondary"
         variant="outline"
         v-model="globalFilter"
         placeholder="البحث عن طالب..."
         class="w-full md:col-span-4"
       />
-      <USelect
+      <!-- <USelect
         v-model="selectedMonth"
         :items="months"
-        size="lg"
+        size="md"
         color="secondary"
         class="w-full"
-      />
+      /> -->
     </div>
     <!-- End Filters -->
-
-    <!-- start Export -->
-    <div class="flex items-center justify-end gap-2 mt-8 mb-2">
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="secondary"
-        size="sm"
-        class="p-2 font-bold text-blue-700"
-      >
-        <span>تصدير</span>
-        <span>({{ studentsStore.sortedIssues.length }})</span>
-        <span> PDF </span>
-      </UButton>
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="primary"
-        size="sm"
-        class="p-2 font-bold text-green-700"
-      >
-        <span>تصدير</span>
-        <span>({{ studentsStore.sortedIssues.length }})</span>
-        <span> Excel </span>
-      </UButton>
-    </div>
-    <!-- end Export -->
 
     <BaseTable
       :loading="studentsStore.loading"
@@ -166,7 +154,27 @@ const selectedIssues = computed(() =>
       :data="numberedIssues"
       :columns="columns"
       :get-dropdown-actions="getDropdownActions"
-    />
+    >
+      <template #actions>
+        <div
+          v-if="selectedIssues.length"
+          class="flex flex-wrap justify-end gap-2 items-center"
+        >
+          <UButton
+            icon="heroicons-document-chart-bar-solid"
+            variant="outline"
+            color="primary"
+            size="sm"
+            class="p-2 font-bold text-green-700"
+            @click="exportIssues"
+          >
+            <span>تصدير</span>
+            <span>({{ selectedIssues.length }})</span>
+            <span> Excel </span>
+          </UButton>
+        </div>
+      </template>
+    </BaseTable>
     <!-- <UTable
       :loading="studentsStore.loading"
       :key="studentsStore.tableKey"

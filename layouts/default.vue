@@ -19,12 +19,32 @@
 <script setup lang="ts">
 // import { students, teachers } from "~/constants";
 // const supabase = useSupabaseClient();
+
 useHead({
-  title: "Al Tabeen School",
+  titleTemplate: "%s - لوحة إدارة المدرسة",
   htmlAttrs: {
     dir: "rtl",
     lang: "ar",
   },
+  meta: [
+    {
+      name: "description",
+      content:
+        "مرحبًا بك في موقعنا، نوفر حلول إدارة المدارس من خلال نظام قوي وسهل الاستخدام.",
+    },
+    {
+      name: "keywords",
+      content:
+        "مدرسة، إدارة الطلاب، النظام المدرسي، التعليم، حضور الطلاب، خطط الحفظ",
+    },
+    {
+      name: "viewport",
+      content: "width=device-width, initial-scale=1",
+    },
+    {
+      charset: "utf-8",
+    },
+  ],
 });
 
 const colorMode = useColorMode();
@@ -42,13 +62,13 @@ const plansStore = usePlansStore();
 onMounted(async () => {
   // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
   // await studentsStore.fetchBehavioralIssues();
-  await studentsStore.fetchStudents();
+  // await studentsStore.fetchStudents();
   await levelsStore.fetchLevels();
   await plansStore.fetchPlans();
   // await quranClassesStore.fetchClasses();
   // await driversStore.fetchDrivers();
-  // await paymentsStore.fetchPayments();
-  await academicClassesStore.fetchClasses();
+  await paymentsStore.fetchPayments();
+  // await academicClassesStore.fetchClasses();
   await teachersStore.fetchTeachers();
   await teachersStore.fetchAbsenceReports();
   await teachersStore.fetchTeachersLoans();

@@ -36,7 +36,30 @@
 <script setup lang="ts">
 import overview from "~/components/home/overview.vue";
 import statistics from "~/components/home/statistics.vue";
+useHead({
+  title: "الرئيسية",
+  meta: [
+    {
+      name: "description",
+      content:
+        "مرحبًا بك في موقعنا، نوفر حلول إدارة المدارس من خلال نظام قوي وسهل الاستخدام.",
+    },
+    {
+      name: "keywords",
+      content:
+        "مدرسة، إدارة الطلاب، النظام المدرسي، التعليم، حضور الطلاب، خطط الحفظ",
+    },
+  ],
+});
 
+useSeoMeta({
+  title: "الرئيسية",
+  description: "نظام متكامل لإدارة المدرسة، الطلاب، المعلمين، الخطط والدفع.",
+  ogTitle: "الرئيسية - لوحة إدارة المدرسة",
+  ogDescription: "نظام متكامل لإدارة المدرسة",
+  ogImage: "/seo/index.png",
+  twitterCard: "summary_large_image",
+});
 const component = {
   overview,
   statistics,

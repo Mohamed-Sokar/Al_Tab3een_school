@@ -8,8 +8,11 @@ const { getArabicDayName } = useDateUtils();
 const globalFilter = ref("");
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
+const rowSelection = ref({});
 const selectedMonth = ref(months[currentMonthIndex]);
 const { getDate } = useDateUtils();
+const { exportToExcel } = useExportToExcel();
+
 const columns: TableColumn<BehavioralIssueTeacher>[] = [
   {
     accessorKey: "rowNumber",
@@ -49,7 +52,6 @@ const columns: TableColumn<BehavioralIssueTeacher>[] = [
     id: "action",
   },
 ];
-
 function getDropdownActions(issue: BehavioralIssueTeacher): DropdownMenuItem[] {
   return [
     [
@@ -75,6 +77,21 @@ function getDropdownActions(issue: BehavioralIssueTeacher): DropdownMenuItem[] {
   ];
 }
 
+// Actions
+const exportIssues = () => {
+  exportToExcel({
+    data: selectedIssues.value.map((issue, i) => ({
+      الرقم: i + 1,
+      الاسم: issue.teacher?.first_name + " " + issue.teacher?.last_name,
+      اليوم: getArabicDayName(issue.created_at ?? ""),
+      التاريخ: getDate(issue.created_at ?? ""),
+      الوصف: issue.description,
+    })),
+    fileName: "المخالفات الإدارية",
+    sheetName: "المخالفات الإدارية",
+  });
+};
+
 const filteredIssues = computed(() => {
   // tableKey.value = Math.random();
   return teachersStore.sortedIssues.filter(
@@ -90,15 +107,18 @@ const numberedIssues = computed(() =>
     rowNumber: index + 1,
   }))
 );
+const selectedIssues = computed(() =>
+  Object.keys(rowSelection.value).map((index) => numberedIssues.value[+index])
+);
 </script>
 
 <template>
   <div>
     <!-- Start Filters -->
-    <div class="w-full grid md:grid-cols-6 gap-3 mt-5">
+    <div class="w-full mb-10">
       <UInput
         icon="i-lucide-search"
-        size="lg"
+        size="md"
         color="secondary"
         variant="outline"
         v-model="globalFilter"
@@ -106,70 +126,44 @@ const numberedIssues = computed(() =>
         class="w-full md:col-span-4"
       />
 
-      <USelect
+      <!-- <USelect
         v-model="selectedMonth"
         :items="months"
         size="lg"
         color="secondary"
         class="w-full"
-      />
+      /> -->
     </div>
     <!-- End Filters -->
-
-    <!-- start Export -->
-    <div class="flex items-center justify-end gap-2 mt-8 mb-2">
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="secondary"
-        size="sm"
-        class="p-2 font-bold text-blue-700"
-      >
-        <span>تصدير</span>
-        <span>({{ numberedIssues.length }})</span>
-        <span> PDF </span>
-      </UButton>
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="primary"
-        size="sm"
-        class="p-2 font-bold text-green-700"
-      >
-        <span>تصدير</span>
-        <span>({{ numberedIssues.length }})</span>
-        <span> Excel </span>
-      </UButton>
-    </div>
-    <!-- end Export -->
 
     <BaseTable
       :loading="teachersStore.loading"
       :key="tableKey"
       v-model:global-filter="globalFilter"
+      v-model:row-selection="rowSelection"
       :data="numberedIssues"
       :columns="columns"
       :get-dropdown-actions="getDropdownActions"
-    />
-    <!-- <UTable
-      :loading="teachersStore.loading"
-      :key="tableKey"
-      v-model:global-filter="globalFilter"
-      ref="table"
-      :data="numberedIssues"
-      :columns="columns"
     >
-      <template #action-cell="{ row }">
-        <UDropdownMenu :items="getDropdownActions(row.original)">
+      <template #actions>
+        <div
+          v-if="selectedIssues.length"
+          class="flex flex-wrap justify-end gap-2 items-center"
+        >
           <UButton
-            icon="i-lucide-ellipsis-vertical"
-            color="neutral"
-            variant="soft"
-            aria-label="Actions"
-            class="p-2"
-          />
-        </UDropdownMenu>
+            icon="heroicons-document-chart-bar-solid"
+            variant="outline"
+            color="primary"
+            size="sm"
+            class="p-2 font-bold text-green-700"
+            @click="exportIssues"
+          >
+            <span>تصدير</span>
+            <span>({{ selectedIssues.length }})</span>
+            <span> Excel </span>
+          </UButton>
+        </div>
       </template>
-    </UTable> -->
+    </BaseTable>
   </div>
 </template>

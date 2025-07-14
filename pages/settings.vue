@@ -30,6 +30,31 @@
 </template>
 
 <script setup lang="ts">
+useHead({
+  title: "الإعدادات",
+  meta: [
+    {
+      name: "description",
+      content:
+        "إعدادات الموقع، تغيير الوضع، تغيير الصورة الشخصية، تغيير الإيميل، تغيير كلمة السر",
+    },
+    {
+      name: "keywords",
+      content:
+        "المدرسة، النظام، الإعدادات، الصورة الشخصية، صورة شخصية، إيميل، كلمة سر، تغيير كلمة سر، ",
+    },
+  ],
+});
+
+useSeoMeta({
+  title: "الإعدادات",
+  description: "تعديل إعدادات النظام والبيانات العامة",
+  ogTitle: "إعدادات النظام",
+  ogDescription: "تحكم كامل بإعدادات لوحة المدرسة",
+  ogImage: "/seo/settings.png",
+  twitterCard: "summary",
+});
+
 const route = useRoute();
 watch(route, () => {
   if (route.path === "/settings") {

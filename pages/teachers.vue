@@ -4,6 +4,31 @@
   </BaseFadeTransition>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+useHead({
+  title: "المعلمون",
+  meta: [
+    {
+      name: "description",
+      content:
+        "شاهد معلومات المعلمين، وقم بإدارتهم بسهولة من خلال لوحة التحكم.",
+    },
+    {
+      name: "keywords",
+      content: "إدارة المعلمين، معلمين، معلومات، المدرسة، النظام",
+    },
+  ],
+});
+
+useSeoMeta({
+  title: "المعلمون",
+  description:
+    "إدارة المعلمين والمراحل الدراسية المرتبطين بها و المخالفات الإدارية والسلف والحضور والغياب",
+  ogTitle: "إدارة المعلمين",
+  ogDescription: "أضف أو عدل بيانات المعلمين والغياب والسلوكيات",
+  ogImage: "/seo/teachers.png",
+  twitterCard: "summary",
+});
+</script>
 
 <style scoped></style>

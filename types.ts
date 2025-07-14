@@ -55,6 +55,7 @@ interface Teacher {
   identity_number: string | undefined;
   phone_number: string | undefined;
   address: string | undefined;
+  masjed: string | undefined;
   whatsapp_number: string | undefined;
   enrollment_date: Date | undefined;
   children_count?: string | undefined;
@@ -79,6 +80,7 @@ interface Payment {
   description: string | undefined;
   date: Date | undefined;
   amount: number | undefined;
+  invoice_number: string | undefined;
 }
 
 interface Class {

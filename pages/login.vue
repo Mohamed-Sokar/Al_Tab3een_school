@@ -1,4 +1,14 @@
 <script setup lang="ts">
+useHead({ title: "تسجيل الدخول" });
+useSeoMeta({
+  title: "تسجيل الدخول",
+  description: "قم بتسجيل الدخول للوصول إلى نظام إدارة المدرسة",
+  ogTitle: "تسجيل الدخول - لوحة المدرسة",
+  ogDescription: "سجل دخولك لإدارة المدرسة",
+  ogImage: "/seo/login.png",
+  twitterCard: "summary",
+});
+
 import { object, string, type InferType } from "yup";
 import type { FormSubmitEvent } from "@nuxt/ui";
 type Schema = InferType<typeof schema>;

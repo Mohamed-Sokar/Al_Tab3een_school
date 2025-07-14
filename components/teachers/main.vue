@@ -4,10 +4,12 @@ import type { Teacher } from "~/types";
 import { useTeachersStore } from "@/stores/teachers";
 import type { Column } from "@tanstack/vue-table";
 import { array, number, object } from "yup";
+import { useExportToExcel } from "~/composables/useExportToExcel";
 
 const teachersStore = useTeachersStore();
 const academicClassesStore = useAcademicClassesStore();
 const { getArabicDayName, getDate } = useDateUtils();
+const { exportToExcel } = useExportToExcel();
 
 type Flag =
   | "behavioral_issues"
@@ -27,7 +29,6 @@ const rowSelection = ref({});
 const tableKey = ref(Math.random());
 const UBadge = resolveComponent("UBadge");
 const UButton = resolveComponent("UButton");
-// const UDropdownMenu = resolveComponent("UDropdownMenu");
 const selectedTeacher = ref<Teacher>();
 const selectedArrayFlag = ref<Flag>();
 const showModal = ref(false);
@@ -329,6 +330,39 @@ const assignAcademicClass = async () => {
   console.log(selectedTeacher.value);
   showModal.value = false;
 };
+const exportStudents = () => {
+  exportToExcel({
+    data: selectedTeachers.value.map((s, i) => ({
+      الرقم: i + 1,
+      "الاسم الكامل":
+        s?.first_name +
+        " " +
+        s?.last_name +
+        " " +
+        s.third_name +
+        " " +
+        s.last_name,
+      // "الاسم الأول": s.first_name,
+      // "الاسم الثاني": s.second_name,
+      // "الاسم الثالث": s.third_name,
+      // "الاسم الأخير": s.last_name,
+      العنوان: s.address,
+      المواد: s.subject,
+      المسجد: s.masjed,
+      الهوية: s.identity_number,
+      الهاتف: s.phone_number,
+      "رقم الواتس": s.whatsapp_number,
+      "تاريخ الميلاد": s.birth_date,
+      "تاريخ الالتحاق بالمدرسة": s.enrollment_date,
+      "عدد الأطفال":
+        s.marital_status === "متزوج" ? s.children_count : "غير متزوج بعد",
+      "الحالة الاجتماعية": s.marital_status,
+      "عدد المخالفات السلوكية": s.behavioral_issues?.length,
+    })),
+    fileName: "المعلمين",
+    sheetName: "المعلمين",
+  });
+};
 // Getters
 const numberedTeachers = computed(() => {
   return teachersStore.sortedTeachers.map((teacher, index) => ({
@@ -578,49 +612,17 @@ const selectedStudentsIds = computed(() =>
           <UButton
             icon="heroicons-document-chart-bar-solid"
             variant="outline"
-            color="secondary"
-            size="sm"
-            class="p-2 font-bold text-blue-700"
-          >
-            <span>تصدير</span>
-            <span>({{ numberedTeachers.length }})</span>
-            <span> PDF </span>
-          </UButton>
-          <UButton
-            icon="heroicons-document-chart-bar-solid"
-            variant="outline"
             color="primary"
             size="sm"
             class="p-2 font-bold text-green-700"
+            @click="exportStudents"
           >
             <span>تصدير</span>
-            <span>({{ numberedTeachers.length }})</span>
+            <span>({{ selectedTeachers.length }})</span>
             <span> Excel </span>
           </UButton>
         </div>
       </template>
     </BaseTable>
-    <!-- <UTable
-      :loading="teachersStore.loading"
-      :key="tableKey"
-      v-model:global-filter="globalFilter"
-      ref="table"
-      :data="numberedTeachers"
-      :columns="columns"
-    >
-      <template #action-cell="{ row }">
-        <div class="flex gap-2 items-center">
-          <UDropdownMenu :items="getDropdownActions(row.original)">
-            <UButton
-              icon="i-lucide-ellipsis-vertical"
-              color="neutral"
-              variant="soft"
-              aria-label="Actions"
-              class="p-2"
-            />
-          </UDropdownMenu>
-        </div>
-      </template>
-    </UTable> -->
   </div>
 </template>

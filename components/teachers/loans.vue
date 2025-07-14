@@ -5,7 +5,7 @@ import { months } from "~/constants";
 import { useTeachersStore } from "@/stores/teachers";
 const { getArabicDayName, getDate } = useDateUtils();
 const teachersStore = useTeachersStore();
-
+const { exportToExcel } = useExportToExcel();
 const globalFilter = ref("");
 const tableKey = ref(Math.random());
 const currentMonthIndex = new Date().getMonth();
@@ -81,6 +81,23 @@ function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
     ],
   ];
 }
+
+// Actions
+const exportIssues = () => {
+  exportToExcel({
+    data: selectedLoans.value.map((issue, i) => ({
+      الرقم: i + 1,
+      الاسم: issue.teacher?.first_name + " " + issue.teacher?.last_name,
+      اليوم: getArabicDayName(issue.created_at ?? ""),
+      التاريخ: getDate(issue.created_at ?? ""),
+      القيمة: issue.amount,
+    })),
+    fileName: "السلف",
+    sheetName: "السلف",
+  });
+};
+
+// Computed Properties
 const filteredLoans = computed(() => {
   tableKey.value = Math.random(); // Reset table key to force re-render
   if (selectedMonth.value === "كل الأشهر") {
@@ -113,7 +130,7 @@ watch(rowSelection, () => {
 <template>
   <div>
     <!-- Start Filters -->
-    <div class="w-full grid md:grid-cols-6 gap-3 mt-5">
+    <div class="mb-10">
       <UInput
         icon="i-lucide-search"
         size="lg"
@@ -123,42 +140,15 @@ watch(rowSelection, () => {
         placeholder="البحث عن معلم..."
         class="w-full md:col-span-4"
       />
-      <USelect
+      <!-- <USelect
         v-model="selectedMonth"
         :items="months"
         size="lg"
         color="secondary"
         class="w-full"
-      />
+      /> -->
     </div>
     <!-- End Filters -->
-
-    <!-- start Export -->
-    <div class="flex items-center justify-end gap-2 mt-8 mb-2">
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="secondary"
-        size="sm"
-        class="p-2 font-bold text-blue-700"
-      >
-        <span>تصدير</span>
-        <span>({{ numberedLoans.length }})</span>
-        <span> PDF </span>
-      </UButton>
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="primary"
-        size="sm"
-        class="p-2 font-bold text-green-700"
-      >
-        <span>تصدير</span>
-        <span>({{ numberedLoans.length }})</span>
-        <span> Excel </span>
-      </UButton>
-    </div>
-    <!-- end Export -->
 
     <!-- Start Table -->
     <BaseTable
@@ -170,7 +160,27 @@ watch(rowSelection, () => {
       :columns="columns"
       v-model:sorting="sorting"
       :get-dropdown-actions="getDropdownActions"
-    />
+    >
+      <template #actions>
+        <div
+          v-if="selectedLoans.length"
+          class="flex flex-wrap justify-end gap-2 items-center"
+        >
+          <UButton
+            icon="heroicons-document-chart-bar-solid"
+            variant="outline"
+            color="primary"
+            size="sm"
+            class="p-2 font-bold text-green-700"
+            @click="exportIssues"
+          >
+            <span>تصدير</span>
+            <span>({{ selectedLoans.length }})</span>
+            <span> Excel </span>
+          </UButton>
+        </div>
+      </template>
+    </BaseTable>
     <!-- <UTable
       :loading="teachersStore.loading"
       :key="tableKey"

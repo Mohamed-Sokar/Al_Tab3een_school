@@ -1,7 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
-  modules: ["@nuxt/ui", "@nuxtjs/supabase", "@pinia/nuxt", "nuxt-charts"],
+  modules: [
+    "@nuxt/ui",
+    "@nuxtjs/supabase",
+    "@pinia/nuxt",
+    "nuxt-charts",
+    "@nuxtjs/sitemap",
+  ],
+  site: {
+    url: "https://altab3een-schoole.netlify.app",
+    name: "مدرسة التابعين الشرعية",
+  },
+
   // plugins: ["~/plugins/axios"],
   css: [
     "~/assets/css/main.css",

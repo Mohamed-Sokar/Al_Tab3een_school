@@ -24,6 +24,15 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: "الصفوف الدراسية" });
+useSeoMeta({
+  title: "الصفوف الدراسية",
+  description: "تعريف وتنظيم الصفوف الدراسية حسب المراحل",
+  ogTitle: "إدارة الصفوف",
+  ogDescription: "إدارة الصفوف الدراسية وتوزيع الطلاب",
+  ogImage: "/seo/classes.png",
+  twitterCard: "summary",
+});
 import type { LinkItem } from "~/types";
 const route = useRoute();
 const classT = ref();

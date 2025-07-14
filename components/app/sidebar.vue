@@ -54,7 +54,6 @@ const signOut = async () => {
     loading.value = false;
   }
 };
-
 const links = [
   { label: "الرئيسية", icon: "i-lucide-home", to: "/" },
   {
@@ -170,7 +169,7 @@ const items: DropdownMenuItem[] = [
                   class="border"
                 />
               </UChip>
-              <template #account="{ item }">
+              <template #account="{ item }: { item: DropdownMenuItem }">
                 <div class="text-left w-full">
                   <p class="text-muted">تم تسجيل الدخول بحساب</p>
                   <div class="flex justify-between w-full">
@@ -178,7 +177,7 @@ const items: DropdownMenuItem[] = [
                       {{ user.email }}
                     </p>
                     <UIcon
-                      :name="item.icon"
+                      :name="item.icon ?? ''"
                       class="flex-shrink-0 h-4 w-4 text-gray-400 dark:text-gray-500 ms-auto"
                     />
                   </div>

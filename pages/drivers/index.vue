@@ -27,6 +27,15 @@
 </template>
 
 <script setup lang="ts">
+useHead({ title: "السائقون" });
+useSeoMeta({
+  title: "السائقون",
+  description: "إدارة السائقين وتوزيعهم على الطلاب",
+  ogTitle: "إدارة السائقين",
+  ogDescription: "تحكم كامل في معلومات السائقين والرحلات",
+  ogImage: "/seo/drivers.png",
+  twitterCard: "summary",
+});
 import { useDriversStore } from "@/stores/drivers";
 const driversStore = useDriversStore();
 </script>

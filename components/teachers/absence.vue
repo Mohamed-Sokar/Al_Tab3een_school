@@ -5,6 +5,7 @@ import { months } from "~/constants";
 import { useTeachersStore } from "@/stores/teachers";
 const teachersStore = useTeachersStore();
 const { getArabicDayName } = useDateUtils();
+const { exportToExcel } = useExportToExcel();
 
 const globalFilter = ref("");
 const tableKey = ref(Math.random());
@@ -13,6 +14,7 @@ const selectedMonth = ref(months[currentMonthIndex]);
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
 const rowSelection = ref({});
 const { getDate } = useDateUtils();
+
 const columns: TableColumn<TeacherAbsenceReport>[] = [
   {
     accessorKey: "rowNumber",
@@ -55,7 +57,6 @@ const columns: TableColumn<TeacherAbsenceReport>[] = [
     id: "action",
   },
 ];
-
 function getDropdownActions(report: TeacherAbsenceReport): DropdownMenuItem[] {
   return [
     [
@@ -80,6 +81,22 @@ function getDropdownActions(report: TeacherAbsenceReport): DropdownMenuItem[] {
   ];
 }
 
+// Actions
+const exportReports = () => {
+  exportToExcel({
+    data: selectedReports.value.map((report, i) => ({
+      الرقم: i + 1,
+      الاسم: report.teacher?.first_name + " " + report.teacher?.last_name,
+      اليوم: getArabicDayName(report.created_at ?? ""),
+      التاريخ: getDate(report.date ?? ""),
+      "حالة الغياب": report.excuse_status,
+      السبب: report.reason,
+    })),
+    fileName: "تقارير الغياب",
+    sheetName: "تقارير الغياب",
+  });
+};
+
 const filteredAbsenceReports = computed(() => {
   tableKey.value = Math.random();
   return teachersStore.sortedAbsenceReports.filter(
@@ -89,7 +106,6 @@ const filteredAbsenceReports = computed(() => {
       months.indexOf(selectedMonth.value)
   );
 });
-
 const numberedAbsenceReports = computed(() =>
   filteredAbsenceReports.value.map(
     (report: TeacherAbsenceReport, index: number) => ({
@@ -98,14 +114,14 @@ const numberedAbsenceReports = computed(() =>
     })
   )
 );
-const selectedReport = computed(() =>
+const selectedReports = computed(() =>
   Object.keys(rowSelection.value).map(
     (index) => numberedAbsenceReports.value[+index]
   )
 );
-const selectedReportsIds = computed(() =>
-  selectedReport.value.map((report) => report?.id)
-);
+// const selectedReportsIds = computed(() =>
+//   selectedReport.value.map((report) => report?.id)
+// );
 
 // watch(rowSelection, () => {
 //   console.log(selectedReport.value);
@@ -115,7 +131,7 @@ const selectedReportsIds = computed(() =>
 <template>
   <div>
     <!-- Start Filters -->
-    <div class="w-full grid md:grid-cols-6 gap-3 mt-5">
+    <div class="mb-10">
       <UInput
         icon="i-lucide-search"
         size="lg"
@@ -125,7 +141,7 @@ const selectedReportsIds = computed(() =>
         placeholder="البحث عن معلم..."
         class="w-full md:col-span-4"
       />
-      <UInput
+      <!-- <UInput
         v-model="selectedDate"
         type="date"
         size="lg"
@@ -138,36 +154,9 @@ const selectedReportsIds = computed(() =>
         size="lg"
         color="secondary"
         class="w-full"
-      />
+      /> -->
     </div>
     <!-- End Filters -->
-
-    <!-- start Export -->
-    <div class="flex items-center justify-end gap-2 mt-8 mb-2">
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="secondary"
-        size="sm"
-        class="p-2 font-bold text-blue-700"
-      >
-        <span>تصدير</span>
-        <span>({{ numberedAbsenceReports.length }})</span>
-        <span> PDF </span>
-      </UButton>
-      <UButton
-        icon="heroicons-document-chart-bar-solid"
-        variant="outline"
-        color="primary"
-        size="sm"
-        class="p-2 font-bold text-green-700"
-      >
-        <span>تصدير</span>
-        <span>({{ numberedAbsenceReports.length }})</span>
-        <span> Excel </span>
-      </UButton>
-    </div>
-    <!-- end Export -->
 
     <BaseTable
       :loading="teachersStore.loading"
@@ -177,7 +166,27 @@ const selectedReportsIds = computed(() =>
       :data="numberedAbsenceReports"
       :columns="columns"
       :get-dropdown-actions="getDropdownActions"
-    />
+    >
+      <template #actions>
+        <div
+          v-if="selectedReports.length"
+          class="flex flex-wrap justify-end gap-2 items-center"
+        >
+          <UButton
+            icon="heroicons-document-chart-bar-solid"
+            variant="outline"
+            color="primary"
+            size="sm"
+            class="p-2 font-bold text-green-700"
+            @click="exportReports"
+          >
+            <span>تصدير</span>
+            <span>({{ selectedReports.length }})</span>
+            <span> Excel </span>
+          </UButton>
+        </div>
+      </template>
+    </BaseTable>
     <!-- <UTable
       :loading="teachersStore.loading"
       :key="tableKey"

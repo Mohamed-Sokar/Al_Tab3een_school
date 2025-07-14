@@ -1,4 +1,13 @@
 <script setup lang="ts">
+useHead({ title: "الخطط الدراسية" });
+useSeoMeta({
+  title: "الخطط الدراسية",
+  description: "إنشاء ومتابعة الخطط الدراسية الشهرية لكل طالب",
+  ogTitle: "إدارة الخطط",
+  ogDescription: "خطط دراسية مفصلة للقرآن والمناهج",
+  ogImage: "/seo/plans.png",
+  twitterCard: "summary",
+});
 import { h, resolveComponent } from "vue";
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { Plan } from "~/types";
