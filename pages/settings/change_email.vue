@@ -42,6 +42,7 @@ const { toastError, toastSuccess } = useAppToast();
 const user = useSupabaseUser();
 const supabase = useSupabaseClient();
 const pending = ref(false);
+const redirectUrl = useRuntimeConfig().public.baseUrl;
 
 const schema = object({
   currentEmail: string().email("إيميل غير صالح").required("الإيميل مطلوب"),
@@ -54,9 +55,10 @@ const state = reactive({
 const saveEmail = async () => {
   pending.value = true;
   try {
-    const { data, error } = await supabase.auth.updateUser({
-      email: state.newEmail,
-    });
+    const { data, error } = await supabase.auth.updateUser(
+      { email: state.newEmail },
+      { emailRedirectTo: `${redirectUrl}/confirm` } //try to deploy it +1
+    );
     if (error) throw error;
 
     console.log(data);
