@@ -58,7 +58,7 @@ const saveEmail = async () => {
     const { data, error } = await supabase.auth.updateUser(
       { email: state.newEmail },
       {
-        emailRedirectTo: `https://altab3een-schoole.netlify.app/auth/email-change-callback`,
+        emailRedirectTo: `${redirectUrl}/auth/email-change-callback`,
       }
     );
     if (error) throw error;

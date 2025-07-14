@@ -14,6 +14,7 @@ import type { FormSubmitEvent } from "@nuxt/ui";
 type Schema = InferType<typeof schema>;
 
 const client = useSupabaseClient();
+const user = useSupabaseUser();
 const { toastError, toastSuccess } = useAppToast();
 const show = ref(false);
 function checkStrength(str: string) {
@@ -59,7 +60,15 @@ const state = reactive({
   password: "",
 });
 const loading = ref(false);
-
+watch(
+  user,
+  () => {
+    if (user) {
+      navigateTo("/");
+    }
+  },
+  { immediate: true }
+);
 onMounted(async () => {
   await client.auth.getSession();
   navigateTo("/");
