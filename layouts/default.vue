@@ -29,7 +29,7 @@ useHead({
   meta: [
     {
       name: "google-site-verification",
-      content: "us9703idIc3jQXdDeC4boohCsP9hUNsfBVWcI__Uvt0",
+      content: "C-UKtSnT0hK7aUzO337wOFBNWVZoqi-DRR5ep1wSOQM", // ضع الكود الخاص بك هنا
     },
     {
       name: "description",
