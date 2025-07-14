@@ -9,15 +9,12 @@ export default defineNuxtConfig({
     "@nuxtjs/sitemap",
     "@nuxtjs/seo",
   ],
-  sitemap: {
-    xsl: undefined,
-  },
+  // sitemap: { xsl: false },
   site: {
     url: "https://altab3een-schoole.netlify.app",
     name: "مدرسة التابعين الشرعية",
-    // enabled: true,
+    enabled: true,
   },
-
   // plugins: ["~/plugins/axios"],
   css: [
     "~/assets/css/main.css",
