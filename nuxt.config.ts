@@ -1,6 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
+  app: {
+    head: {
+      meta: [{ name: "google-site-verification", content: "0d0189358504d035" }],
+    },
+  },
   modules: [
     "@nuxt/ui",
     "@nuxtjs/supabase",
