@@ -27,6 +27,7 @@ useHead({
     lang: "ar",
   },
   meta: [
+    { name: "robots", content: "index" },
     {
       name: "google-site-verification",
       content: "C-UKtSnT0hK7aUzO337wOFBNWVZoqi-DRR5ep1wSOQM", // ضع الكود الخاص بك هنا

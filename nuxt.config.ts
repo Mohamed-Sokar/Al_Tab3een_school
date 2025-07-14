@@ -7,9 +7,12 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
     "nuxt-charts",
     "@nuxtjs/sitemap",
+    "@nuxtjs/seo",
   ],
+
   site: {
-    url: "https://altab3een-schoole.netlify.app",
+    enabled: true,
+    url: process.env.BASE_URL ?? "http://localhost:3000",
     name: "مدرسة التابعين الشرعية",
   },
 
