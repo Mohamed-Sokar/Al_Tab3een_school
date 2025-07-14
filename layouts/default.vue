@@ -28,6 +28,10 @@ useHead({
   },
   meta: [
     {
+      name: "google-site-verification",
+      content: "us9703idIc3jQXdDeC4boohCsP9hUNsfBVWcI__Uvt0",
+    },
+    {
       name: "description",
       content:
         "مرحبًا بك في موقعنا، نوفر حلول إدارة المدارس من خلال نظام قوي وسهل الاستخدام.",
