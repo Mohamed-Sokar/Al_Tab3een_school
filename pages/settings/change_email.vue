@@ -18,7 +18,7 @@
         <UFormField
           label="الحساب الجديد"
           name="newEmail"
-          description="بعد الحفظ سيصلك إيميلين على حسابك القديم والجديد لتأكيد العملية"
+          description="بعد الحفظ سيصلك إيميل على حسابك الجديد لتأكيد العملية"
         >
           <UInput
             v-model="state.newEmail"
@@ -56,8 +56,10 @@ const saveEmail = async () => {
   pending.value = true;
   try {
     const { data, error } = await supabase.auth.updateUser(
-      { email: state.newEmail },
-      { emailRedirectTo: `${redirectUrl}/confirm` } //try to deploy it +1
+      {
+        email: state.newEmail,
+      },
+      { emailRedirectTo: `${redirectUrl}/auth/email-change-callback` }
     );
     if (error) throw error;
 
