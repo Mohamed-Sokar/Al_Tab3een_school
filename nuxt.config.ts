@@ -3,10 +3,11 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   app: {
     head: {
+      // <meta name="google-site-verification" content="us9703idIc3jQXdDeC4boohCsP9hUNsfBVWcI__Uvt0" />
       meta: [
         {
           name: "google-site-verification",
-          content: "C-UKtSnT0hK7aUzO337wOFBNWVZoqi-DRR5ep1wSOQM",
+          content: "us9703idIc3jQXdDeC4boohCsP9hUNsfBVWcI__Uvt0",
         },
       ],
     },
