@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
+  sitemap: { xsl: false },
   app: {
     head: {
       // <meta name="google-site-verification" content="us9703idIc3jQXdDeC4boohCsP9hUNsfBVWcI__Uvt0" />
