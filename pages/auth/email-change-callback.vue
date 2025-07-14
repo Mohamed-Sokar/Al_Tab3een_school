@@ -9,7 +9,7 @@ onMounted(async () => {
 
   if (!error) {
     // ✅ إعادة التوجيه بعد نجاح تأكيد البريد
-    navigateTo("/");
+    navigateTo("/settings/change_email");
   } else {
     console.error(error.message);
     navigateTo("/error");
