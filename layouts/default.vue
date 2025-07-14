@@ -65,14 +65,14 @@ const plansStore = usePlansStore();
 
 onMounted(async () => {
   // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
-  // await studentsStore.fetchBehavioralIssues();
-  // await studentsStore.fetchStudents();
+  await studentsStore.fetchBehavioralIssues();
+  await studentsStore.fetchStudents();
   await levelsStore.fetchLevels();
   await plansStore.fetchPlans();
-  // await quranClassesStore.fetchClasses();
-  // await driversStore.fetchDrivers();
+  await quranClassesStore.fetchClasses();
+  await driversStore.fetchDrivers();
   await paymentsStore.fetchPayments();
-  // await academicClassesStore.fetchClasses();
+  await academicClassesStore.fetchClasses();
   await teachersStore.fetchTeachers();
   await teachersStore.fetchAbsenceReports();
   await teachersStore.fetchTeachersLoans();
