@@ -9,11 +9,13 @@ export default defineNuxtConfig({
     "@nuxtjs/sitemap",
     "@nuxtjs/seo",
   ],
-
+  sitemap: {
+    xsl: undefined,
+  },
   site: {
-    enabled: true,
-    url: process.env.BASE_URL ?? "http://localhost:3000",
+    url: "https://altab3een-schoole.netlify.app",
     name: "مدرسة التابعين الشرعية",
+    // enabled: true,
   },
 
   // plugins: ["~/plugins/axios"],
