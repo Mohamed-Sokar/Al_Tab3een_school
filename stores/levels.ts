@@ -9,6 +9,7 @@ export const useLevelsStore = defineStore("levels", () => {
   // Data
   const levels = ref<Level[]>([]);
   const loading = ref(false);
+  const isLoaded = ref(false);
   // const tableKey = ref(Math.random());
 
   // Getters
@@ -24,7 +25,7 @@ export const useLevelsStore = defineStore("levels", () => {
   // });
 
   const fetchLevels = async () => {
-    if (levels.value.length) return; // تجنب الجلب أكثر من مرة
+    if (isLoaded.value) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
       const { data } = await api.get("/levels");
@@ -35,6 +36,7 @@ export const useLevelsStore = defineStore("levels", () => {
       toastSuccess({
         title: "تم تحميل المستويات بنجاح",
       });
+      isLoaded.value = true;
       // tableKey.value = Math.random();
     } catch (err) {
       toastError({

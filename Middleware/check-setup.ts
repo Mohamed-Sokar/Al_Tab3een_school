@@ -1,5 +1,12 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (import.meta.server) return;
+  // if (import.meta.server) return;
+  const nuxtApp = useNuxtApp();
+  if (
+    import.meta.client &&
+    nuxtApp.isHydrating &&
+    nuxtApp.payload.serverRendered
+  )
+    return;
 
   const levelsStore = useLevelsStore();
   const academicClassesStore = useAcademicClassesStore();
@@ -8,13 +15,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const employeesStore = useTeachersStore();
 
   // 🛡️ الخطوة 1: التحقق من المستويات
-  await Promise.all([
-    levelsStore.fetchLevels(),
-    academicClassesStore.fetchClasses(),
-    quranClassesStore.fetchClasses(),
-    plansStore.fetchPlans(),
-    employeesStore.fetchTeachers(),
-  ]);
+  // await Promise.all([
+  //   levelsStore.fetchLevels(),
+  //   academicClassesStore.fetchClasses(),
+  //   quranClassesStore.fetchClasses(),
+  //   plansStore.fetchPlans(),
+  //   employeesStore.fetchTeachers(),
+  // ]);
 
   const path = to.path;
   if (
@@ -62,13 +69,4 @@ export default defineNuxtRouteMiddleware(async (to) => {
       return navigateTo("/employees/view?alert=أضف الموظفين أولاً");
     }
   }
-  // if (
-  //   !to.path.startsWith("/classes") ||
-  //   !to.path.startsWith("/plans") ||
-  //   !to.path.startsWith("/employees") ||
-  //   !to.path.startsWith("/students")
-  // ) {
-  //   return navigateTo("/");
-  // }
-  // }, 1000);
 });

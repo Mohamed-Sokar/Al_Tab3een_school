@@ -7,11 +7,12 @@ export const usePlansStore = defineStore("plans", () => {
   const studentsStore = useStudentStore();
   const { toastSuccess, toastError } = useAppToast();
   const plans = ref<Plan[]>([]);
+  const isLoaded = ref(false);
   const loading = ref(false);
   const tableKey = ref(Math.random());
 
   const fetchPlans = async () => {
-    if (plansData.value.length) return; // تجنب الجلب أكثر من مرة
+    if (isLoaded.value) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
       const { data } = await api.get("/plans");
@@ -22,6 +23,7 @@ export const usePlansStore = defineStore("plans", () => {
       toastSuccess({
         title: "تم تحميل الخطط بنجاح",
       });
+      isLoaded.value = true;
       tableKey.value = Math.random();
     } catch (err) {
       toastError({
