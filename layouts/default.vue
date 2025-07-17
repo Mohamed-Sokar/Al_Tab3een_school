@@ -27,7 +27,7 @@ useHead({
     lang: "ar",
   },
   meta: [
-    { name: "robots", content: "index" },
+    { name: "robots", content: "index, follow" },
     // {
     //   name: "google-site-verification",
     //   content: "C-UKtSnT0hK7aUzO337wOFBNWVZoqi-DRR5ep1wSOQM", // ضع الكود الخاص بك هنا
@@ -78,6 +78,7 @@ onMounted(async () => {
   await teachersStore.fetchAbsenceReports();
   await teachersStore.fetchTeachersLoans();
   await teachersStore.fetchTeachersBehavioralIssues();
+  await teachersStore.fetchSupervisoryVisits();
 });
 
 // import { useStudentStore } from "@/stores/students";

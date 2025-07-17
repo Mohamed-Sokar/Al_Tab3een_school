@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import type { TeacherAbsenceReport } from "~/types";
+import type { EmployeeAbsenceReport } from "~/types";
 import { months } from "~/constants";
 import { useTeachersStore } from "@/stores/teachers";
+
+useHead({ title: "الحضور والغياب" });
+
 const teachersStore = useTeachersStore();
 const { getArabicDayName } = useDateUtils();
 const { exportToExcel } = useExportToExcel();
@@ -15,7 +18,7 @@ const selectedDate = ref(new Date().toISOString().split("T")[0]);
 const rowSelection = ref({});
 const { getDate } = useDateUtils();
 
-const columns: TableColumn<TeacherAbsenceReport>[] = [
+const columns: TableColumn<EmployeeAbsenceReport>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
@@ -25,7 +28,9 @@ const columns: TableColumn<TeacherAbsenceReport>[] = [
     header: "اسم المعلم",
     cell: ({ row }) => {
       return (
-        row.original.teacher?.first_name + " " + row.original.teacher?.last_name
+        row.original.employee?.first_name +
+        " " +
+        row.original.employee?.last_name
       );
     },
   },
@@ -57,7 +62,7 @@ const columns: TableColumn<TeacherAbsenceReport>[] = [
     id: "action",
   },
 ];
-function getDropdownActions(report: TeacherAbsenceReport): DropdownMenuItem[] {
+function getDropdownActions(report: EmployeeAbsenceReport): DropdownMenuItem[] {
   return [
     [
       {
@@ -86,7 +91,7 @@ const exportReports = () => {
   exportToExcel({
     data: selectedReports.value.map((report, i) => ({
       الرقم: i + 1,
-      الاسم: report.teacher?.first_name + " " + report.teacher?.last_name,
+      الاسم: report.employee?.first_name + " " + report.employee?.last_name,
       اليوم: getArabicDayName(report.created_at ?? ""),
       التاريخ: getDate(report.date ?? ""),
       "حالة الغياب": report.excuse_status,
@@ -100,7 +105,7 @@ const exportReports = () => {
 const filteredAbsenceReports = computed(() => {
   tableKey.value = Math.random();
   return teachersStore.sortedAbsenceReports.filter(
-    (report: TeacherAbsenceReport) =>
+    (report: EmployeeAbsenceReport) =>
       // report.date === selectedDate.value &&
       new Date(report.date || new Date()).getMonth() ===
       months.indexOf(selectedMonth.value)
@@ -108,7 +113,7 @@ const filteredAbsenceReports = computed(() => {
 });
 const numberedAbsenceReports = computed(() =>
   filteredAbsenceReports.value.map(
-    (report: TeacherAbsenceReport, index: number) => ({
+    (report: EmployeeAbsenceReport, index: number) => ({
       ...report,
       rowNumber: index + 1,
     })

@@ -27,6 +27,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
 
   const fetchClasses = async () => {
     loading.value = true;
+    if (classesData.value.length) return; // تجنب الجلب أكثر من مرة
     try {
       const { data } = await api.get("academic_classes");
 

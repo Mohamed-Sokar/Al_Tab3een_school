@@ -5,6 +5,23 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute();
+
+definePageMeta({
+  middleware: ["check-setup"],
+});
+watch(
+  route,
+  () => {
+    if (route.query.alert) {
+      useAppToast().toastError({
+        title: decodeURIComponent(route.query.alert as string),
+      });
+    }
+  },
+  { immediate: true }
+);
+
 useHead({
   title: "الطلاب",
   meta: [

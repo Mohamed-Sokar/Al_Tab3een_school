@@ -19,7 +19,9 @@
     </BaseHeader>
 
     <BaseTabs :links="links" />
-    <NuxtPage />
+    <BaseFadeTransition>
+      <NuxtPage />
+    </BaseFadeTransition>
   </div>
 </template>
 
@@ -33,9 +35,22 @@ useSeoMeta({
   ogImage: "/seo/classes.png",
   twitterCard: "summary",
 });
+
 import type { LinkItem } from "~/types";
 const route = useRoute();
 const classT = ref();
+
+onMounted(() => {
+  watch(
+    route,
+    () => {
+      route.path === "/classes/view"
+        ? navigateTo("/classes/view/academic_classes")
+        : navigateTo(route.path);
+    },
+    { immediate: true }
+  );
+});
 
 watch(
   route,

@@ -56,32 +56,37 @@ const signOut = async () => {
 };
 const links = [
   { label: "الرئيسية", icon: "i-lucide-home", to: "/" },
-  {
-    label: "الطلاب",
-    icon: "i-lucide-users",
-    to: "/students/view/students_table",
-  },
-  { label: "المعلمون", icon: "i-lucide-users", to: "/teachers/view" },
-  { label: "المصروفات", icon: "i-lucide-credit-card", to: "/payments" },
+  { label: "المستويات", icon: "i-lucide-book-open", to: "/levels" },
   {
     label: "الصفوف",
     icon: "i-heroicons-presentation-chart-bar",
-    to: "/classes/view/academic_classes",
-    star: true,
+    to: "/classes/view",
   },
-  {
-    label: "السائقين",
-    icon: "i-lucide-car-taxi-front",
-    to: "/drivers",
-    star: true,
-  },
-  { label: "المستويات", icon: "i-lucide-book-open", to: "/levels" },
   {
     label: "خطط الطلاب",
     icon: "i-heroicons-calendar-days",
     to: "/plans",
-    star: true,
   },
+  { label: "الموظفون", icon: "i-lucide-users", to: "/employees/view" },
+  {
+    label: "الطلاب",
+    icon: "i-lucide-users",
+    to: "/students/view",
+    children: [
+      {
+        label: "الطلاب",
+        icon: "i-lucide-users",
+        to: "/students/view",
+      },
+    ],
+  },
+  { label: "المصروفات", icon: "i-lucide-credit-card", to: "/payments" },
+  // {
+  //   label: "السائقين",
+  //   icon: "i-lucide-car-taxi-front",
+  //   to: "/drivers",
+  // },
+
   // { label: "التقارير", icon: "i-lucide-bar-chart-3", to: "/reports" },
   { label: "الإعدادات", icon: "i-lucide-settings", to: "/settings/general" },
 ];
@@ -220,6 +225,36 @@ const items: DropdownMenuItem[] = [
                 class="size-5 text-warning-300"
               />
             </NuxtLink>
+            <!-- <UCollapsible
+              v-if="link.children"
+              class="flex flex-col gap-2 w-full border-none"
+            >
+              <UButton
+                class="group data-[state=open]:bg-secondary/15 hover:bg-secondary/15 bg-transparent border-none text-white"
+                :label="link.label"
+                size="xl"
+                :icon="link.icon"
+                :class="{
+                  'bg-blue-800':
+                    link.to === '/'
+                      ? route.path === link.to
+                      : route.path.includes(link.to),
+                }"
+                color="secondary"
+                variant="soft"
+                trailing-icon="i-lucide-chevron-down"
+                :ui="{
+                  trailingIcon:
+                    'group-data-[state=open]:rotate-180 transition-transform duration-200',
+                }"
+                block
+              />
+
+              <template #content>
+                <div class="bg-transparent h-30">test</div>
+                <Placeholder class="h-48" />
+              </template>
+            </UCollapsible> -->
           </div>
         </nav>
 

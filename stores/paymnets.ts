@@ -10,6 +10,7 @@ export const usePaymentsStore = defineStore("payments", () => {
   const tableKey = ref(Math.random());
 
   const fetchPayments = async () => {
+    if (paymentsData.value.length) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
       const { data } = await api.get("/payments");

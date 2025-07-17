@@ -41,7 +41,6 @@ const color = computed(() => {
   if (score.value === 3) return "warning";
   return "success";
 });
-
 const text = computed(() => {
   if (score.value === 0) return "أدخل كلمة السر";
   if (score.value <= 2) return "كلمة سر ضعيفة";

@@ -11,6 +11,7 @@ export const usePlansStore = defineStore("plans", () => {
   const tableKey = ref(Math.random());
 
   const fetchPlans = async () => {
+    if (plansData.value.length) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
       const { data } = await api.get("/plans");

@@ -9,6 +9,7 @@ import type { Student } from "~/types";
 import { useStudentStore } from "@/stores/students";
 
 const studentsStore = useStudentStore();
+const levelsStore = useLevelsStore();
 const form = ref();
 
 const schema = object({
@@ -64,6 +65,7 @@ const newStudentState = reactive<Student>({
   second_name: undefined,
   third_name: undefined,
   last_name: undefined,
+  level_id: undefined,
   guardian_name: undefined,
   guardian_name_kinship: guardian_name_kinship_options[0],
   whatsapp_number: undefined,
@@ -71,7 +73,6 @@ const newStudentState = reactive<Student>({
   father_identity_number: undefined,
   phone_number: undefined,
   birth_date: undefined,
-  level_id: undefined,
   masjed: undefined,
   address: undefined,
   memorization_status: undefined,
@@ -83,7 +84,7 @@ const newStudentState = reactive<Student>({
 const createStudent = async () => {
   console.log(newStudentState);
   await studentsStore.addStudent({ ...newStudentState });
-  navigateTo("/students/view/students_table");
+  navigateTo("/students/view");
 };
 const birth_date_string = computed({
   get() {
@@ -152,6 +153,22 @@ const birth_date_string = computed({
           class="w-full"
         />
       </UFormField>
+
+      <UFormField label="المستوى الدراسي" name="level_id">
+        <USelect
+          v-model="newStudentState.level_id"
+          :items="
+            useLevelsStore().levelsData.map((level) => ({
+              label: level.title,
+              value: level.id,
+            }))
+          "
+          type="text"
+          class="w-full"
+          placeholder="المستوى الدراسي"
+        />
+      </UFormField>
+
       <UFormField label="اسم ولي الأمر" name="guardian_name">
         <UInput
           v-model="newStudentState.guardian_name"
@@ -228,21 +245,6 @@ const birth_date_string = computed({
         />
       </UFormField>
 
-      <UFormField label="المستوى الدراسي" name="level_id">
-        <USelect
-          v-model="newStudentState.level_id"
-          :items="
-            useLevelsStore().levelsData.map((level) => ({
-              label: level.title,
-              value: level.id,
-            }))
-          "
-          type="text"
-          class="w-full"
-          placeholder="المستوى الدراسي"
-        />
-      </UFormField>
-
       <UFormField label="حالة الحفظ" name="memorization_status">
         <USelect
           v-model="newStudentState.memorization_status"
@@ -305,7 +307,7 @@ const birth_date_string = computed({
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo('/students/view/students_table')"
+          @click="navigateTo('/students/view')"
           label="إلغاء"
         />
       </div>

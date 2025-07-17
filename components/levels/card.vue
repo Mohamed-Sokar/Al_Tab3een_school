@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Level } from "~/types";
-
+const levelsStore = useLevelsStore();
 defineProps<{
   level: Level;
 }>();
@@ -102,12 +102,13 @@ defineProps<{
         </div>
       </div>
 
-      <div class="grid grid-cols-4 gap-2 text-center">
+      <div class="grid grid-cols-5 gap-2 text-center">
         <UButton
           label="عرض الطلاب"
-          class="hover:cursor-pointer col-span-3 flex justify-center"
+          class="hover:cursor-pointer col-span-5 xl:col-span-3 flex justify-center"
           color="secondary"
           variant="subtle"
+          size="sm"
           @click="
             navigateTo({
               name: 'students-view-students_table',
@@ -117,8 +118,9 @@ defineProps<{
         />
         <UButton
           label="تعديل"
-          class="hover:cursor-pointer flex justify-center"
+          class="hover:cursor-pointer flex justify-center col-span-5 xl:col-span-1"
           color="secondary"
+          size="sm"
           variant="solid"
           @click="
             navigateTo({
@@ -126,6 +128,15 @@ defineProps<{
               params: { id: level.id },
             })
           "
+        />
+        <UButton
+          label="حذف"
+          class="hover:cursor-pointer flex justify-center col-span-5 xl:col-span-1"
+          color="error"
+          variant="solid"
+          :loading="levelsStore.loading"
+          size="sm"
+          @click="levelsStore.deleteLevel(level.id ?? 0)"
         />
       </div>
     </div>

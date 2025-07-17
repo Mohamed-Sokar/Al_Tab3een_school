@@ -25,6 +25,7 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
   });
 
   const fetchClasses = async () => {
+    if (classesData.value.length) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
       const { data } = await api.get("/quran_classes");

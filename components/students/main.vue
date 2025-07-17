@@ -61,7 +61,7 @@ const selectedStudent = ref<Student>();
 const showModal = ref(false);
 const selectedFlag = ref<Flag>();
 const selectedClassId = ref<number | undefined>(undefined);
-const selectedDriverId = ref<number | undefined>(undefined);
+// const selectedDriverId = ref<number | undefined>(undefined);
 const selectedPlan = ref<
   { label: string; value: number | undefined } | undefined
 >(undefined);
@@ -322,7 +322,7 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
         color: "warning",
         icon: "i-heroicons-exclamation-triangle",
         onSelect: () => {
-          navigateTo(`/students/${student.id}/add_behavioral_issue`);
+          navigateTo(`/students/${student.id}/add-behavioral-issue`);
         },
       },
       {
@@ -330,7 +330,7 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
         icon: "i-heroicons-academic-cap",
         color: "info",
         onSelect: () => {
-          navigateTo(`/students/${student.id}/add_grades_report`);
+          navigateTo(`/students/${student.id}/add-grades-report`);
         },
       },
       {
@@ -339,7 +339,7 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
         color: "info",
         onSelect: () => {
           navigateTo({
-            name: "students-id-add_quran_achievement_report",
+            name: "students-id-add-quran-achievement-report",
             params: { id: student.id },
             query: {
               general_plan_id: student.plan_id,
@@ -356,14 +356,14 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
         label: "معاينة",
         icon: "i-lucide-eye",
         onSelect: () => {
-          navigateTo(`/students/${student.id}/view_student`);
+          navigateTo(`/students/${student.id}/view`);
         },
       },
       {
         label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
-          navigateTo(`/students/${student.id}/edit_student`);
+          navigateTo(`/students/${student.id}/edit`);
         },
       },
       {
@@ -757,7 +757,7 @@ const toDate = (date: string | Date): string => {
 
           <p v-else>لم يتم تعيين صف بعد</p>
         </div>
-        <div v-if="selectedFlag === 'driver_info'">
+        <!-- <div v-if="selectedFlag === 'driver_info'">
           <div v-if="selectedStudent?.driver">
             <ul>
               <li
@@ -788,7 +788,7 @@ const toDate = (date: string | Date): string => {
           </div>
 
           <p v-else>لم يتم تعيين سائق بعد</p>
-        </div>
+        </div> -->
         <div v-if="selectedFlag === 'plan'">
           <div v-if="selectedStudent?.plan" class="text-sm">
             <!-- achievment plan details -->
@@ -928,7 +928,7 @@ const toDate = (date: string | Date): string => {
             </div>
           </UForm>
         </div>
-        <div v-if="selectedFlag === 'assign_driver'">
+        <!-- <div v-if="selectedFlag === 'assign_driver'">
           <UForm
             :schema="assignDriverSchema"
             :state="{ selectedDriverId }"
@@ -965,7 +965,7 @@ const toDate = (date: string | Date): string => {
               />
             </div>
           </UForm>
-        </div>
+        </div> -->
         <div v-if="selectedFlag === 'assign_plan'">
           <UForm
             :schema="assignPlanSchema"
@@ -1081,7 +1081,7 @@ const toDate = (date: string | Date): string => {
             <span>({{ selectedStudents.length }})</span>
           </UButton>
           <!-- assign driver to students button -->
-          <UButton
+          <!-- <UButton
             icon="lucide-car-taxi-front"
             variant="outline"
             color="warning"
@@ -1092,7 +1092,7 @@ const toDate = (date: string | Date): string => {
             <span>تعيين</span>
             <span>سائق</span>
             <span>({{ selectedStudents.length }})</span>
-          </UButton>
+          </UButton> -->
           <!-- assign plan to students button -->
           <UButton
             icon="lucide-car-taxi-front"

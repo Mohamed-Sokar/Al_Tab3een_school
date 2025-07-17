@@ -1,4 +1,21 @@
 <script setup lang="ts">
+definePageMeta({
+  middleware: ["check-setup"],
+});
+onMounted(() => {
+  watch(
+    route,
+    () => {
+      if (route.query.alert) {
+        useAppToast().toastError({
+          title: decodeURIComponent(route.query.alert as string),
+        });
+      }
+    },
+    { immediate: true }
+  );
+});
+
 useHead({ title: "الخطط الدراسية" });
 useSeoMeta({
   title: "الخطط الدراسية",

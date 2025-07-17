@@ -43,11 +43,10 @@ interface StudentMonthlyAchievements {
   status: "مكتمل" | "غير مكتمل" | undefined;
 }
 
-interface Teacher {
+interface Employee {
   id?: string | undefined;
   manager_id?: string | undefined | null;
-  // full_name: string | undefined;
-  full_name?: string | undefined;
+  // full_name?: string | undefined;
   first_name: string | undefined;
   second_name: string | undefined;
   third_name: string | undefined;
@@ -56,17 +55,20 @@ interface Teacher {
   phone_number: string | undefined;
   address: string | undefined;
   masjed: string | undefined;
+  job_title: string | undefined;
   whatsapp_number: string | undefined;
   enrollment_date: Date | undefined;
   children_count?: string | undefined;
   marital_status: "متزوج" | "أعزب" | "مطلق" | "أرمل" | undefined;
   birth_date: Date | undefined;
   subject: string[] | undefined;
+  level_id: number | undefined;
   created_at?: string | undefined | Date;
 
-  behavioral_issues?: Array<BehavioralIssueTeacher> | undefined;
-  loans?: Array<TeacherLoan> | undefined;
-  absence?: Array<TeacherAbsenceReport> | undefined;
+  behavioral_issues?: Array<BehavioralIssueEmployee> | undefined;
+  supervisory_visits?: Array<SupervisoryVisitTeacher> | undefined;
+  loans?: Array<EmployeeLoan> | undefined;
+  absence?: Array<EmployeeAbsenceReport> | undefined;
   academic_classes?: Array<Class> | undefined;
 
   // behavioral_issues_count?: number | undefined;
@@ -146,21 +148,34 @@ interface BehavioralIssue {
   description: string | undefined;
 }
 
-interface BehavioralIssueTeacher {
+interface BehavioralIssueEmployee {
   id: number | undefined;
   teacher_id: string | undefined;
-  teacher: {
+  employee?: {
     first_name: string | undefined;
     last_name: string | undefined;
   };
   description: string | undefined;
   created_at?: string | undefined | Date;
 }
+interface SupervisoryVisitTeacher {
+  id?: number | undefined;
+  teacher_id?: string | undefined;
+  teacher?: {
+    first_name: string | undefined;
+    last_name: string | undefined;
+  };
+  notes: string | undefined;
+  supervisor: string | undefined;
+  date: Date | undefined;
+  type: string | undefined;
+  created_at?: string | undefined | Date;
+}
 
-interface TeacherLoan {
+interface EmployeeLoan {
   id: number | undefined;
   teacher_id: string | undefined;
-  teacher: {
+  employee: {
     first_name: string | undefined;
     last_name: string | undefined;
   };
@@ -168,10 +183,10 @@ interface TeacherLoan {
   created_at?: Date | undefined;
 }
 
-interface TeacherAbsenceReport {
+interface EmployeeAbsenceReport {
   id?: number | undefined;
   teacher_id?: string | undefined;
-  teacher?: {
+  employee?: {
     first_name: string | undefined;
     last_name: string | undefined;
   };
@@ -218,12 +233,13 @@ export type {
   Plan,
   MonthlyPlan,
   BehavioralIssue,
-  BehavioralIssueTeacher,
+  BehavioralIssueEmployee,
+  SupervisoryVisitTeacher,
   GradesReport,
   Payment,
-  Teacher,
-  TeacherLoan,
-  TeacherAbsenceReport,
+  Employee,
+  EmployeeAbsenceReport,
+  EmployeeLoan,
   Level,
   LinkItem,
 };

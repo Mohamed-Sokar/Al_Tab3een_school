@@ -1,21 +1,22 @@
 import type {
-  Teacher,
-  BehavioralIssueTeacher,
-  TeacherAbsenceReport,
-  TeacherLoan,
+  Employee,
+  BehavioralIssueEmployee,
+  EmployeeAbsenceReport,
+  EmployeeLoan,
+  SupervisoryVisitTeacher,
 } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
 export const useTeachersStore = defineStore("teachers", () => {
   const { toastSuccess, toastError } = useAppToast();
-  // const user = useSupabaseUser();
-  const teachersData = ref<Teacher[]>([]);
+  const teachersData = ref<Employee[]>([]);
   const loading = ref(false);
-  const behavioralIssuesTeachersData = ref<BehavioralIssueTeacher[]>([]);
-  const teachersLoansData = ref<TeacherLoan[]>([]);
+  const behavioralIssuesTeachersData = ref<BehavioralIssueEmployee[]>([]);
+  const supervisoryVisitsTeachersData = ref<SupervisoryVisitTeacher[]>([]);
+  const teachersLoansData = ref<EmployeeLoan[]>([]);
 
-  const teachersAbsenceReportsData = ref<TeacherAbsenceReport[]>([]);
+  const teachersAbsenceReportsData = ref<EmployeeAbsenceReport[]>([]);
   const tableKey = ref(Math.random());
 
   // Getters
@@ -28,6 +29,13 @@ export const useTeachersStore = defineStore("teachers", () => {
     return behavioralIssuesTeachersData.value.sort((a, b) => {
       const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
       const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return aDate - bDate;
+    });
+  });
+  const sortedSupervisorVisits = computed(() => {
+    return supervisoryVisitsTeachersData.value.sort((a, b) => {
+      const aDate = a.date ? new Date(a.date).getTime() : 0;
+      const bDate = b.date ? new Date(b.date).getTime() : 0;
       return aDate - bDate;
     });
   });
@@ -46,9 +54,10 @@ export const useTeachersStore = defineStore("teachers", () => {
 
   // Actions
   const fetchTeachers = async () => {
+    if (teachersData.value.length) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
-      const { data } = await api.get("/teachers");
+      const { data } = await api.get("/employees");
       console.log(data);
       // set students data to ref locally
       teachersData.value = data;
@@ -66,10 +75,11 @@ export const useTeachersStore = defineStore("teachers", () => {
       loading.value = false;
     }
   };
-  const addTeacher = async (teacher: Teacher) => {
+  const addTeacher = async (teacher: Object) => {
+    console.log(teacher);
     try {
       loading.value = true;
-      const { data } = await api.post("/teachers", teacher);
+      const { data } = await api.post("/employees", teacher);
       toastSuccess({
         title: `:تم إضافة المعلم ${data[0].first_name} ${data[0].last_name} بنجاح`,
       });
@@ -84,12 +94,12 @@ export const useTeachersStore = defineStore("teachers", () => {
       loading.value = false;
     }
   };
-  const updateTeacher = async (teacherId: string, newTeacher: Teacher) => {
+  const updateTeacher = async (teacherId: string, newTeacher: Employee) => {
     try {
       loading.value = true;
       const cleaned = removeInvalidFields(newTeacher); // 🧹 remove unfound columns in DB
 
-      const { data } = await api.put(`teachers/${teacherId}`, cleaned);
+      const { data } = await api.put(`employees/${teacherId}`, cleaned);
 
       toastSuccess({
         title: `:تم تحديث بيانات المعلم ${data[0].first_name} ${data[0].last_name} بنجاح`,
@@ -131,7 +141,7 @@ export const useTeachersStore = defineStore("teachers", () => {
   const deleteTeacher = async (teacherId: string) => {
     try {
       loading.value = true;
-      const { data } = await api.delete(`teachers/${teacherId}`);
+      const { data } = await api.delete(`employees/${teacherId}`);
       toastSuccess({
         title: `:تم حذف المعلم ( ${data[0].full_name} ) بنجاح`,
       });
@@ -159,7 +169,7 @@ export const useTeachersStore = defineStore("teachers", () => {
   const fetchTeachersBehavioralIssues = async () => {
     loading.value = true;
     try {
-      const { data } = await api.get("/teachers/behavioral-issues");
+      const { data } = await api.get("/employees/behavioral-issues");
       console.log(data);
       // set behavioral Issues data to ref locally
       behavioralIssuesTeachersData.value = data;
@@ -191,7 +201,7 @@ export const useTeachersStore = defineStore("teachers", () => {
 
     try {
       loading.value = true;
-      const { data } = await api.post("/teachers/behavioral-issues", issue);
+      const { data } = await api.post("/employees/behavioral-issues", issue);
       console.log(data);
       toastSuccess({
         title: "تم إضافة المخالفة السلوكية",
@@ -241,10 +251,13 @@ export const useTeachersStore = defineStore("teachers", () => {
         targetedIssue?.teacher_id ?? ""
       );
 
-      const { data } = await api.put(`/teachers/behavioral-issues/${issueId}`, {
-        // ...behavioralIssuesTeachersData.value[issueIndex],
-        description,
-      });
+      const { data } = await api.put(
+        `/employees/behavioral-issues/${issueId}`,
+        {
+          // ...behavioralIssuesTeachersData.value[issueIndex],
+          description,
+        }
+      );
       console.log(data);
 
       behavioralIssuesTeachersData.value[issueIndex] = {
@@ -261,7 +274,7 @@ export const useTeachersStore = defineStore("teachers", () => {
         // You can safely access students_behavioral_issues[issueIndex] here
         const issueIndex =
           targetedTeacher?.behavioral_issues?.findIndex(
-            (issue) => issue.id === issueId
+            (issue: BehavioralIssueEmployee) => issue.id === issueId
           ) || 0;
 
         // For example, update the description:
@@ -295,7 +308,7 @@ export const useTeachersStore = defineStore("teachers", () => {
       // delete issue from DB
       loading.value = true;
       const { data } = await api.delete(
-        `teachers/behavioral-issues/${issueId}`
+        `employees/behavioral-issues/${issueId}`
       );
       toastSuccess({
         title: `:تم حذف المخالفة بنجاح`,
@@ -331,12 +344,191 @@ export const useTeachersStore = defineStore("teachers", () => {
       (issue) => issue.id === issueId
     );
   };
+  // supervisoryVisits actions
+  const fetchSupervisoryVisits = async () => {
+    loading.value = true;
+    try {
+      const { data } = await api.get("/employees/supervisory-visits");
+      console.log(data);
+      // set supervisory visits data to ref locally
+      supervisoryVisitsTeachersData.value = data;
+      toastSuccess({
+        title: "تم تحميل الزيارات بنجاح",
+      });
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في تحميل الزيارات الإدارية",
+        description: err instanceof Error ? err.message : String(err),
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const addSupervisoryVisit = async (
+    teacherId: string,
+    visit: SupervisoryVisitTeacher
+  ) => {
+    const targetedTeacher = getSpesificTeacher(teacherId);
+
+    if (!targetedTeacher) return;
+
+    try {
+      loading.value = true;
+      const { data } = await api.post("/employees/supervisory-visits", {
+        ...visit,
+        teacher_id: teacherId,
+      });
+      console.log(data);
+      toastSuccess({
+        title: "تم إضافة الزيارة بنجاح",
+      });
+
+      if (teachersData.value && !!targetedTeacher) {
+        // ensure exsisting the supervisory visits array
+        if (!targetedTeacher.supervisory_visits) {
+          targetedTeacher.supervisory_visits = [];
+        }
+
+        // add new supervisory visits
+        targetedTeacher.supervisory_visits.push({
+          ...data[0], // الزيارة التي أرجعها السيرفر
+        });
+      }
+
+      const newVisit = {
+        ...visit,
+        teacher: {
+          first_name: targetedTeacher.first_name,
+          last_name: targetedTeacher.last_name,
+        },
+      };
+      supervisoryVisitsTeachersData.value.unshift({ ...newVisit, ...data[0] });
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في إضافة الزيارة",
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const editSupervisorVisits = async (
+    visitId: number,
+    newVisit: SupervisoryVisitTeacher
+  ) => {
+    try {
+      loading.value = true;
+      const visitIndex = getSpesificSupervisorVisitIndex(visitId);
+      const targetedVisit = getSpesificSupervisorVisit(visitId);
+      const teacherIndex = getSpesificTeacherIndex(
+        targetedVisit?.teacher_id ?? ""
+      );
+      const targetedTeacher = getSpesificTeacher(
+        targetedVisit?.teacher_id ?? ""
+      );
+      const payload = {
+        notes: newVisit?.notes,
+        type: newVisit?.type,
+        supervisor: newVisit?.supervisor,
+        date: newVisit?.date,
+      };
+      const { data } = await api.put(
+        `/employees/supervisory-visits/${visitId}`,
+        payload
+      );
+      console.log(data);
+
+      supervisoryVisitsTeachersData.value[visitIndex] = {
+        ...supervisoryVisitsTeachersData.value[visitIndex],
+        ...payload,
+      };
+
+      // update students behavioral issues array locally
+      if (
+        teachersData.value &&
+        teachersData.value[teacherIndex] &&
+        teachersData.value[teacherIndex].supervisory_visits
+      ) {
+        // You can safely access students_behavioral_issues[issueIndex] here
+        const visitIndex =
+          targetedTeacher?.supervisory_visits?.findIndex(
+            (visit) => visit.id === visitId
+          ) || 0;
+
+        // For example, update the description:
+        teachersData.value[teacherIndex].supervisory_visits[visitIndex] = {
+          ...payload,
+          ...data[0],
+        };
+      }
+
+      toastSuccess({
+        title: "تم تعديل الزيارة بنجاح",
+      });
+    } catch (err) {
+      toastError({
+        title: "حدثت مشكلة أثناء تعديل الزيارة",
+        description: err instanceof Error ? err.message : String(err),
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const deleteSupervisorVisit = async (visitId: number) => {
+    // Update the teacher's supervisor visits
+    const targetedVisit = getSpesificSupervisorVisit(visitId);
+    const visitIndex = getSpesificSupervisorVisitIndex(visitId);
+    const targetedTeacher = getSpesificTeacher(targetedVisit?.teacher_id ?? "");
+
+    try {
+      // delete issue from DB
+      loading.value = true;
+      const { data } = await api.delete(
+        `employees/supervisory-visits/${visitId}`
+      );
+      toastSuccess({
+        title: `:تم حذف الزيارة بنجاح`,
+      });
+      console.log(data);
+      // delete issue locally
+      supervisoryVisitsTeachersData.value.splice(visitIndex, 1);
+
+      // delete issue from the student behavioral issues array
+      if (!!targetedTeacher) {
+        const targetedVisitIndex =
+          targetedTeacher.supervisory_visits?.findIndex(
+            (visit) => visit.id === visitId
+          );
+
+        targetedTeacher.supervisory_visits?.splice(targetedVisitIndex ?? 0, 1);
+      }
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في حذف الزيارة",
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const getSpesificSupervisorVisit = (visitId: number) => {
+    return supervisoryVisitsTeachersData.value.find(
+      (visit) => visit.id === visitId
+    );
+  };
+  const getSpesificSupervisorVisitIndex = (visitId: number) => {
+    return supervisoryVisitsTeachersData.value.findIndex(
+      (visit) => visit.id === visitId
+    );
+  };
 
   // Teacher loans operations
   const fetchTeachersLoans = async () => {
     loading.value = true;
     try {
-      const { data } = await api.get("/teachers/loans");
+      const { data } = await api.get("/employees/loans");
       console.log(data);
       // set loans data to ref locally
       teachersLoansData.value = data;
@@ -367,7 +559,7 @@ export const useTeachersStore = defineStore("teachers", () => {
 
     try {
       loading.value = true;
-      const { data } = await api.post("/teachers/loans", loan);
+      const { data } = await api.post("/employees/loans", loan);
       console.log(data);
       toastSuccess({
         title: "تم إضافة السلفة",
@@ -414,7 +606,7 @@ export const useTeachersStore = defineStore("teachers", () => {
         targetedLoan?.teacher_id || ""
       );
 
-      const { data } = await api.put(`/teachers/loans/${loanId}`, {
+      const { data } = await api.put(`/employees/loans/${loanId}`, {
         // ...behavioralIssuesTeachersData.value[loanIndex],
         amount,
       });
@@ -494,7 +686,7 @@ export const useTeachersStore = defineStore("teachers", () => {
   const fetchAbsenceReports = async () => {
     loading.value = true;
     try {
-      const { data } = await api.get("/teachers/absence");
+      const { data } = await api.get("/employees/absence");
       console.log(data);
       // set loans data to ref locally
       teachersAbsenceReportsData.value = data;
@@ -528,7 +720,7 @@ export const useTeachersStore = defineStore("teachers", () => {
 
     try {
       loading.value = true;
-      const { data } = await api.post("/teachers/absence", newReport);
+      const { data } = await api.post("/employees/absence", newReport);
       console.log(data);
       toastSuccess({
         title: "تم إضافة التقرير",
@@ -576,7 +768,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     try {
       // delete report from DB
       loading.value = true;
-      const { data } = await api.delete(`teachers/absence/${reportId}`);
+      const { data } = await api.delete(`employees/absence/${reportId}`);
       toastSuccess({
         title: `:تم حذف التقرير بنجاح`,
       });
@@ -616,7 +808,7 @@ export const useTeachersStore = defineStore("teachers", () => {
         targetedReport?.teacher_id || ""
       );
 
-      const { data } = await api.put(`teachers/absence/${reportId}`, {
+      const { data } = await api.put(`employees/absence/${reportId}`, {
         // ...behavioralIssuesTeachersData.value[loanIndex],
         // ...targetedReport,
         ...newReport,
@@ -701,6 +893,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     behavioralIssuesTeachersData,
     teachersLoansData,
     teachersAbsenceReportsData,
+    supervisoryVisitsTeachersData,
     loading,
     // Actions
     fetchTeachers,
@@ -723,9 +916,15 @@ export const useTeachersStore = defineStore("teachers", () => {
     deleteTeacherLoan,
     getSpesificTeacherLoan,
     getSpesificTeacherLoanIndex,
+    // teachers supervisory visits
+    fetchSupervisoryVisits,
+    addSupervisoryVisit,
+    editSupervisorVisits,
+    deleteSupervisorVisit,
+    getSpesificSupervisorVisit,
+    getSpesificSupervisorVisitIndex,
     // teachers absence reports
     fetchAbsenceReports,
-    // toggleTeacherAbsenceReport,
     addTeacherAbsenceReport,
     editTeacherAbsenceReport,
     deleteTeacherAbsenceReport,
@@ -737,6 +936,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     sortedTeachers,
     sortedLoans,
     sortedIssues,
+    sortedSupervisorVisits,
     sortedAbsenceReports,
   };
 });

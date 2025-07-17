@@ -21,12 +21,13 @@ export const useStudentStore = defineStore("students", () => {
   });
   const sortedIssues = computed(() => {
     return [...(behavioralIssuesStudentData.value ?? [])].sort((a, b) =>
-      (a.student_name ?? "").localeCompare(b.student_name ?? "")
+      (a.student?.first_name ?? "").localeCompare(b.student?.first_name ?? "")
     );
   });
 
   // Actions
   const fetchStudents = async () => {
+    if (studentsData.value.length) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
       const { data } = await api.get("/students");

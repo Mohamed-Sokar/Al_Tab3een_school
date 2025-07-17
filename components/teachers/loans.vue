@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import type { TeacherLoan } from "~/types";
+import type { EmployeeLoan } from "~/types";
 import { months } from "~/constants";
 import { useTeachersStore } from "@/stores/teachers";
+
+useHead({ title: "القروض" });
+
 const { getArabicDayName, getDate } = useDateUtils();
 const teachersStore = useTeachersStore();
 const { exportToExcel } = useExportToExcel();
@@ -18,7 +21,7 @@ const sorting = ref([
     desc: false,
   },
 ]);
-const columns: TableColumn<TeacherLoan>[] = [
+const columns: TableColumn<EmployeeLoan>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
@@ -29,7 +32,7 @@ const columns: TableColumn<TeacherLoan>[] = [
     header: "اسم المعلم",
     cell: ({ row }) => {
       return (
-        row.original.teacher.first_name + " " + row.original.teacher.last_name
+        row.original.employee.first_name + " " + row.original.employee.last_name
       );
     },
   },
@@ -57,7 +60,7 @@ const columns: TableColumn<TeacherLoan>[] = [
     id: "action",
   },
 ];
-function getDropdownActions(loan: TeacherLoan): DropdownMenuItem[] {
+function getDropdownActions(loan: EmployeeLoan): DropdownMenuItem[] {
   return [
     [
       {
@@ -87,7 +90,7 @@ const exportIssues = () => {
   exportToExcel({
     data: selectedLoans.value.map((issue, i) => ({
       الرقم: i + 1,
-      الاسم: issue.teacher?.first_name + " " + issue.teacher?.last_name,
+      الاسم: issue.employee?.first_name + " " + issue.employee?.last_name,
       اليوم: getArabicDayName(issue.created_at ?? ""),
       التاريخ: getDate(issue.created_at ?? ""),
       القيمة: issue.amount,
@@ -181,25 +184,5 @@ watch(rowSelection, () => {
         </div>
       </template>
     </BaseTable>
-    <!-- <UTable
-      :loading="teachersStore.loading"
-      :key="tableKey"
-      v-model:global-filter="globalFilter"
-      ref="table"
-      :data="numberedLoans"
-      :columns="columns"
-    >
-      <template #action-cell="{ row }">
-        <UDropdownMenu :items="getDropdownActions(row.original)">
-          <UButton
-            icon="i-lucide-ellipsis-vertical"
-            color="neutral"
-            variant="soft"
-            aria-label="Actions"
-            class="p-2"
-          />
-        </UDropdownMenu>
-      </template>
-    </UTable> -->
   </div>
 </template>

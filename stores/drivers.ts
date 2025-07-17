@@ -23,6 +23,7 @@ export const useDriversStore = defineStore("drivers", () => {
   });
 
   const fetchDrivers = async () => {
+    if (driversData.value.length) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
       const { data } = await api.get("/drivers");

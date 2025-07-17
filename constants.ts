@@ -1,12 +1,9 @@
 import type {
   BehavioralIssue,
-  BehavioralIssueTeacher,
+  BehavioralIssueEmployee,
   GradesReport,
-  Level,
-  Payment,
-  Student,
-  TeacherLoan,
-  TeacherUpsentReport,
+  EmployeeLoan,
+  EmployeeAbsenceReport,
 } from "./types";
 
 export const memorization_status_options = [
@@ -14,9 +11,7 @@ export const memorization_status_options = [
   "حافظ ضعيف",
   "غير حافظ",
 ];
-
 export const academic_level_options = ["ممتاز", "جيد جدا", "جيد", "ضعيف"];
-
 export const quran_classes_options = [
   "تثبيت",
   "الأول",
@@ -40,7 +35,7 @@ export const level_options = [
   "الثامن",
   "التاسع",
 ];
-
+export const job_title_options = ["معلم", "آذن", "سكرتير", "نائب مدير", "مدير"];
 export const class_group_options = ["1", "2", "3", "4", "5"];
 export const class_wing_options = [
   "الجنوبية",
@@ -49,7 +44,6 @@ export const class_wing_options = [
   "الشرقية",
 ];
 export const class_floor_options = ["الأرضي", "الأول", "الثاني", "الثالث"];
-
 export const courses_options = [
   "اللغة العربية",
   "اللغة الإنجليزية",
@@ -58,7 +52,6 @@ export const courses_options = [
   "القرآن",
   "التربية الإسلامية",
 ];
-
 export const grades_level_options = [
   "شهري",
   "نصف الفصل الأول",
@@ -66,11 +59,8 @@ export const grades_level_options = [
   "نصف الفصل الثاني",
   "نهاية الفصل الثاني",
 ];
-
 export const payment_type_options = ["صادر", "وارد"];
-
 export const modeOptions = ref(["light", "dark"]);
-
 export const months = [
   "كل الأشهر",
   "يناير",
@@ -126,7 +116,6 @@ export const daily_recitation_options = [
   "5 أجزاء",
   "10 أجزاء",
 ];
-
 export const marital_status_options = ["متزوج", "أعزب", "مطلق", "أرمل"];
 export const students = [
   {
@@ -333,7 +322,6 @@ export const students = [
     masjed: "مسجد الشافعي",
   },
 ];
-
 export const teachers = [
   {
     // id: 1,
@@ -406,35 +394,8 @@ export const teachers = [
     // loans_amount: 0,
   },
 ];
-
-export const teachersLoans: TeacherLoan[] = [];
-
-export const teachersUpsentReports: TeacherUpsentReport[] = [];
-
-export const payments: Payment[] = [
-  {
-    id: Math.random(),
-    type: "مصروف",
-    description: "تكريم الطلاب في المسابقة",
-    date: new Date().toISOString().split("T")[0],
-    amount: 500,
-  },
-  {
-    id: Math.random(),
-    type: "مصروف",
-    description: "تكاليف أدوات التنطيف",
-    date: new Date().toISOString().split("T")[0],
-    amount: 200,
-  },
-  {
-    id: Math.random(),
-    type: "دخل",
-    description: "دعم من مؤسسة",
-    date: new Date().toISOString().split("T")[0],
-    amount: 1000,
-  },
-];
-
+export const teachersLoans: EmployeeLoan[] = [];
+const employeeAbsenceReport: EmployeeAbsenceReport[] = [];
 export const behavioralIssues: BehavioralIssue[] = [
   // {
   //   id: 1,
@@ -477,38 +438,35 @@ export const behavioralIssues: BehavioralIssue[] = [
   //   description: "الاعتداء على طالب",
   // },
 ];
-
-export const behavioralIssuesTeacher: BehavioralIssueTeacher[] = [];
-
+export const behavioralIssuesTeacher: BehavioralIssueEmployee[] = [];
 export const gradesReports: GradesReport[] = [];
-
-export const levels: Level[] = [
-  {
-    id: 1,
-    title: "الصف السادس",
-    studentsCount: 80,
-    maximumCapacity: 60,
-    fees: 100,
-  },
-  {
-    id: 2,
-    title: "الصف السابع",
-    studentsCount: 65,
-    maximumCapacity: 70,
-    fees: 100,
-  },
-  {
-    id: 3,
-    title: "الصف الثامن",
-    studentsCount: 43,
-    maximumCapacity: 60,
-    fees: 100,
-  },
-  {
-    id: 4,
-    title: "الصف التاسع",
-    studentsCount: 70,
-    maximumCapacity: 77,
-    fees: 100,
-  },
-];
+// export const levels: Level[] = [
+//   {
+//     id: 1,
+//     title: "الصف السادس",
+//     studentsCount: 80,
+//     maximumCapacity: 60,
+//     fees: 100,
+//   },
+//   {
+//     id: 2,
+//     title: "الصف السابع",
+//     studentsCount: 65,
+//     maximumCapacity: 70,
+//     fees: 100,
+//   },
+//   {
+//     id: 3,
+//     title: "الصف الثامن",
+//     studentsCount: 43,
+//     maximumCapacity: 60,
+//     fees: 100,
+//   },
+//   {
+//     id: 4,
+//     title: "الصف التاسع",
+//     studentsCount: 70,
+//     maximumCapacity: 77,
+//     fees: 100,
+//   },
+// ];

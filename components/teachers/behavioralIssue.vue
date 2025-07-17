@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import { type BehavioralIssueTeacher } from "~/types";
+import type { BehavioralIssueEmployee } from "~/types";
 import { months } from "~/constants";
 import { useTeachersStore } from "@/stores/teachers";
+
+useHead({ title: "المخالفات الإدارية" });
+
 const teachersStore = useTeachersStore();
 const { getArabicDayName } = useDateUtils();
 const globalFilter = ref("");
@@ -13,7 +16,7 @@ const selectedMonth = ref(months[currentMonthIndex]);
 const { getDate } = useDateUtils();
 const { exportToExcel } = useExportToExcel();
 
-const columns: TableColumn<BehavioralIssueTeacher>[] = [
+const columns: TableColumn<BehavioralIssueEmployee>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
@@ -24,7 +27,9 @@ const columns: TableColumn<BehavioralIssueTeacher>[] = [
     header: "اسم المعلم",
     cell: ({ row }) => {
       return (
-        row.original.teacher.first_name + " " + row.original.teacher.last_name
+        row.original?.employee?.first_name +
+        " " +
+        row.original?.employee?.last_name
       );
     },
   },
@@ -52,7 +57,9 @@ const columns: TableColumn<BehavioralIssueTeacher>[] = [
     id: "action",
   },
 ];
-function getDropdownActions(issue: BehavioralIssueTeacher): DropdownMenuItem[] {
+function getDropdownActions(
+  issue: BehavioralIssueEmployee
+): DropdownMenuItem[] {
   return [
     [
       {
@@ -95,14 +102,14 @@ const exportIssues = () => {
 const filteredIssues = computed(() => {
   // tableKey.value = Math.random();
   return teachersStore.sortedIssues.filter(
-    (issue) =>
+    (issue: BehavioralIssueEmployee) =>
       new Date(issue.created_at ?? new Date()).getMonth() ===
       months.indexOf(selectedMonth.value)
   );
 });
 
 const numberedIssues = computed(() =>
-  filteredIssues.value.map((issue, index) => ({
+  filteredIssues.value.map((issue: BehavioralIssueEmployee, index: number) => ({
     ...issue,
     rowNumber: index + 1,
   }))

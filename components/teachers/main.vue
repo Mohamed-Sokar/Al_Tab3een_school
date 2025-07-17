@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import type { Teacher } from "~/types";
+import type { Employee } from "~/types";
 import { useTeachersStore } from "@/stores/teachers";
-import type { Column } from "@tanstack/vue-table";
-import { array, number, object } from "yup";
+import { array, object } from "yup";
 import { useExportToExcel } from "~/composables/useExportToExcel";
+
+useHead({ title: "المعلمون" });
 
 const teachersStore = useTeachersStore();
 const academicClassesStore = useAcademicClassesStore();
@@ -16,6 +17,8 @@ type Flag =
   | "loans"
   | "absence"
   | "academic_classes"
+  | "add_supervisory_visit"
+  | "supervisory_visits"
   | "assign_academic_class";
 
 const globalFilter = ref("");
@@ -29,7 +32,7 @@ const rowSelection = ref({});
 const tableKey = ref(Math.random());
 const UBadge = resolveComponent("UBadge");
 const UButton = resolveComponent("UButton");
-const selectedTeacher = ref<Teacher>();
+const selectedTeacher = ref<Employee>();
 const selectedArrayFlag = ref<Flag>();
 const showModal = ref(false);
 const selectedAcademicClassesIds = ref<number[]>([]);
@@ -40,15 +43,11 @@ const schema = object({
   selectedAcademicClassesIds: array().required("الصف مطلوب"),
 });
 
-const columns: TableColumn<Teacher>[] = [
+const columns: TableColumn<Employee>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
   },
-  // {
-  //   accessorKey: "identity_number",
-  //   header: "الهوية",
-  // },
   {
     accessorKey: "full_name",
     header: ({ column }) => {
@@ -77,25 +76,10 @@ const columns: TableColumn<Teacher>[] = [
         : "";
     },
   },
-  // {
-  //   accessorKey: "phone_number",
-  //   header: "رقم الجوال",
-  // },
-  // {
-  //   accessorKey: "birth_date",
-  //   // header: "تاريخ الميلاد",
-  //   header: ({ column }) => getHeader(column, "تاريخ الميلاد"),
-  //   cell: ({ row }) => {
-  //     // return new Date(row.getValue("birth_date")).toLocaleString("en-US", {
-  //     //   day: "numeric",
-  //     //   month: "short",
-  //     //   hour: "2-digit",
-  //     //   minute: "2-digit",
-  //     //   hour12: false,
-  //     // });
-  //     return row.original.birth_date;
-  //   },
-  // },
+  {
+    accessorKey: "job_title",
+    header: "المسمى الوظيفي",
+  },
   {
     accessorKey: "subject",
     header: "المادة",
@@ -115,8 +99,8 @@ const columns: TableColumn<Teacher>[] = [
         UBadge,
         {
           class: `capitalize`,
-          variant: "soft",
-          color: `neutral`,
+          variant: "solid",
+          color: `info`,
         },
         () => `${subject || "غير محدد"}`
       );
@@ -134,7 +118,7 @@ const columns: TableColumn<Teacher>[] = [
             issues.length > 0 ? "font-bold" : "font-normal"
           }`,
           variant: `${issues.length > 0 ? "subtle" : "soft"}`,
-          color: `${issues.length > 0 ? "error" : "success"}`,
+          color: `${issues.length > 0 ? "error" : "neutral"}`,
           onClick: (e: Event) => {
             e.stopPropagation();
             showIssuesModal(row.original, "behavioral_issues");
@@ -156,7 +140,7 @@ const columns: TableColumn<Teacher>[] = [
             loans.length > 0 ? "font-bold" : "font-normal"
           }`,
           variant: `${loans.length ? "subtle" : "soft"}`,
-          color: `${loans.length ? "error" : "success"}`,
+          color: `${loans.length ? "error" : "neutral"}`,
           onClick: (e: Event) => {
             e.stopPropagation();
             showIssuesModal(row.original, "loans");
@@ -179,7 +163,7 @@ const columns: TableColumn<Teacher>[] = [
             absences.length > 0 ? "font-bold" : "font-normal"
           }`,
           variant: `${absences.length ? "subtle" : "soft"}`,
-          color: `${absences.length ? "error" : "success"}`,
+          color: `${absences.length ? "error" : "neutral"}`,
           onClick: (e: Event) => {
             e.stopPropagation();
             showIssuesModal(row.original, "absence");
@@ -195,6 +179,9 @@ const columns: TableColumn<Teacher>[] = [
     header: "الصفوف الدراسية",
     cell: ({ row }) => {
       const academic_classes = row.original.academic_classes || [];
+      if (academic_classes.length === 0) {
+        return "لا يوجد صفوف";
+      }
       return h(
         UBadge,
         {
@@ -202,7 +189,7 @@ const columns: TableColumn<Teacher>[] = [
             academic_classes.length > 0 ? "font-bold" : "font-normal"
           }`,
           variant: `${academic_classes.length ? "subtle" : "soft"}`,
-          color: `${academic_classes.length ? "error" : "success"}`,
+          color: `neutral`,
           onClick: (e: Event) => {
             e.stopPropagation();
             showIssuesModal(row.original, "academic_classes");
@@ -213,21 +200,55 @@ const columns: TableColumn<Teacher>[] = [
       );
     },
   },
+  {
+    accessorKey: "supervisory_visits",
+    header: "الزيارات الإشرافية",
+    cell: ({ row }) => {
+      const supervisory_visits = row.original.supervisory_visits || [];
+      if (supervisory_visits.length === 0) {
+        return "لا توجد زيارات";
+      }
+      return h(
+        UBadge,
+        {
+          class: `capitalize hover:cursor-pointer hover:outline ${
+            supervisory_visits.length > 0 ? "font-bold" : "font-normal"
+          }`,
+          variant: `${supervisory_visits.length ? "subtle" : "soft"}`,
+          color: `${supervisory_visits.length ? "success" : "neutral"}`,
+          onClick: (e: Event) => {
+            e.stopPropagation();
+            showIssuesModal(row.original, "supervisory_visits");
+          },
+        },
+
+        () => `${supervisory_visits.length} زيارة`
+      );
+    },
+  },
 
   {
     id: "action",
   },
 ];
-function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
+function getDropdownActions(teacher: Employee): DropdownMenuItem[][] {
   return [
     [
+      {
+        label: "إضافة زيارة إشرافية",
+        color: "info",
+        icon: "i-heroicons-calendar-days",
+        onSelect: () => {
+          navigateTo(`/employees/${teacher.id}/add-supervisory-visit`);
+          // showIssuesModal(teacher, "add_supervisory_visit");
+        },
+      },
       {
         label: "إضافة صف دراسي",
         color: "info",
         icon: "i-heroicons-presentation-chart-bar",
         onSelect: () => {
           showIssuesModal(teacher, "assign_academic_class");
-          // navigateTo(`/teachers/${teacher.id}/add_absence_report`);
         },
       },
       {
@@ -235,7 +256,7 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
         color: "info",
         icon: "i-heroicons-banknotes",
         onSelect: () => {
-          navigateTo(`/teachers/${teacher.id}/add_loan`);
+          navigateTo(`/employees/${teacher.id}/add-loan`);
         },
       },
       {
@@ -243,7 +264,7 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
         color: "error",
         icon: "i-heroicons-user-minus",
         onSelect: () => {
-          navigateTo(`/teachers/${teacher.id}/add_absence_report`);
+          navigateTo(`/employees/${teacher.id}/add-absence-report`);
         },
       },
       {
@@ -251,7 +272,7 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
         color: "warning",
         icon: "i-heroicons-exclamation-triangle",
         onSelect: () => {
-          navigateTo(`/teachers/${teacher.id}/add_behavioral_issue`);
+          navigateTo(`/employees/${teacher.id}/add-behavioral-issue`);
         },
       },
     ],
@@ -260,14 +281,14 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
         label: "معاينة",
         icon: "i-lucide-eye",
         onSelect: () => {
-          navigateTo(`/teachers/${teacher.id}/view_teacher`);
+          navigateTo(`/employees/${teacher.id}/view`);
         },
       },
       {
         label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
-          navigateTo(`/teachers/${teacher.id}/edit_teacher`);
+          navigateTo(`/employees/${teacher.id}/edit`);
         },
       },
       {
@@ -276,14 +297,13 @@ function getDropdownActions(teacher: Teacher): DropdownMenuItem[][] {
         color: "error",
         onSelect: () => {
           teachersStore.deleteTeacher(teacher.id || "");
-          // tableKey.value = Math.random();
         },
       },
     ],
   ];
 }
 // Actions
-function showIssuesModal(teacher: Teacher, flag: Flag) {
+function showIssuesModal(teacher: Employee, flag: Flag) {
   selectedArrayFlag.value = flag;
   selectedTeacher.value = teacher;
   showModal.value = true;
@@ -365,15 +385,17 @@ const exportStudents = () => {
 };
 // Getters
 const numberedTeachers = computed(() => {
-  return teachersStore.sortedTeachers.map((teacher, index) => ({
-    ...teacher,
-    rowNumber: index + 1,
-  }));
+  return teachersStore.sortedTeachers.map(
+    (teacher: Employee, index: number) => ({
+      ...teacher,
+      rowNumber: index + 1,
+    })
+  );
 });
 const selectedTeachers = computed(() =>
   Object.keys(rowSelection.value).map((index) => numberedTeachers.value[+index])
 );
-const selectedStudentsIds = computed(() =>
+const selectedEmployeesIds = computed(() =>
   selectedTeachers.value.map((student) => student?.id)
 );
 
@@ -395,6 +417,8 @@ const selectedStudentsIds = computed(() =>
           ? 'تفاصيل أيام الغياب'
           : selectedArrayFlag === 'academic_classes'
           ? 'تفاصيل الصفوف الدراسية'
+          : selectedArrayFlag === 'supervisory_visits'
+          ? 'تفاصيل الزيارات الإشرافية'
           : ''
       "
     >
@@ -432,6 +456,44 @@ const selectedStudentsIds = computed(() =>
           </div>
 
           <p v-else>لا توجد مخالفات.</p>
+        </div>
+        <div v-if="selectedArrayFlag === 'supervisory_visits'">
+          <div v-if="selectedTeacher?.supervisory_visits?.length">
+            <ul>
+              <li
+                class="grid grid-cols-5 justify-between items-center gap-2 border-b py-2 place-items-center"
+              >
+                <span class="font-bold">اليوم</span>
+                <span class="font-bold">التاريخ</span>
+                <span class="font-bold">نوع الزيارة</span>
+                <span class="font-bold">المشرف</span>
+                <span class="font-bold">ملاحظات</span>
+              </li>
+              <li
+                v-for="(visit, index) in selectedTeacher.supervisory_visits"
+                :key="index"
+                class="grid grid-cols-5 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
+              >
+                <span>
+                  {{ getArabicDayName(visit.date + "") }}
+                </span>
+                <span>
+                  {{ getDate(visit.date ?? "") }}
+                </span>
+                <span> {{ visit.type }} </span>
+                <span> {{ visit.supervisor }} </span>
+                <span> {{ visit.notes }} </span>
+              </li>
+            </ul>
+            <div class="pt-3">
+              <span> المجموع: </span>
+              <span class="font-bold">
+                {{ selectedTeacher.supervisory_visits.length }}
+              </span>
+            </div>
+          </div>
+
+          <p v-else>لا توجد زيارات.</p>
         </div>
         <div v-if="selectedArrayFlag === 'academic_classes'">
           <div v-if="selectedTeacher?.academic_classes?.length">
@@ -536,7 +598,6 @@ const selectedStudentsIds = computed(() =>
 
           <p v-else>لا يوجد أيام غياب.</p>
         </div>
-
         <div v-if="selectedArrayFlag === 'assign_academic_class'">
           <UForm
             :schema="schema"
@@ -626,3 +687,4 @@ const selectedStudentsIds = computed(() =>
     </BaseTable>
   </div>
 </template>
+<style></style>

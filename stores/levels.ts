@@ -14,16 +14,17 @@ export const useLevelsStore = defineStore("levels", () => {
   // Getters
   const levelsData = computed(() => levels.value);
 
-  const levelsWithStudentsCount = computed(() => {
-    return levels.value.map((level) => {
-      const count = studentsStore.studentsData.filter(
-        (s) => s.level === level.title
-      ).length;
-      return { ...level, studentsCount: count };
-    });
-  });
+  // const levelsWithStudentsCount = computed(() => {
+  //   return levels.value.map((level) => {
+  //     const count = studentsStore.studentsData.filter(
+  //       (s) => s.level === level.title
+  //     ).length;
+  //     return { ...level, studentsCount: count };
+  //   });
+  // });
 
   const fetchLevels = async () => {
+    if (levels.value.length) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
       const { data } = await api.get("/levels");
@@ -38,7 +39,7 @@ export const useLevelsStore = defineStore("levels", () => {
     } catch (err) {
       toastError({
         title: "حدث مشكلة أثناء تحميل المستويات",
-        description: err.message,
+        description: (err as Error).message,
       });
       throw Error(err instanceof Error ? err.message : String(err));
     } finally {
@@ -61,7 +62,7 @@ export const useLevelsStore = defineStore("levels", () => {
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة المستوى",
-        description: err.message,
+        description: (err as Error).message,
       });
       throw Error(err instanceof Error ? err.message : String(err));
     } finally {
@@ -82,7 +83,7 @@ export const useLevelsStore = defineStore("levels", () => {
     } catch (err) {
       toastError({
         title: "حدث مشكلة في حذف المستوى",
-        description: err.message,
+        description: (err as Error).message,
       });
     } finally {
       loading.value = false;
@@ -111,7 +112,7 @@ export const useLevelsStore = defineStore("levels", () => {
     } catch (err) {
       toastError({
         title: "حدث مشكلة في تعديل بيانات المستوى",
-        description: err.message,
+        description: (err as Error).message,
       });
     } finally {
       loading.value = false;
@@ -123,18 +124,18 @@ export const useLevelsStore = defineStore("levels", () => {
   const getSpecificLevelIndex = (levelId: number) => {
     return levels.value.findIndex((level) => level.id === levelId);
   };
-  const levelStudentsCount = (levelTitle: string) => {
-    return levelsWithStudentsCount.value.find(
-      (level) => level.title === levelTitle
-    )?.studentsCount;
-  };
+  // const levelStudentsCount = (levelTitle: string) => {
+  //   return levelsWithStudentsCount.value.find(
+  //     (level) => level.title === levelTitle
+  //   )?.studentsCount;
+  // };
 
   return {
     // Data
     loading,
     //Getters
     levelsData,
-    levelsWithStudentsCount,
+    // levelsWithStudentsCount,
 
     // Actions
     fetchLevels,
@@ -143,6 +144,6 @@ export const useLevelsStore = defineStore("levels", () => {
     deleteLevel,
     getSpecificLevel,
     getSpecificLevelIndex,
-    levelStudentsCount,
+    // levelStudentsCount,
   };
 });
