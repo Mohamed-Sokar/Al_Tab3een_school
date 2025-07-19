@@ -1,6 +1,7 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   // if (import.meta.server) return;
   const nuxtApp = useNuxtApp();
+  if (import.meta.server) return;
   if (
     import.meta.client &&
     nuxtApp.isHydrating &&

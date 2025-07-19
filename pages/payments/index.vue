@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute();
 useHead({ title: "المدفوعات الشهرية" });
 useSeoMeta({
   title: "المدفوعات الشهرية",
@@ -28,6 +29,22 @@ useSeoMeta({
   ogDescription: "إدارة المدفوعات الشهرية",
   ogImage: "/seo/payments.png",
   twitterCard: "summary",
+});
+definePageMeta({
+  middleware: ["check-setup"],
+});
+onMounted(() => {
+  watch(
+    route,
+    () => {
+      if (route.query.alert) {
+        useAppToast().toastError({
+          title: decodeURIComponent(route.query.alert as string),
+        });
+      }
+    },
+    { immediate: true }
+  );
 });
 </script>
 
