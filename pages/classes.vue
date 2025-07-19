@@ -8,7 +8,7 @@
 const route = useRoute();
 
 definePageMeta({
-  middleware: ["check-setup"],
+  // middleware: ["check-setup"],
 });
 onMounted(() => {
   watch(
