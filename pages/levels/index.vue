@@ -3,9 +3,9 @@ import { useLevelsStore } from "@/stores/levels";
 import { useStudentStore } from "@/stores/students";
 
 const route = useRoute();
-definePageMeta({
-  // middleware: ["check-setup"],
-});
+// definePageMeta({
+//   // middleware: ["check-setup"],
+// });
 watch(
   route,
   () => {
