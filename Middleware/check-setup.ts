@@ -1,13 +1,12 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+  // const nuxtApp = useNuxtApp();
   // if (import.meta.server) return;
-  const nuxtApp = useNuxtApp();
-  if (import.meta.server) return;
-  if (
-    import.meta.client &&
-    nuxtApp.isHydrating &&
-    nuxtApp.payload.serverRendered
-  )
-    return;
+  // if (
+  //   import.meta.client &&
+  //   nuxtApp.isHydrating &&
+  //   nuxtApp.payload.serverRendered
+  // )
+  //   return;
 
   const levelsStore = useLevelsStore();
   const academicClassesStore = useAcademicClassesStore();
