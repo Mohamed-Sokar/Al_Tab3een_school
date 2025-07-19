@@ -1,7 +1,7 @@
 <script setup lang="ts">
-definePageMeta({
-  // middleware: ["check-setup"],
-});
+// definePageMeta({
+// middleware: ["check-setup"],
+// });
 onMounted(() => {
   watch(
     route,

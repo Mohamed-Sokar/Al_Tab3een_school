@@ -29,7 +29,7 @@ useSeoMeta({
 });
 
 const levelsStore = useLevelsStore();
-const studentsStore = useStudentStore();
+// const studentsStore = useStudentStore();
 
 // const levelsWithStudentsCount = computed(() => {
 //   return levelsStore.levelsData.map((level) => {

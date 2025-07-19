@@ -30,9 +30,6 @@ useSeoMeta({
   ogImage: "/seo/payments.png",
   twitterCard: "summary",
 });
-definePageMeta({
-  // middleware: ["check-setup"],
-});
 onMounted(() => {
   watch(
     route,

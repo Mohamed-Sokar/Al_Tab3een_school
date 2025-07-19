@@ -85,14 +85,14 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
       await api.delete(`academic_classes/${classId}`);
 
       toastSuccess({
-        title: `:تم حذف المستوى بنجاح`,
+        title: `:تم حذف الصف الدراسي بنجاح`,
       });
       // delete class locally
       const classIndex = getSpecificClassIndex(classId);
       classes.value.splice(classIndex, 1);
     } catch (err) {
       toastError({
-        title: "حدث مشكلة في حذف المستوى",
+        title: "حدث مشكلة في حذف الصف الدراسي",
         description:
           err instanceof Error
             ? err.message

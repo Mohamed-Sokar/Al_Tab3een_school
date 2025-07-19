@@ -7,9 +7,9 @@
 <script setup lang="ts">
 const route = useRoute();
 
-definePageMeta({
-  // middleware: ["check-setup"],
-});
+// definePageMeta({
+// middleware: ["check-setup"],
+// });
 watch(
   route,
   () => {

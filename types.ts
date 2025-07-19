@@ -92,7 +92,7 @@ interface Class {
   floor?: string | undefined;
   wing?: string | undefined;
   maximum_capacity?: number | undefined;
-  studentsCount?: number | undefined;
+  students?: [{ count: number }];
   class?: { id?: number; title: string; group: string };
 }
 
@@ -216,7 +216,7 @@ interface GradesReport {
 interface Level {
   id?: number | undefined;
   title: string | undefined;
-  studentsCount?: number | undefined;
+  students: [{ count: number }];
   fees: number | undefined;
   maximum_capacity: number | undefined;
 }

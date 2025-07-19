@@ -4,9 +4,14 @@ import type { Class } from "~/types";
 defineProps<{
   _class: Class;
 }>();
+
+const academicClassesStore = useAcademicClassesStore();
+const quranClassesStore = useQuranClassesStore();
+
+console.log(academicClassesStore.loading);
 const route = useRoute();
-console.log(route.path.split("/")[route.path.split("/").length - 1]); //academic_classes, quran_classes
 const classT = route.path.split("/")[route.path.split("/").length - 1];
+
 const classType = computed(() =>
   classT === "academic_classes"
     ? "academic"
@@ -52,7 +57,7 @@ const classType = computed(() =>
           <span class="text-xs font-bold">عدد الطلاب</span>
         </div>
         <div class="font-bold text-secondary-600">
-          {{ _class.studentsCount }}
+          {{ _class?.students?.[0]?.count ?? 0 }}
         </div>
       </div>
 
@@ -83,13 +88,18 @@ const classType = computed(() =>
         <div
           class="text-sm flex items-center gap-1"
           :class="`text-${
-            (_class.maximum_capacity ?? 0) - (_class.studentsCount ?? 0) > 0
+            (_class.maximum_capacity ?? 0) -
+              (_class?.students?.[0]?.count ?? 0) >
+            0
               ? 'success'
               : 'error'
           }`"
         >
           <div class="font-bold">
-            {{ (_class.maximum_capacity ?? 0) - (_class.studentsCount ?? 0) }}
+            {{
+              (_class.maximum_capacity ?? 0) -
+              (_class?.students?.[0]?.count ?? 0)
+            }}
           </div>
           <div class="font-semibold">مقعد</div>
         </div>
@@ -122,12 +132,13 @@ const classType = computed(() =>
         </div>
       </div>
 
-      <div class="grid grid-cols-4 gap-2 text-center">
+      <div class="grid grid-cols-5 gap-2 text-center">
         <UButton
           label="عرض الطلاب"
-          class="hover:cursor-pointer col-span-3 flex justify-center"
+          class="hover:cursor-pointer col-span-5 xl:col-span-3 flex justify-center"
           color="secondary"
           variant="subtle"
+          size="sm"
           @click="
             navigateTo({
               name: 'students-view-students_table',
@@ -141,15 +152,34 @@ const classType = computed(() =>
         />
         <UButton
           label="تعديل"
-          class="hover:cursor-pointer flex justify-center"
+          class="hover:cursor-pointer flex justify-center col-span-5 xl:col-span-1"
           color="secondary"
           variant="solid"
+          size="sm"
           @click="
             navigateTo({
               name: 'classes-id-edit_class',
               params: { id: _class.id },
               query: { classType: classType },
             })
+          "
+        />
+        <UButton
+          label="حذف"
+          class="hover:cursor-pointer flex justify-center col-span-5 xl:col-span-1"
+          color="error"
+          variant="solid"
+          :loading="
+            classType === 'academic'
+              ? academicClassesStore.loading
+              : classType === 'quran'
+              ? quranClassesStore.loading
+              : false
+          "
+          @click="
+            classType === 'academic'
+              ? academicClassesStore.deleteClass(_class.id ?? 0)
+              : quranClassesStore.deleteClass(_class.id ?? 0)
           "
         />
       </div>

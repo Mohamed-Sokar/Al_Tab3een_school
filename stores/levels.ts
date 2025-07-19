@@ -15,14 +15,14 @@ export const useLevelsStore = defineStore("levels", () => {
   // Getters
   const levelsData = computed(() => levels.value);
 
-  // const levelsWithStudentsCount = computed(() => {
-  //   return levels.value.map((level) => {
-  //     const count = studentsStore.studentsData.filter(
-  //       (s) => s.level === level.title
-  //     ).length;
-  //     return { ...level, studentsCount: count };
-  //   });
-  // });
+  const levelsWithStudentsCount = computed(() => {
+    return levels.value.map((level) => {
+      const count = studentsStore.studentsData.filter(
+        (s) => s.level === level.title
+      ).length;
+      return { ...level, studentsCount: count };
+    });
+  });
 
   const fetchLevels = async () => {
     if (isLoaded.value) return; // تجنب الجلب أكثر من مرة
@@ -30,7 +30,7 @@ export const useLevelsStore = defineStore("levels", () => {
     try {
       const { data } = await api.get("/levels");
 
-      console.log(data);
+      console.log("levels: ", data);
       // set levels data to ref locally
       levels.value = data;
       toastSuccess({
@@ -126,18 +126,13 @@ export const useLevelsStore = defineStore("levels", () => {
   const getSpecificLevelIndex = (levelId: number) => {
     return levels.value.findIndex((level) => level.id === levelId);
   };
-  // const levelStudentsCount = (levelTitle: string) => {
-  //   return levelsWithStudentsCount.value.find(
-  //     (level) => level.title === levelTitle
-  //   )?.studentsCount;
-  // };
 
   return {
     // Data
     loading,
     //Getters
     levelsData,
-    // levelsWithStudentsCount,
+    levelsWithStudentsCount,
 
     // Actions
     fetchLevels,

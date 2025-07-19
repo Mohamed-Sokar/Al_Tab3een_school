@@ -80,6 +80,7 @@ const links = [
       },
     ],
   },
+  { label: "الدرجات", icon: "i-heroicons-academic-cap", to: "/grads" },
   { label: "المصروفات", icon: "i-lucide-credit-card", to: "/payments" },
   // {
   //   label: "السائقين",

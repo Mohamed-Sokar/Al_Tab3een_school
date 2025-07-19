@@ -14,7 +14,7 @@ const links = [
   },
   {
     label: "كشف الدرجات",
-    icon: "i-lucide-user",
+    icon: "i-heroicons-academic-cap",
     to: "/students/view/grades",
   },
 ];

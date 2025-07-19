@@ -84,14 +84,14 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
       await api.delete(`quran_classes/${classId}`);
 
       toastSuccess({
-        title: `:تم حذف المستوى بنجاح`,
+        title: `:تم حذف الصف القرآني بنجاح`,
       });
       // delete class locally
       const classIndex = getSpecificClassIndex(classId);
       classes.value.splice(classIndex, 1);
     } catch (err) {
       toastError({
-        title: "حدث مشكلة في حذف المستوى",
+        title: "حدث مشكلة في حذف الصف القرآني",
         description:
           err instanceof Error
             ? err.message
