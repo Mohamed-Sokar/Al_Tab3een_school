@@ -195,22 +195,54 @@ interface EmployeeAbsenceReport {
   reason: string | undefined;
   excuse_status: string | undefined;
 }
+interface Semester {
+  id?: number | undefined;
+  name: string | undefined;
+  year: string | undefined;
+}
+interface ExamType {
+  id?: number | undefined;
+  name: string | undefined;
+}
+interface Subject {
+  id?: number | undefined;
+  name: string | undefined;
+}
 
 interface GradesReport {
-  id: number | undefined;
-  student_name: string | undefined;
-  level: string | undefined;
-  section: string | undefined;
-  arabic: number | undefined;
-  math: number | undefined;
-  science: number | undefined;
-  quran: number | undefined;
-  english: number | undefined;
-  relegion: number | undefined;
-  maxmumGrade: number | undefined;
-  minmumGrade: number | undefined;
-  average: number | string | undefined;
-  type: string | undefined;
+  id?: number | undefined;
+  student_id: string | undefined;
+  semester_id: number | undefined;
+  academic_class_id: number | undefined;
+  subject_exam_id: number | undefined;
+  subject_id: number | undefined;
+  score: number | undefined;
+}
+
+interface AvgScoreResult {
+  academic_class_id: number | undefined;
+  academic_class_group: string | undefined;
+  academic_class_title: string | undefined;
+  exam_type_name: string | undefined;
+  average_score: number | undefined;
+  exam_type_id: number | undefined;
+  min_score: number | undefined;
+  max_score: number | undefined;
+  subject_id: number | undefined;
+  subject_name: string | undefined;
+  subject_exam_id: number | undefined;
+}
+
+interface Grade {
+  id?: number | undefined;
+  student_id?: string | undefined;
+  student?: Student;
+  score: number | null;
+  // first_name?: string | undefined;
+  // second_name?: string | undefined;
+  // third_name?: string | undefined;
+  // last_name?: string | undefined;
+  // identity_number?: string | undefined;
 }
 
 interface Level {
@@ -242,4 +274,10 @@ export type {
   EmployeeLoan,
   Level,
   LinkItem,
+  // Grades Reports
+  Semester,
+  ExamType,
+  AvgScoreResult,
+  Subject,
+  Grade,
 };

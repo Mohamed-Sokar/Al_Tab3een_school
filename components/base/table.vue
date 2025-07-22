@@ -45,7 +45,7 @@ const props = defineProps({
     type: Function as PropType<
       (row: any) => DropdownMenuItem[][] | DropdownMenuItem[]
     >,
-    required: true,
+    required: false,
   },
 });
 
@@ -140,15 +140,19 @@ const columnVisibility = ref({
       class="border border-accented rounded-tr-md rounded-tl-md mt-3"
     >
       <template #action-cell="{ row }">
-        <UDropdownMenu :items="getDropdownActions(row.original)">
-          <UButton
-            icon="i-lucide-ellipsis-vertical"
-            color="neutral"
-            variant="soft"
-            aria-label="Actions"
-            class="p-2"
-          />
-        </UDropdownMenu>
+        <slot name="action-cell" :row="row">
+          <UDropdownMenu
+            :items="getDropdownActions ? getDropdownActions(row.original) : []"
+          >
+            <UButton
+              icon="i-lucide-ellipsis-vertical"
+              color="neutral"
+              variant="soft"
+              aria-label="Actions"
+              class="p-2"
+            />
+          </UDropdownMenu>
+        </slot>
       </template>
       <template #expanded="{ row }" v-if="expanded">
         <pre>{{ row.original }}</pre>

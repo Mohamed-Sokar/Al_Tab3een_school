@@ -80,7 +80,7 @@ const links = [
       },
     ],
   },
-  { label: "الدرجات", icon: "i-heroicons-academic-cap", to: "/grads" },
+  { label: "الدرجات", icon: "i-heroicons-academic-cap", to: "/grades" },
   { label: "المصروفات", icon: "i-lucide-credit-card", to: "/payments" },
   // {
   //   label: "السائقين",
@@ -214,7 +214,7 @@ const items: DropdownMenuItem[] = [
                 'bg-blue-600':
                   link.to === '/'
                     ? route.path === link.to
-                    : route.path.includes(link.to),
+                    : route.path.startsWith(link.to),
               }"
             >
               <UIcon :name="link.icon" class="size-5" />

@@ -1,10 +1,11 @@
-import type { Class } from "~/types";
+import type { Class, Student } from "~/types";
 import { defineStore } from "pinia";
 import { useStudentStore } from "@/stores/students";
 
 export const useAcademicClassesStore = defineStore("academic_classes", () => {
   const studentsStore = useStudentStore();
   const teachersStore = useTeachersStore();
+  const client = useSupabaseClient();
   // helper composables
   const { toastError, toastSuccess } = useAppToast();
   // Data
@@ -31,7 +32,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
     try {
       const { data } = await api.get("academic_classes");
 
-      console.log(data);
+      // console.log(data);
       // set levels data to ref locally
       classes.value = data;
       toastSuccess({
@@ -60,7 +61,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
       toastSuccess({
         title: `:تم إضافة الصف بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // add student locally
       classes.value.unshift({
         ...level,
@@ -113,7 +114,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
         title: `:تم تحديث بيانات الصف بنجاح`,
       });
 
-      console.log(data);
+      // console.log(data);
 
       // update class locally
       const classIndex = getSpecificClassIndex(classId);
@@ -149,6 +150,37 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
       (level) => level.title === levelTitle
     )?.studentsCount;
   };
+  const getStudentByAcademicClassId = async (academic_class_id: number) => {
+    loading.value = true;
+    try {
+      const { data, error } = await client
+        .from("students")
+        .select(
+          "id, first_name, second_name, third_name, last_name, identity_number"
+        )
+        .eq("academic_class_id", academic_class_id);
+
+      // console.log(data);
+      if (error) {
+        throw createError({ statusCode: 500, message: error.message });
+      }
+      // set semesters data to ref locally
+
+      toastSuccess({
+        title: "تم تحميل الفصول بنجاح",
+      });
+
+      return data;
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة أثناء تحميل الفصول",
+        description: (err as Error).message,
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const assignAcademicClassesForTeacher = async (
     academicClassesIds: number[],
     teacherId: string
@@ -163,7 +195,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
           teacherId,
         }
       );
-      console.log(data);
+      // console.log(data);
       toastSuccess({ title: "تم تعيين الصفوف الدراسية للمعلم بنجاح" });
 
       // تحديث البيانات محليًا إذا لزم الأمر
@@ -219,7 +251,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
         }
       );
 
-      console.log(data);
+      // console.log(data);
 
       toastSuccess({ title: "تم إلغاء تعيين الصفوف الدراسية للمعلم بنجاح" });
       // تحديث البيانات محليًا إذا لزم الأمر
@@ -274,7 +306,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
         classId,
       });
 
-      console.log(data);
+      // console.log(data);
 
       toastSuccess({ title: "تم نقل الطلاب للصف الدراسي الجديد بنجاح" });
 
@@ -314,6 +346,8 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
     getSpecificClass,
     getSpecificClassIndex,
     classStudentsCount,
+
+    getStudentByAcademicClassId,
 
     updateAcademicClassForStudents,
     assignAcademicClassesForTeacher,

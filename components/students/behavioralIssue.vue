@@ -175,25 +175,5 @@ const selectedIssues = computed(() =>
         </div>
       </template>
     </BaseTable>
-    <!-- <UTable
-      :loading="studentsStore.loading"
-      :key="studentsStore.tableKey"
-      v-model:global-filter="globalFilter"
-      ref="table"
-      :data="numberedIssues"
-      :columns="columns"
-    >
-      <template #action-cell="{ row }">
-        <UDropdownMenu :items="getDropdownActions(row.original)">
-          <UButton
-            icon="i-lucide-ellipsis-vertical"
-            color="neutral"
-            variant="soft"
-            aria-label="Actions"
-            class="p-2"
-          />
-        </UDropdownMenu>
-      </template>
-    </UTable> -->
   </div>
 </template>

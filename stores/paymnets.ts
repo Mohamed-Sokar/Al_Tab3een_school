@@ -15,7 +15,7 @@ export const usePaymentsStore = defineStore("payments", () => {
     try {
       const { data } = await api.get("/payments");
 
-      console.log(data);
+      // console.log(data);
       // set payments data to ref locally
       payments.value = data;
       toastSuccess({
@@ -41,7 +41,7 @@ export const usePaymentsStore = defineStore("payments", () => {
       toastSuccess({
         title: `:تم إضافة الدفعة بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // add student locally
       (payments.value || []).unshift({
         ...payment,
@@ -86,7 +86,7 @@ export const usePaymentsStore = defineStore("payments", () => {
         title: `:تم تحديث بيانات الدفعة بنجاح`,
       });
 
-      console.log(data);
+      // console.log(data);
 
       // update payment locally
       const targetedPaymentIndex = getSpecificPaymentIndex(paymentId);

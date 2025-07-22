@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { Column } from "@tanstack/vue-table";
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import type { Student } from "~/types";
 import { useStudentStore } from "@/stores/students";

@@ -1,8 +1,6 @@
-import { behavioralIssues } from "./../constants";
 import type { Student, BehavioralIssue, AchievmentReport } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
-// import { students } from "~/constants";
 
 export const useStudentStore = defineStore("students", () => {
   const plansStore = usePlansStore();
@@ -31,7 +29,7 @@ export const useStudentStore = defineStore("students", () => {
     loading.value = true;
     try {
       const { data } = await api.get("/students");
-      console.log(data);
+      // console.log(data);
       // set students data to ref locally
       studentsData.value = data;
       toastSuccess({
@@ -41,7 +39,7 @@ export const useStudentStore = defineStore("students", () => {
     } catch (err) {
       toastError({
         title: "هناك مشكلة في تحميل الطلاب",
-        description: err.message,
+        description: (err as Error).message,
       });
       // throw new Error();
     } finally {
@@ -50,13 +48,13 @@ export const useStudentStore = defineStore("students", () => {
   };
   const addStudent = async (student: Student) => {
     loading.value = true;
-    console.log("student: ", student);
+    // console.log("student: ", student);
     try {
       const { data } = await api.post("/students", student);
       toastSuccess({
         title: `:تم إضافة الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
       });
-      console.log("student from backend: ", data[0]);
+      // console.log("student from backend: ", data[0]);
       // add student locally
       studentsData.value.unshift({ ...data[0] });
     } catch (err) {
@@ -148,7 +146,7 @@ export const useStudentStore = defineStore("students", () => {
   //       classId,
   //     });
 
-  //     console.log(data);
+  // console.log(data);
 
   //     toastSuccess({ title: "تم نقل الطلاب للصف الدراسي الجديد بنجاح" });
 
@@ -176,7 +174,7 @@ export const useStudentStore = defineStore("students", () => {
   //       classId,
   //     });
 
-  //     console.log(data);
+  // console.log(data);
 
   //     toastSuccess({ title: "تم نقل الطلاب للصف القرآني الجديد بنجاح" });
 
@@ -204,7 +202,7 @@ export const useStudentStore = defineStore("students", () => {
   //       driverId,
   //     });
 
-  //     console.log(data);
+  // console.log(data);
 
   //     toastSuccess({ title: "تم تعيين سائق للطلاب بنجاح" });
 
@@ -232,7 +230,7 @@ export const useStudentStore = defineStore("students", () => {
     loading.value = true;
     try {
       const { data } = await api.get("/students/behavioral-issues");
-      console.log("behavioralIssues: ", data);
+      // console.log("behavioralIssues: ", data);
       // set behavioral Issues data to ref locally
       behavioralIssuesStudentData.value = data;
       toastSuccess({
@@ -284,7 +282,7 @@ export const useStudentStore = defineStore("students", () => {
       toastSuccess({
         title: "تم إضافة المخالفة السلوكية",
       });
-      console.log(data[0]);
+      // console.log(data[0]);
       // const studentIndex = getSpesificStudentIndex(studentId);
       if (studentsData.value && !!targetedStudent) {
         // const existingStudent = studentsData.value[studentIndex];
@@ -303,7 +301,7 @@ export const useStudentStore = defineStore("students", () => {
         ...newIssue,
         ...data[0],
       };
-      console.log(newData);
+      // console.log(newData);
       behavioralIssuesStudentData.value.unshift(newData);
     } catch (err) {
       toastError({
@@ -322,7 +320,7 @@ export const useStudentStore = defineStore("students", () => {
       loading.value = true;
       const issueIndex = getSpesificStudentBehavioralIssueIndex(issueId);
       const targetedIssue = getSpesificStudentBehavioralIssue(issueId);
-      console.log(issueIndex);
+      // console.log(issueIndex);
 
       const { data } = await api.put(`/students/behavioral-issues/${issueId}`, {
         ...(behavioralIssuesStudentData.value || [])[issueIndex],
@@ -342,11 +340,11 @@ export const useStudentStore = defineStore("students", () => {
       if (
         studentsData.value &&
         studentsData.value[studentIndex] &&
-        studentsData.value[studentIndex].students_behavioral_issues
+        studentsData.value[studentIndex].behavioral_issues
       ) {
         // You can safely access students_behavioral_issues[issueIndex] here
         // For example, update the description:
-        studentsData.value[studentIndex].students_behavioral_issues[
+        studentsData.value[studentIndex].behavioral_issues[
           issueIndex
         ].description = description;
       }
@@ -386,15 +384,11 @@ export const useStudentStore = defineStore("students", () => {
 
       // delete issue from the student behavioral issues array
       if (targetedStudent) {
-        const targetedIssueIndex =
-          targetedStudent.students_behavioral_issues?.findIndex(
-            (issue) => issue.id === issueId
-          );
-
-        targetedStudent.students_behavioral_issues?.splice(
-          targetedIssueIndex ?? 0,
-          1
+        const targetedIssueIndex = targetedStudent.behavioral_issues?.findIndex(
+          (issue) => issue.id === issueId
         );
+
+        targetedStudent.behavioral_issues?.splice(targetedIssueIndex ?? 0, 1);
       }
     } catch (err) {
       toastError({
@@ -476,7 +470,7 @@ export const useStudentStore = defineStore("students", () => {
         "/students/quran-achievement-report",
         payload
       );
-      console.log(data);
+      // console.log(data);
       toastSuccess({
         title: "تم إضافة تقرير الإنجاز القرآني بنجاح",
       });

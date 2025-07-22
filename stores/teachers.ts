@@ -58,7 +58,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     loading.value = true;
     try {
       const { data } = await api.get("/employees");
-      console.log(data);
+      // console.log(data);
       // set students data to ref locally
       teachersData.value = data;
       toastSuccess({
@@ -76,7 +76,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     }
   };
   const addTeacher = async (teacher: Object) => {
-    console.log(teacher);
+    // console.log(teacher);
     try {
       loading.value = true;
       const { data } = await api.post("/employees", teacher);
@@ -145,7 +145,7 @@ export const useTeachersStore = defineStore("teachers", () => {
       toastSuccess({
         title: `:تم حذف المعلم ( ${data[0].full_name} ) بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // delete student locally
       const teacherIndex = getSpesificTeacherIndex(teacherId);
       teachersData.value.splice(teacherIndex, 1);
@@ -170,7 +170,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     loading.value = true;
     try {
       const { data } = await api.get("/employees/behavioral-issues");
-      console.log(data);
+      // console.log(data);
       // set behavioral Issues data to ref locally
       behavioralIssuesTeachersData.value = data;
       toastSuccess({
@@ -202,7 +202,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     try {
       loading.value = true;
       const { data } = await api.post("/employees/behavioral-issues", issue);
-      console.log(data);
+      // console.log(data);
       toastSuccess({
         title: "تم إضافة المخالفة السلوكية",
       });
@@ -258,7 +258,7 @@ export const useTeachersStore = defineStore("teachers", () => {
           description,
         }
       );
-      console.log(data);
+      // console.log(data);
 
       behavioralIssuesTeachersData.value[issueIndex] = {
         ...behavioralIssuesTeachersData.value[issueIndex],
@@ -313,7 +313,7 @@ export const useTeachersStore = defineStore("teachers", () => {
       toastSuccess({
         title: `:تم حذف المخالفة بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // delete issue locally
       behavioralIssuesTeachersData.value.splice(issueIndex, 1);
 
@@ -349,7 +349,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     loading.value = true;
     try {
       const { data } = await api.get("/employees/supervisory-visits");
-      console.log(data);
+      // console.log(data);
       // set supervisory visits data to ref locally
       supervisoryVisitsTeachersData.value = data;
       toastSuccess({
@@ -379,7 +379,7 @@ export const useTeachersStore = defineStore("teachers", () => {
         ...visit,
         teacher_id: teacherId,
       });
-      console.log(data);
+      // console.log(data);
       toastSuccess({
         title: "تم إضافة الزيارة بنجاح",
       });
@@ -437,7 +437,7 @@ export const useTeachersStore = defineStore("teachers", () => {
         `/employees/supervisory-visits/${visitId}`,
         payload
       );
-      console.log(data);
+      // console.log(data);
 
       supervisoryVisitsTeachersData.value[visitIndex] = {
         ...supervisoryVisitsTeachersData.value[visitIndex],
@@ -491,7 +491,7 @@ export const useTeachersStore = defineStore("teachers", () => {
       toastSuccess({
         title: `:تم حذف الزيارة بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // delete issue locally
       supervisoryVisitsTeachersData.value.splice(visitIndex, 1);
 
@@ -529,7 +529,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     loading.value = true;
     try {
       const { data } = await api.get("/employees/loans");
-      console.log(data);
+      // console.log(data);
       // set loans data to ref locally
       teachersLoansData.value = data;
 
@@ -560,7 +560,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     try {
       loading.value = true;
       const { data } = await api.post("/employees/loans", loan);
-      console.log(data);
+      // console.log(data);
       toastSuccess({
         title: "تم إضافة السلفة",
       });
@@ -610,7 +610,7 @@ export const useTeachersStore = defineStore("teachers", () => {
         // ...behavioralIssuesTeachersData.value[loanIndex],
         amount,
       });
-      console.log(data);
+      // console.log(data);
 
       // update loans data locally
       teachersLoansData.value[loanIndex] = {
@@ -655,7 +655,7 @@ export const useTeachersStore = defineStore("teachers", () => {
       toastSuccess({
         title: `:تم حذف السلفة بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // delete issue locally
       teachersLoansData.value.splice(loanIndex, 1);
 
@@ -687,7 +687,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     loading.value = true;
     try {
       const { data } = await api.get("/employees/absence");
-      console.log(data);
+      // console.log(data);
       // set loans data to ref locally
       teachersAbsenceReportsData.value = data;
 
@@ -721,7 +721,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     try {
       loading.value = true;
       const { data } = await api.post("/employees/absence", newReport);
-      console.log(data);
+      // console.log(data);
       toastSuccess({
         title: "تم إضافة التقرير",
       });
@@ -772,7 +772,7 @@ export const useTeachersStore = defineStore("teachers", () => {
       toastSuccess({
         title: `:تم حذف التقرير بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // delete report locally
       teachersAbsenceReportsData.value.splice(reportIndex, 1);
 
@@ -855,9 +855,8 @@ export const useTeachersStore = defineStore("teachers", () => {
   const getSpesificTeacherAbsenceReportIndex = (reportId: number) => {
     return teachersAbsenceReportsData.value.findIndex((r) => r.id === reportId);
   };
-
   // helpre methods
-  function removeInvalidFields(student: Teacher): Partial<Teacher> {
+  function removeInvalidFields(employee: Employee): Partial<Employee> {
     const allowedFields = [
       "id",
       "full_name",
@@ -869,7 +868,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     ];
 
     return Object.fromEntries(
-      Object.entries(student).filter(([key]) => allowedFields.includes(key))
+      Object.entries(employee).filter(([key]) => allowedFields.includes(key))
     );
   }
 

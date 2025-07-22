@@ -30,7 +30,7 @@ export const useLevelsStore = defineStore("levels", () => {
     try {
       const { data } = await api.get("/levels");
 
-      console.log("levels: ", data);
+      // console.log("levels: ", data);
       // set levels data to ref locally
       levels.value = data;
       toastSuccess({
@@ -56,7 +56,7 @@ export const useLevelsStore = defineStore("levels", () => {
       toastSuccess({
         title: `:تم إضافة المستوى بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // add student locally
       levels.value.unshift({
         ...level,
@@ -100,7 +100,7 @@ export const useLevelsStore = defineStore("levels", () => {
         title: `:تم تحديث بيانات المستوى بنجاح`,
       });
 
-      console.log(data);
+      // console.log(data);
 
       // update level locally
       const levelIndex = getSpecificLevelIndex(levelId);

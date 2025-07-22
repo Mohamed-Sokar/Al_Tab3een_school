@@ -28,7 +28,7 @@ export const useDriversStore = defineStore("drivers", () => {
     try {
       const { data } = await api.get("/drivers");
 
-      console.log(data);
+      // console.log(data);
       // set levels data to ref locally
       drivers.value = data;
       toastSuccess({
@@ -56,7 +56,7 @@ export const useDriversStore = defineStore("drivers", () => {
       toastSuccess({
         title: `:تم إضافة السائق بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // add student locally
       drivers.value.unshift({
         ...driver,
@@ -109,7 +109,7 @@ export const useDriversStore = defineStore("drivers", () => {
         title: `:تم تحديث بيانات السائق بنجاح`,
       });
 
-      console.log(data);
+      // console.log(data);
 
       // update class locally
       const driverIndex = getSpecificDriverIndex(driverId);
@@ -158,7 +158,7 @@ export const useDriversStore = defineStore("drivers", () => {
         driverId,
       });
 
-      console.log(data);
+      // console.log(data);
 
       toastSuccess({ title: "تم تعيين سائق للطلاب بنجاح" });
 

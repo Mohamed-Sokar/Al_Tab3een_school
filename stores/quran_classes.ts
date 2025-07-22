@@ -30,7 +30,8 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
     try {
       const { data } = await api.get("/quran_classes");
 
-      console.log(data);
+      // console.log(data);
+
       // set levels data to ref locally
       classes.value = data;
       toastSuccess({
@@ -59,7 +60,8 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
       toastSuccess({
         title: `:تم إضافة الصف بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
+
       // add student locally
       classes.value.unshift({
         ...level,
@@ -112,7 +114,7 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
         title: `:تم تحديث بيانات الصف بنجاح`,
       });
 
-      console.log(data);
+      // console.log(data);
 
       // update class locally
       const classIndex = getSpecificClassIndex(classId);
@@ -155,7 +157,7 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
         classId,
       });
 
-      console.log(data);
+      // console.log(data);
 
       toastSuccess({ title: "تم نقل الطلاب للصف القرآني الجديد بنجاح" });
 

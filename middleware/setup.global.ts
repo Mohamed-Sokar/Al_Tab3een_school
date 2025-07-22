@@ -13,21 +13,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const quranClassesStore = useQuranClassesStore();
   const plansStore = usePlansStore();
   const employeesStore = useTeachersStore();
-
-  // 🛡️ الخطوة 1: التحقق من المستويات
-  // await Promise.all([
-  //   levelsStore.fetchLevels(),
-  //   academicClassesStore.fetchClasses(),
-  //   quranClassesStore.fetchClasses(),
-  //   plansStore.fetchPlans(),
-  //   employeesStore.fetchTeachers(),
-  // ]);
+  const studentsStore = useStudentStore();
 
   const path = to.path;
+
+  // 🛡️ الخطوة 1: التحقق من المستويات
   if (
     (path.startsWith("/classes") ||
       path.startsWith("/plans") ||
       path.startsWith("/employees") ||
+      path.startsWith("/grades") ||
       path.startsWith("/students")) &&
     !levelsStore.levelsData?.length
   ) {
@@ -40,6 +35,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (
     (path.startsWith("/plans") ||
       path.startsWith("/employees") ||
+      path.startsWith("/grades") ||
       path.startsWith("/students")) &&
     (!academicClassesStore.classesData?.length ||
       !quranClassesStore.classesData?.length)
@@ -55,7 +51,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // 🛡️ الخطوة 3: التحقق من الخطط
   if (
-    (path.startsWith("/employees") || path.startsWith("/students")) &&
+    (path.startsWith("/employees") ||
+      path.startsWith("/grades") ||
+      path.startsWith("/students")) &&
     !plansStore.plansData?.length
   ) {
     if (!path.startsWith("/plans")) {
@@ -63,10 +61,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  // 🛡️ الخطوة 4: التحقق من الموظفين
-  if (path.startsWith("/students") && !employeesStore.teachersData?.length) {
+  // 🛡️ الخطوة 4: التحقق من المعلمين
+  if (
+    (path.startsWith("/grades") || path.startsWith("/students")) &&
+    !employeesStore.teachersData?.length
+  ) {
     if (!path.startsWith("/employees")) {
-      return navigateTo("/employees/view?alert=أضف الموظفين أولاً");
+      return navigateTo("/employees/view?alert=أضف معلمًا أولاً");
+    }
+  }
+
+  // 🛡️ الخطوة 5: التحقق من الطلاب
+  if (path.startsWith("/grades") && !studentsStore.studentsData?.length) {
+    if (!path.startsWith("/students")) {
+      return navigateTo("/students/view?alert=أضف الطلاب أولاً");
     }
   }
 });

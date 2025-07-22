@@ -17,7 +17,7 @@ export const usePlansStore = defineStore("plans", () => {
     try {
       const { data } = await api.get("/plans");
 
-      console.log(data);
+      // console.log(data);
       // set payments data to ref locally
       plans.value = data;
       toastSuccess({
@@ -67,7 +67,7 @@ export const usePlansStore = defineStore("plans", () => {
       toastSuccess({
         title: `:تم إضافة الخطة بنجاح`,
       });
-      console.log(data);
+      // console.log(data);
       // add plan locally
       plans.value.unshift({
         ...data[0],
@@ -110,7 +110,7 @@ export const usePlansStore = defineStore("plans", () => {
         title: `:تم تحديث بيانات الخطة بنجاح`,
       });
 
-      console.log(data);
+      // console.log(data);
 
       // update plan locally
       const targetedPlanIndex = getSpecificPlanIndex(planId);
@@ -154,11 +154,11 @@ export const usePlansStore = defineStore("plans", () => {
       }
 
       const { data } = await api.post("/plans/months_plans", newMonthlyPlan);
-      console.log(data);
+      // console.log(data);
       toastSuccess({
         title: `:تم إضافة الخطة بنجاح`,
       });
-      // console.log(data);
+      console.log(data);
       // add monthly plan locally
       const plan = plans.value.find((p) => p.id === generalPlanId);
       if (plan) {
@@ -244,7 +244,7 @@ export const usePlansStore = defineStore("plans", () => {
         title: `:تم تحديث بيانات الخطة بنجاح`,
       });
 
-      console.log(data);
+      // console.log(data);
 
       // update plan locally
       const plan = plans.value.find((p) => p.id === generalPlanId);
