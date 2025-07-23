@@ -14,7 +14,8 @@ useHead({ title: "إضافة كشف درجات" });
 
 // init
 const gradsReportsStore = useGradsStore();
-const { toastError, toastSuccess } = useAppToast();
+const { toastError } = useAppToast();
+
 // schema
 const schema = object({
   semester_id: number().required("السنة الدراسية مطلوبة"),
@@ -25,7 +26,11 @@ const schema = object({
 
 // data
 const state = reactive({
-  semester_id: gradsReportsStore.semestersData[0]?.id,
+  // semester_id: gradsReportsStore.semestersData[0]?.id,
+  // exam_type_id: gradsReportsStore.examTypesData[2].id,
+  // academic_class_id: useAcademicClassesStore().classesData[1].id,
+  // subject_id: gradsReportsStore.subjectsData[2].id,
+  semester_id: undefined,
   exam_type_id: undefined,
   academic_class_id: undefined,
   subject_id: undefined,
@@ -109,7 +114,6 @@ const getStudents = async () => {
 };
 const validateScore = (index: number) => {
   const score = Number(grades.value[index].score);
-  console.log(score);
   if (isNaN(score)) {
     scoreErrors.value[index] = "الدرجة غير صالحة";
   } else if (score < 5) {
@@ -157,9 +161,10 @@ const saveGrades = async () => {
     await gradsReportsStore.saveGrades(payload);
     await gradsReportsStore.get_avg_scores_filtered();
     navigateTo({ name: "grades" });
+
+    students.value = [];
   } finally {
     isLoading.value = false;
-    students.value = [];
   }
 };
 </script>
@@ -294,43 +299,31 @@ const saveGrades = async () => {
             </UBadge>
           </div>
         </div>
-        <!-- students  -->
-        <ul v-if="students.length">
-          <li
-            class="grid grid-cols-3 font-bold bg-secondary text-white place-items-center"
-          >
-            <div
-              class="border-x border-t border-accented w-full text-center p-2.5"
+
+        <table class="w-full">
+          <thead>
+            <tr
+              class="grid grid-cols-3 font-bold bg-secondary text-white place-items-center border-t border-b border-accented"
             >
-              هوية الطالب
-            </div>
-            <div
-              class="border-x border-t border-accented w-full text-center p-2.5"
-            >
-              الاسم رباعي
-            </div>
-            <div
-              class="border-x border-t border-accented w-full text-center p-2.5"
-            >
-              علامة الطالب
-            </div>
-          </li>
-          <div v-if="!isLoading">
-            <li
+              <th class="border-x border-accented p-2 w-full">هوية الطالب</th>
+              <th class="border-x border-accented p-2 w-full">الاسم رباعي</th>
+              <th class="border-x border-accented p-2 w-full">علامة الطالب</th>
+            </tr>
+          </thead>
+          <tbody v-if="!isLoading">
+            <tr
               v-if="students.length"
               class="grid grid-cols-3 place-items-center"
               v-for="(student, index) in students"
               :key="student.id"
             >
-              <div
-                class="w-full border border-accented text-center p-3"
-                :class="{ 'p-6': scoreErrors[index] }"
+              <td
+                class="w-full h-full p-2 text-center border-x border-b border-accented flex justify-center items-center"
               >
-                {{ student.identity_number }}
-              </div>
-              <div
-                class="w-full border border-accented text-center p-3"
-                :class="{ 'p-6': scoreErrors[index] }"
+                {{ student.identity_number ?? 1234 }}
+              </td>
+              <td
+                class="w-full h-full p-2 text-center border-x border-b border-accented flex justify-center items-center"
               >
                 {{
                   student.first_name +
@@ -341,9 +334,9 @@ const saveGrades = async () => {
                   " " +
                   student.last_name
                 }}
-              </div>
-              <div
-                class="w-full border border-accented text-center p-2"
+              </td>
+              <td
+                class="w-full h-full p-2 text-center border-x border-b border-accented flex flex-col justify-center items-center"
                 v-if="grades.length > index && grades[index]"
               >
                 <UInput
@@ -353,22 +346,25 @@ const saveGrades = async () => {
                   @input="() => validateScore(index)"
                   :class="scoreErrors[index] ? 'border-error' : ''"
                 />
-                <p v-if="scoreErrors[index]" class="text-error text-sm mt-1">
+                <p v-if="scoreErrors[index]" class="text-error text-xs mt-1">
                   {{ scoreErrors[index] }}
                 </p>
-              </div>
-            </li>
-            <li v-else class="flex justify-center p-2 border border-accented">
+              </td>
+            </tr>
+            <tr
+              v-else
+              class="flex justify-center p-2 border border-accented mt-2"
+            >
               لا يوجد بيانات للعرض
-            </li>
-          </div>
-          <div v-else>
+            </tr>
+          </tbody>
+          <tbody v-else>
             <USkeleton class="h-8 w-full my-2" />
             <USkeleton class="h-8 w-full my-2" />
             <USkeleton class="h-8 w-full my-2" />
             <USkeleton class="h-8 w-full my-2" />
-          </div>
-        </ul>
+          </tbody>
+        </table>
       </template>
       <template #footer v-if="students.length">
         <div class="gap-2 flex">

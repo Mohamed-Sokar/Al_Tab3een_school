@@ -9,10 +9,9 @@ const { exportToExcel } = useExportToExcel();
 const { getArabicDayName, getDate } = useDateUtils();
 
 const UBadge = resolveComponent("UBadge");
-// const table = useTemplateRef("table");
 const globalFilter = ref("");
 const currentMonthIndex = new Date().getMonth();
-const selectedMonth = ref(months[currentMonthIndex]);
+const selectedMonth = ref(months[currentMonthIndex + 1]);
 const tableKey = ref(Math.random());
 const rowSelection = ref({});
 // const selectedDate = ref(new Date().toISOString().split("T")[0]);

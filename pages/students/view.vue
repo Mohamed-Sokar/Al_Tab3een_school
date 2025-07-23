@@ -12,11 +12,11 @@ const links = [
     icon: "i-heroicons-exclamation-triangle",
     to: "/students/view/behavioral-issues",
   },
-  {
-    label: "كشف الدرجات",
-    icon: "i-heroicons-academic-cap",
-    to: "/students/view/grades",
-  },
+  // {
+  //   label: "كشف الدرجات",
+  //   icon: "i-heroicons-academic-cap",
+  //   to: "/students/view/grades",
+  // },
 ];
 </script>
 

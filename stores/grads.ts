@@ -75,34 +75,34 @@ export const useGradsStore = defineStore("grads", () => {
       loading.value = false;
     }
   };
-  const get_avg_scores_by_class = async (class_id: number) => {
-    try {
-      loading.value = true;
-      const { data, error } = await client.rpc("get_avg_scores_by_class", {
-        class_id: class_id, // ID of the academic class you want to get averages for
-      } as any);
-      avg_scores_by_class.value = data;
-      toastSuccess({
-        title: "تم تحميل معدل التقارير بنجاح",
-      });
-      // console.log("AvgScoreResult: ", data);
-      if (error) {
-        throw createError({ statusCode: 500, message: error.message });
-      }
-    } catch (err) {
-      toastError({
-        title: "حدث مشكلة أثناء تحميل معدل التقارير",
-        description:
-          err instanceof Error
-            ? err.message
-            : typeof err === "string"
-            ? err
-            : JSON.stringify(err),
-      });
-    } finally {
-      loading.value = false;
-    }
-  };
+  // const get_avg_scores_by_class = async (class_id: number) => {
+  //   try {
+  //     loading.value = true;
+  //     const { data, error } = await client.rpc("get_avg_scores_by_class", {
+  //       class_id: class_id, // ID of the academic class you want to get averages for
+  //     } as any);
+  //     avg_scores_by_class.value = data;
+  //     toastSuccess({
+  //       title: "تم تحميل معدل التقارير بنجاح",
+  //     });
+  //     // console.log("AvgScoreResult: ", data);
+  //     if (error) {
+  //       throw createError({ statusCode: 500, message: error.message });
+  //     }
+  //   } catch (err) {
+  //     toastError({
+  //       title: "حدث مشكلة أثناء تحميل معدل التقارير",
+  //       description:
+  //         err instanceof Error
+  //           ? err.message
+  //           : typeof err === "string"
+  //           ? err
+  //           : JSON.stringify(err),
+  //     });
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
   const get_avg_scores_filtered = async (
     semester_id: number | null = null,
     class_id: number | null = null,
@@ -495,7 +495,7 @@ export const useGradsStore = defineStore("grads", () => {
     // subjects
     fetchSubjects,
     // rpc DB function
-    get_avg_scores_by_class,
+    // get_avg_scores_by_class,
     get_avg_scores_filtered,
 
     getSubjectExamsByExamTypeId,

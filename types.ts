@@ -231,6 +231,7 @@ interface AvgScoreResult {
   subject_id: number | undefined;
   subject_name: string | undefined;
   subject_exam_id: number | undefined;
+  grades_count: number | undefined;
 }
 
 interface Grade {

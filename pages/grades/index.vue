@@ -4,10 +4,7 @@ import type {
   AvgScoreResult,
   Class,
   ExamType,
-  Grade,
-  GradesReport,
   Semester,
-  Student,
   Subject,
 } from "~/types";
 import { object, number } from "yup";
@@ -75,14 +72,22 @@ const columns: TableColumn<AvgScoreResult>[] = [
     cell: ({ row }) => row.original.min_score,
   },
   {
+    accessorKey: "عدد العلامات",
+    header: "عدد العلامات",
+    cell: ({ row }) => row.original.grades_count,
+  },
+  {
     accessorKey: "معدل التقييم",
     header: "معدل التقييم",
-    cell: ({ row }) => row.original.average_score,
+    cell: ({ row }) => {
+      return calculatePercentage(row.original);
+    },
   },
   {
     id: "action",
   },
 ];
+
 // state
 const state = reactive({
   semester: gradsReportsStore.semestersData[0]?.id,
@@ -117,14 +122,21 @@ const exportReports = () => {
   });
 };
 const search = async () => {
-  //   await gradsReportsStore.fetchGradsReport();
   await gradsReportsStore.get_avg_scores_filtered(
     state.semester,
     state.academic_class,
     state.exam_type,
     state.subject
   );
+  console.log(gradsReportsStore.avg_scores_by_class);
 };
+// دالة لحساب النسبة المئوية
+const calculatePercentage = (row: AvgScoreResult) => {
+  if (!row.max_score || row.max_score === 0) return "غير متاح"; // تجنب القسمة على صفر
+  const percentage = ((row.average_score ?? 0) / row.max_score) * 100;
+  return percentage.toFixed(2) + "%"; // تقريب إلى منزلتين عشريتين
+};
+
 // watch and watchEffect
 watchEffect(() => {
   if (gradsReportsStore.semestersData.length > 0) {

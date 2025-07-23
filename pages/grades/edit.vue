@@ -118,6 +118,7 @@ onMounted(async () => {
   await getStudentsWithGrades();
 });
 </script>
+
 <template>
   <UCard class="max-w-4xl mx-auto mt-15">
     <template #header>
@@ -131,91 +132,82 @@ onMounted(async () => {
       </div>
     </template>
     <template #default>
-      <!-- info -->
-      <div
-        class="flex gap-2 flex-col justify-between items-start lg:items-start mb-5"
-      >
-        <div class="w-full grid grid-cols-1 lg:grid-cols-4 gap-2 mb-5">
-          <UFormField
-            label="السنة الدراسية"
-            required
-            name="semester_id"
-            size="md"
-          >
-            <USelect
-              disabled
-              class="w-full"
-              v-model="state.semester_id"
-              :items="
+      <!-- select buttons -->
+      <div class="w-full grid grid-cols-1 lg:grid-cols-4 gap-2 mb-5">
+        <UFormField
+          label="السنة الدراسية"
+          required
+          name="semester_id"
+          size="md"
+        >
+          <USelect
+            disabled
+            class="w-full"
+            v-model="state.semester_id"
+            :items="
                      gradsReportsStore.semestersData.map((s:Semester) => ({
                      label: `${s.year} - ${s.name}`,
                      value: s.id,
                    }))
                  "
-              placeholder="اختر السنة الدراسية"
-            />
-          </UFormField>
+            placeholder="اختر السنة الدراسية"
+          />
+        </UFormField>
 
-          <UFormField
-            label="نوع الاختبار"
-            name="exam_type_id"
-            size="md"
-            required
-          >
-            <USelect
-              disabled
-              class="w-full"
-              v-model="state.exam_type_id"
-              :items="[{ label: 'اختر نوع الاختبار', value: null }
+        <UFormField label="نوع الاختبار" name="exam_type_id" size="md" required>
+          <USelect
+            disabled
+            class="w-full"
+            v-model="state.exam_type_id"
+            :items="[{ label: 'اختر نوع الاختبار', value: null }
                    ,...gradsReportsStore.examTypesData.map((s:ExamType) => ({
                      label: `${s.name}`,
                      value: s.id,
                    }))]
                  "
-              placeholder="اختر نوع الاختبار"
-            />
-          </UFormField>
+            placeholder="اختر نوع الاختبار"
+          />
+        </UFormField>
 
-          <UFormField
-            label="الشعبة الدراسية"
-            name="academic_class_id"
-            size="md"
-            required
-          >
-            <USelect
-              disabled
-              class="w-full"
-              v-model="state.academic_class_id"
-              :items="[{ label: 'اختر الشعبة الدراسية', value: null }
+        <UFormField
+          label="الشعبة الدراسية"
+          name="academic_class_id"
+          size="md"
+          required
+        >
+          <USelect
+            disabled
+            class="w-full"
+            v-model="state.academic_class_id"
+            :items="[{ label: 'اختر الشعبة الدراسية', value: null }
                    ,...useAcademicClassesStore().classesData.map((s:Class) => ({
                      label: `${s.title} - ${s.group}`,
                      value: s.id,
                    }))]
                  "
-              placeholder="اختر الشعبة الدراسية"
-            />
-          </UFormField>
+            placeholder="اختر الشعبة الدراسية"
+          />
+        </UFormField>
 
-          <UFormField
-            label="المادة الدراسية"
-            name="subject_id"
-            size="md"
-            required
-          >
-            <USelect
-              disabled
-              class="w-full"
-              v-model="state.subject_id"
-              :items="[{ label: 'اختر المادة الدراسية', value: null }
+        <UFormField
+          label="المادة الدراسية"
+          name="subject_id"
+          size="md"
+          required
+        >
+          <USelect
+            disabled
+            class="w-full"
+            v-model="state.subject_id"
+            :items="[{ label: 'اختر المادة الدراسية', value: null }
                    , ...gradsReportsStore.subjectsData.map((s:Subject) => ({
                      label: `${s.name}`,
                      value: s.id,
                    }))]
                  "
-              placeholder="اختر المادة الدراسية"
-            />
-          </UFormField>
-        </div>
+            placeholder="اختر المادة الدراسية"
+          />
+        </UFormField>
       </div>
       <!-- max & min score -->
       <div class="flex flex-wrap gap-2 mb-5" v-if="studentsWithGrades.length">
@@ -241,42 +233,30 @@ onMounted(async () => {
         </div>
       </div>
       <!-- students  -->
-      <ul v-if="studentsWithGrades.length">
-        <li
-          class="grid grid-cols-3 font-bold bg-secondary text-white place-items-center"
-        >
-          <div
-            class="border-x border-t border-accented w-full text-center p-2.5"
+      <table class="w-full">
+        <thead>
+          <tr
+            class="grid grid-cols-3 font-bold bg-secondary text-white place-items-center border-t border-b border-accented"
           >
-            هوية الطالب
-          </div>
-          <div
-            class="border-x border-t border-accented w-full text-center p-2.5"
-          >
-            الاسم رباعي
-          </div>
-          <div
-            class="border-x border-t border-accented w-full text-center p-2.5"
-          >
-            علامة الطالب
-          </div>
-        </li>
-        <div v-if="!isLoading">
-          <li
+            <th class="border-x border-accented p-2 w-full">هوية الطالب</th>
+            <th class="border-x border-accented p-2 w-full">الاسم رباعي</th>
+            <th class="border-x border-accented p-2 w-full">علامة الطالب</th>
+          </tr>
+        </thead>
+        <tbody v-if="!isLoading">
+          <tr
             v-if="studentsWithGrades.length"
             class="grid grid-cols-3 place-items-center"
             v-for="(swg, index) in studentsWithGrades"
-            :key="swg.id"
+            :key="swg.student?.id"
           >
-            <div
-              class="w-full border border-accented text-center p-3"
-              :class="{ 'p-6': scoreErrors[index] }"
+            <td
+              class="w-full h-full p-2 text-center border-x border-b border-accented flex justify-center items-center"
             >
               {{ swg.student?.identity_number }}
-            </div>
-            <div
-              class="w-full border border-accented text-center p-3"
-              :class="{ 'p-6': scoreErrors[index] }"
+            </td>
+            <td
+              class="w-full h-full p-2 text-center border-x border-b border-accented flex justify-center items-center"
             >
               {{
                 swg.student?.first_name +
@@ -287,8 +267,13 @@ onMounted(async () => {
                 " " +
                 swg.student?.last_name
               }}
-            </div>
-            <div class="w-full border border-accented text-center p-2">
+            </td>
+            <td
+              class="w-full h-full p-2 text-center border-x border-b border-accented flex flex-col justify-center items-center"
+              v-if="
+                studentsWithGrades.length > index && studentsWithGrades[index]
+              "
+            >
               <UInput
                 color="secondary"
                 v-model="studentsWithGrades[index].score"
@@ -296,22 +281,25 @@ onMounted(async () => {
                 @input="() => validateScore(index)"
                 :class="scoreErrors[index] ? 'border-error' : ''"
               />
-              <p v-if="scoreErrors[index]" class="text-error text-sm mt-1">
+              <p v-if="scoreErrors[index]" class="text-error text-xs mt-1">
                 {{ scoreErrors[index] }}
               </p>
-            </div>
-          </li>
-          <li v-else class="flex justify-center p-2 border border-accented">
+            </td>
+          </tr>
+          <tr
+            v-else
+            class="flex justify-center p-2 border border-accented mt-2"
+          >
             لا يوجد بيانات للعرض
-          </li>
-        </div>
-        <div v-else>
+          </tr>
+        </tbody>
+        <tbody v-else>
           <USkeleton class="h-8 w-full my-2" />
           <USkeleton class="h-8 w-full my-2" />
           <USkeleton class="h-8 w-full my-2" />
           <USkeleton class="h-8 w-full my-2" />
-        </div>
-      </ul>
+        </tbody>
+      </table>
     </template>
     <template #footer v-if="studentsWithGrades.length">
       <div class="gap-2 flex">
