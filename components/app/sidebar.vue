@@ -63,7 +63,7 @@ const links = [
     to: "/classes/view",
   },
   {
-    label: "خطط الطلاب",
+    label: "خطط الطلاب القرآنية",
     icon: "i-heroicons-calendar-days",
     to: "/plans",
   },
@@ -81,6 +81,11 @@ const links = [
     ],
   },
   { label: "الدرجات", icon: "i-heroicons-academic-cap", to: "/grades" },
+  {
+    label: "الإنجاز القرآني ",
+    icon: "i-lucide-book-open",
+    to: "/quran-achievement-reports",
+  },
   { label: "المصروفات", icon: "i-lucide-credit-card", to: "/payments" },
   // {
   //   label: "السائقين",

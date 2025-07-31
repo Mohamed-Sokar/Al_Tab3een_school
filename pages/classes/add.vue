@@ -58,11 +58,7 @@
           type="submit"
           class="flex w-full md:w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          :loading="
-            isAcademic
-              ? academicClassesStore.loading
-              : quranClassesStore.loading
-          "
+          :loading="isLoading"
           label="إضافة"
         />
         <UButton
@@ -119,8 +115,10 @@ const state = reactive<Class>({
 const form = ref();
 const route = useRoute();
 const isAcademic = route.query.classType === "academic";
+const isLoading = ref(false);
 
 const onSubmit = async () => {
+  isLoading.value = true;
   if (isAcademic) {
     await academicClassesStore.addClass({ ...state });
     await academicClassesStore.fetchClasses();
@@ -128,6 +126,7 @@ const onSubmit = async () => {
     await quranClassesStore.addClass({ ...state });
     await quranClassesStore.fetchClasses();
   }
+  isLoading.value = false;
 
   navigateTo({
     name: isAcademic

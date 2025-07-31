@@ -1,3 +1,4 @@
+import { useQuranAcheivementReport } from "./stores/quran_acheivement_report";
 interface Student {
   id?: string | undefined;
   full_name?: string | undefined;
@@ -18,6 +19,7 @@ interface Student {
   address: string | undefined;
   masjed: string | undefined;
   level_id: number | undefined;
+  level?: { title: string };
   // class_group: string | undefined;
   memorized_juz: number | undefined;
   memorization_status: "غير حافظ" | "حافظ قوي" | "حافظ ضعيف" | undefined;
@@ -34,6 +36,39 @@ interface Student {
   quran_achievement_reports?: StudentMonthlyAchievements[] | undefined;
 }
 
+interface StudentFilters {
+  academicClassFilter?: number | undefined;
+  quranClassFilter?: number | undefined;
+  planFilter?: number | undefined;
+  levelFilter?: number | undefined;
+  identityNumberFilter?: string | undefined; // Changed to string to handle Arabic/English numbers
+  memorizationStatusFilter?: string | undefined;
+  firstNameFilter?: string | undefined;
+  secondNameFilter?: string | undefined;
+  thirdNameFilter?: string | undefined;
+  lastNameFilter?: string | undefined;
+}
+
+interface StudentQuranAcheivementReportFilters {
+  academicClassFilter?: number | undefined;
+  monthlyPlanFilter?: number | undefined;
+}
+
+type StudentModalFlag =
+  | "academic_class"
+  | "quran_class"
+  | "studentIssue"
+  | "move_quran_class"
+  | "move_academic_class"
+  | "driver_info"
+  | "plan"
+  | "assign_plan"
+  | "assign_driver";
+
+interface SelectOption {
+  label: string;
+  value: number | string | undefined; // دعم string لـ month و status
+}
 interface StudentMonthlyAchievements {
   id?: number | undefined;
   student_id?: string | undefined;
@@ -121,15 +156,18 @@ interface MonthlyPlan {
   plan_id?: number | undefined;
   month: string | undefined;
   pages: number | undefined;
-  status?: string | undefined;
+  plan: Plan;
 }
-interface AchievmentReport {
+interface QuranAchievementReport {
   id?: number | undefined;
-  monthly_plan_id: number | undefined;
   student_id?: string | undefined;
   month: string | undefined;
   achieved_pages: number | undefined;
-  status?: string | undefined;
+  monthly_plan_id: number | undefined;
+  status?: "مكتمل" | "غير مكتمل" | undefined;
+  student?: Student;
+  monthly_plan?: MonthlyPlan;
+  created_at?: Date;
 }
 type StudentBehavioralIssue = {
   first_name: string | undefined;
@@ -260,11 +298,15 @@ interface LinkItem {
 }
 export type {
   Student,
+  StudentFilters,
+  StudentQuranAcheivementReportFilters,
+  StudentModalFlag,
   Class,
   Driver,
-  AchievmentReport,
+  QuranAchievementReport,
   Plan,
   MonthlyPlan,
+  SelectOption,
   BehavioralIssue,
   BehavioralIssueEmployee,
   SupervisoryVisitTeacher,

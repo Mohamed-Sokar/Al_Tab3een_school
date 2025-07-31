@@ -10,6 +10,7 @@ const quranClassesStore = useQuranClassesStore();
 
 console.log(academicClassesStore.loading);
 const route = useRoute();
+const isLoading = ref(false);
 const classT = route.path.split("/")[route.path.split("/").length - 1];
 
 const classType = computed(() =>
@@ -19,6 +20,26 @@ const classType = computed(() =>
     ? "quran"
     : ""
 );
+
+const query = (_class: Class) => {
+  if (classType.value === "academic") {
+    return {
+      academic_class_id: _class.id,
+    };
+  }
+  if (classType.value === "quran") {
+    return {
+      quran_class_id: _class.id,
+    };
+  }
+  return {};
+};
+
+const onDeleteHandler = async (_class: Class) => {
+  classType.value === "academic"
+    ? academicClassesStore.deleteClass(_class.id ?? 0)
+    : quranClassesStore.deleteClass(_class.id ?? 0);
+};
 </script>
 
 <template>
@@ -141,12 +162,8 @@ const classType = computed(() =>
           size="sm"
           @click="
             navigateTo({
-              name: 'students-view-students_table',
-              query: {
-                level: _class.title,
-                class_group: _class.group,
-                classType: classType,
-              },
+              name: 'students-view',
+              query: query(_class),
             })
           "
         />
@@ -169,18 +186,8 @@ const classType = computed(() =>
           class="hover:cursor-pointer flex justify-center col-span-5 xl:col-span-1"
           color="error"
           variant="solid"
-          :loading="
-            classType === 'academic'
-              ? academicClassesStore.loading
-              : classType === 'quran'
-              ? quranClassesStore.loading
-              : false
-          "
-          @click="
-            classType === 'academic'
-              ? academicClassesStore.deleteClass(_class.id ?? 0)
-              : quranClassesStore.deleteClass(_class.id ?? 0)
-          "
+          :loading="isLoading"
+          @click="onDeleteHandler(_class)"
         />
       </div>
     </div>

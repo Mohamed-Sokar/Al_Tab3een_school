@@ -25,7 +25,15 @@ const schema = object({
 });
 
 // data
-const state = reactive({
+const state = reactive<{
+  semester_id: number | undefined;
+  exam_type_id: number | undefined;
+  academic_class_id: number | undefined;
+  subject_id: number | undefined;
+  subject_exam_id: number | undefined;
+  min_score: number | undefined;
+  max_score: number | undefined;
+}>({
   // semester_id: gradsReportsStore.semestersData[0]?.id,
   // exam_type_id: gradsReportsStore.examTypesData[2].id,
   // academic_class_id: useAcademicClassesStore().classesData[1].id,
@@ -34,7 +42,6 @@ const state = reactive({
   exam_type_id: undefined,
   academic_class_id: undefined,
   subject_id: undefined,
-
   subject_exam_id: undefined,
   min_score: undefined,
   max_score: undefined,
@@ -47,7 +54,7 @@ const scoreErrors = ref<string[]>([]);
 // watch effect
 watchEffect(() => {
   if (gradsReportsStore.semestersData.length > 0) {
-    state.semester_id = gradsReportsStore.semestersData[0].id;
+    state.semester_id = Number(gradsReportsStore.semestersData[0].id);
   }
 });
 
@@ -336,11 +343,12 @@ const saveGrades = async () => {
                 }}
               </td>
               <td
-                class="w-full h-full p-2 text-center border-x border-b border-accented flex flex-col justify-center items-center"
+                class="w-full h-full p-2 border-x border-b border-accented flex flex-col justify-center"
                 v-if="grades.length > index && grades[index]"
               >
                 <UInput
-                  color="secondary"
+                  :color="scoreErrors[index] ? 'error' : 'secondary'"
+                  :highlight="scoreErrors[index] ? true : false"
                   v-model="grades[index].score"
                   @update:model-value="validateScore(index)"
                   @input="() => validateScore(index)"

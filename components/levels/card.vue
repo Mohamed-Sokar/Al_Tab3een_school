@@ -111,8 +111,8 @@ defineProps<{
           size="sm"
           @click="
             navigateTo({
-              name: 'students-view-students_table',
-              query: { level: level.title },
+              name: 'students-view',
+              query: { level_id: level.id },
             })
           "
         />

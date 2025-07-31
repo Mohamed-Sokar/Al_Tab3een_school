@@ -58,7 +58,6 @@ const newStudentState = reactive<Student>({
   memorization_status: undefined,
   memorized_juz: undefined as number | undefined,
   daily_recitation: undefined,
-  // class_group: undefined,
 });
 
 const route = useRoute();
@@ -74,11 +73,13 @@ const targetedStudent = ref<Student | undefined>(
 watchEffect(() => {
   if (studentsStore.sortedStudents.length > 0) {
     targetedStudent.value = studentsStore.getSpesificStudent(studentId);
+    console.log(targetedStudent.value);
     Object.assign(newStudentState, targetedStudent.value);
   }
 });
 
 const updateStudent = async () => {
+  console.log(newStudentState);
   await studentsStore.editStudent(studentId, newStudentState);
   navigateTo({ name: "students-view-students_table" });
 };
@@ -251,7 +252,7 @@ const updateStudent = async () => {
         />
       </UFormField>
 
-      <div class="col-span-2 flex gap-2 mt-5">
+      <div class="lg:col-span-2 flex gap-2 mt-5">
         <UButton
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"

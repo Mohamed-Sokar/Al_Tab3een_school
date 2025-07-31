@@ -69,10 +69,9 @@ onMounted(async () => {
   await gradesReportStore.fetchSemesters();
   await gradesReportStore.fetchExamTypes();
   await gradesReportStore.fetchSubjects();
-
   // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
   await studentsStore.fetchBehavioralIssues();
-  await studentsStore.fetchStudents();
+  // await studentsStore.fetchStudents();
   await levelsStore.fetchLevels();
   await academicClassesStore.fetchClasses();
   await plansStore.fetchPlans();

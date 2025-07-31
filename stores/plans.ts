@@ -1,29 +1,30 @@
-import { students } from "~/constants";
 import type { MonthlyPlan, Plan, Student } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
 export const usePlansStore = defineStore("plans", () => {
   const studentsStore = useStudentStore();
+  const client = useSupabaseClient();
   const { toastSuccess, toastError } = useAppToast();
   const plans = ref<Plan[]>([]);
-  const isLoaded = ref(false);
+  const monthsPlans = ref<MonthlyPlan[]>([]);
+  const plansIsLoaded = ref(false);
+  const monthsPlansIsLoaded = ref(false);
   const loading = ref(false);
   const tableKey = ref(Math.random());
 
   const fetchPlans = async () => {
-    if (isLoaded.value) return; // تجنب الجلب أكثر من مرة
-    loading.value = true;
     try {
-      const { data } = await api.get("/plans");
+      if (plansIsLoaded.value) return; // تجنب الجلب أكثر من مرة
+      loading.value = true;
 
-      // console.log(data);
+      const { data } = await api.get("/plans");
       // set payments data to ref locally
       plans.value = data;
       toastSuccess({
         title: "تم تحميل الخطط بنجاح",
       });
-      isLoaded.value = true;
+      plansIsLoaded.value = true;
       tableKey.value = Math.random();
     } catch (err) {
       toastError({
@@ -125,6 +126,32 @@ export const usePlansStore = defineStore("plans", () => {
         title: "حدث مشكلة في تعديل بيانات الخطة",
       });
       throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const fetchMonthsPlans = async () => {
+    loading.value = true;
+    if (monthsPlansIsLoaded.value) return;
+    try {
+      const { data, error } = await client
+        .from("months_plans")
+        .select("*, plan:plan_id(id,stage, semester, year, students_type)");
+
+      // set payments data to ref locally
+      if (error) throw Error;
+
+      toastSuccess({
+        title: "تم تحميل الخطط الشهرية بنجاح",
+      });
+      // console.log("months plans: ", data);
+      monthsPlansIsLoaded.value = true;
+      monthsPlans.value = data;
+      return data;
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة أثناء تحميل الخطط الشهرية",
+      });
     } finally {
       loading.value = false;
     }
@@ -364,6 +391,7 @@ export const usePlansStore = defineStore("plans", () => {
   }
   // Getters
   const plansData = computed(() => plans.value);
+  const monthsPlansData = computed(() => monthsPlans.value);
 
   return {
     // data
@@ -372,6 +400,7 @@ export const usePlansStore = defineStore("plans", () => {
     tableKey,
     // Actions
     fetchPlans,
+    fetchMonthsPlans,
     addPlan,
     addMonthlyPlan,
     deletePlan,
@@ -387,5 +416,6 @@ export const usePlansStore = defineStore("plans", () => {
     assignPlanToStudents,
     // Getters
     plansData,
+    monthsPlansData,
   };
 });

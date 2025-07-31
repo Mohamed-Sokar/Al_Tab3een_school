@@ -1,4 +1,4 @@
-import type { Class, Student } from "~/types";
+import type { Class } from "~/types";
 import { defineStore } from "pinia";
 import { useStudentStore } from "@/stores/students";
 

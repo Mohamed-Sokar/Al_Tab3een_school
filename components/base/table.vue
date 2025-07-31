@@ -2,6 +2,7 @@
 import type { PropType, Ref } from "vue";
 import { h, resolveComponent } from "vue";
 import type { TableRow } from "@nuxt/ui";
+import { getPaginationRowModel } from "@tanstack/vue-table";
 import upperFirst from "lodash/upperFirst";
 
 const UCheckbox = resolveComponent("UCheckbox");
@@ -50,7 +51,11 @@ const props = defineProps({
 });
 
 const table = useTemplateRef("table");
-const emit = defineEmits(["update:globalFilter", "update:rowSelection"]);
+const emit = defineEmits([
+  "update:globalFilter",
+  "update:rowSelection",
+  "update:pagination",
+]);
 const newColumns = computed(() => [
   {
     id: "select",
@@ -130,11 +135,11 @@ const columnVisibility = ref({
       :loading="loading"
       :key="key"
       :global-filter="globalFilter"
+      @update:global-filter="(value) => emit('update:globalFilter', value)"
       :row-selection="props.rowSelection"
       @update:row-selection="(value) => emit('update:rowSelection', value)"
       v-model:column-visibility="columnVisibility"
       @select="onSelect"
-      @update:global-filter="(value) => emit('update:globalFilter', value)"
       :data="data"
       :columns="newColumns"
       class="border border-accented rounded-tr-md rounded-tl-md mt-3"

@@ -1,13 +1,21 @@
-import type { Student, BehavioralIssue, AchievmentReport } from "~/types";
+import type {
+  Student,
+  BehavioralIssue,
+  QuranAchievementReport,
+  StudentFilters,
+  MonthlyPlan,
+} from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
 export const useStudentStore = defineStore("students", () => {
   const plansStore = usePlansStore();
+  const client = useSupabaseClient();
   const { toastSuccess, toastError } = useAppToast();
   const studentsData = ref<Student[]>([]);
   const behavioralIssuesStudentData = ref<BehavioralIssue[]>([]);
   const loading = ref(false);
+  const studentsCount = ref(0);
   const tableKey = ref(Math.random());
 
   // Getters
@@ -22,29 +30,180 @@ export const useStudentStore = defineStore("students", () => {
       (a.student?.first_name ?? "").localeCompare(b.student?.first_name ?? "")
     );
   });
-
+  const studentsCountData = computed(() => studentsCount.value);
   // Actions
-  const fetchStudents = async () => {
-    if (studentsData.value.length) return; // تجنب الجلب أكثر من مرة
+  /**
+   * جلب الطلاب من Supabase مع دعم التصفح والفلاتر
+   * @param {number} pageNum - رقم الصفحة (يبدأ من 1)
+   * @param {number} pageSize - عدد السجلات لكل صفحة
+   * @param {Object} filters - الفلاتر المطبقة (اختيارية)
+   * @returns {Promise<void>}
+   */
+  const fetchStudents = async (
+    pageNum: number = 1,
+    pageSize: number = 10,
+    filters: StudentFilters,
+    forceRefresh: boolean = false
+  ): Promise<void> => {
+    const start = (pageNum - 1) * pageSize; // بداية النطاق
+    const end = start + pageSize - 1; // نهاية النطاق
+    // Check if any filter is applied
+    const isFilterApplied =
+      filters.academicClassFilter ||
+      filters.quranClassFilter ||
+      filters.planFilter ||
+      filters.levelFilter ||
+      filters.memorizationStatusFilter ||
+      filters.firstNameFilter ||
+      filters.secondNameFilter ||
+      filters.thirdNameFilter ||
+      filters.lastNameFilter ||
+      filters.identityNumberFilter;
+
+    // Force refresh if filters are applied or forceRefresh is explicitly true
+    const shouldForceRefresh = forceRefresh || isFilterApplied;
+
+    if (!shouldForceRefresh) {
+      console.log("force Refresh", forceRefresh);
+      // التحقق مما إذا كانت البيانات موجودة بالفعل
+      const hasEnoughData = studentsData.value.length > start;
+      if (hasEnoughData) {
+        const slicedData = studentsData.value.slice(start, end + 1);
+        if (
+          slicedData.length >= Math.min(pageSize, studentsCount.value - start)
+        ) {
+          console.log(`Using cached data for page ${pageNum}`);
+          return;
+        }
+      }
+    }
+
     loading.value = true;
     try {
-      const { data } = await api.get("/students");
-      // console.log(data);
-      // set students data to ref locally
-      studentsData.value = data;
+      let query = client
+        .from("students")
+        .select(
+          `*, behavioral_issues:students_behavioral_issues(id, description, created_at),
+      academic_class:academic_classes(id,title,group,floor,wing),
+      quran_class:quran_classes(id,title,group,floor,wing),
+      driver:drivers(name, car_type, car_color, phone_no),
+      plan:plans(id,year,semester,stage,total_pages, months_plans(id,month, pages, plan_id)),
+      quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id,month,achieved_pages,status),
+      level:levels(title)`
+        )
+        .range(start, end)
+        .order("first_name", { ascending: true });
+
+      // تطبيق الفلاتر إذا وجدت
+      if (filters.academicClassFilter) {
+        query = query.eq("academic_class_id", filters.academicClassFilter);
+      }
+      if (filters.quranClassFilter) {
+        query = query.eq("quran_class_id", filters.quranClassFilter);
+      }
+      if (filters.planFilter) {
+        query = query.eq("plan_id", filters.planFilter);
+      }
+      if (filters.levelFilter) {
+        query = query.eq("level_id", filters.levelFilter);
+      }
+      if (filters.memorizationStatusFilter) {
+        query = query.eq(
+          "memorization_status",
+          filters.memorizationStatusFilter
+        );
+      }
+      if (filters.firstNameFilter) {
+        query = query.eq("first_name", filters.firstNameFilter);
+      }
+      if (filters.secondNameFilter) {
+        query = query.eq("second_name", filters.secondNameFilter);
+      }
+      if (filters.thirdNameFilter) {
+        query = query.eq("third_name", filters.thirdNameFilter);
+      }
+      if (filters.lastNameFilter) {
+        query = query.eq("last_name", filters.lastNameFilter);
+      }
+      if (filters.identityNumberFilter) {
+        query = query.eq("identity_number", filters.identityNumberFilter);
+      }
+
+      const { data, error } = await query;
+
+      if (forceRefresh) {
+        studentsData.value = data as Student[];
+        console.log("students data inside force", studentsData.value);
+      } else {
+        // دمج البيانات الجديدة مع القديمة (تجنب التكرار باستخدام id)
+        const existingIds = new Set(
+          studentsData.value.map((student) => student.id)
+        );
+        const newData = (data as Student[]).filter(
+          (student) => !existingIds.has(student.id)
+        );
+        // set students data
+        studentsData.value = [...studentsData.value, ...newData];
+      }
       toastSuccess({
         title: "تم تحميل الطلاب بنجاح",
       });
-      // tableKey.value = Math.random();
     } catch (err) {
       toastError({
         title: "هناك مشكلة في تحميل الطلاب",
         description: (err as Error).message,
       });
-      // throw new Error();
     } finally {
       loading.value = false;
     }
+  };
+  /**
+   * جلب عدد الطلاب الكلي مع تطبيق الفلاتر
+   * @param {Object} filters - الفلاتر المطبقة (اختيارية)
+   * @returns {Promise<void>}
+   */
+  const getStudentsCount = async (filters: StudentFilters): Promise<void> => {
+    let query = client
+      .from("students")
+      .select("*", { count: "exact", head: true });
+
+    // تطبيق الفلاتر إذا وجدت
+    if (filters.academicClassFilter) {
+      query = query.eq("academic_class_id", filters.academicClassFilter);
+    }
+    if (filters.quranClassFilter) {
+      query = query.eq("quran_class_id", filters.quranClassFilter);
+    }
+    if (filters.planFilter) {
+      query = query.eq("plan_id", filters.planFilter);
+    }
+    if (filters.levelFilter) {
+      query = query.eq("level_id", filters.levelFilter);
+    }
+    if (filters.memorizationStatusFilter) {
+      query = query.eq("memorization_status", filters.memorizationStatusFilter);
+    }
+    if (filters.firstNameFilter) {
+      query = query.eq("first_name", filters.firstNameFilter);
+    }
+    if (filters.secondNameFilter) {
+      query = query.eq("second_name", filters.secondNameFilter);
+    }
+    if (filters.thirdNameFilter) {
+      query = query.eq("third_name", filters.thirdNameFilter);
+    }
+    if (filters.lastNameFilter) {
+      query = query.eq("last_name", filters.lastNameFilter);
+    }
+    if (filters.identityNumberFilter) {
+      query = query.eq("identity_number", filters.identityNumberFilter);
+    }
+
+    const { count, error } = await query;
+    if (error) {
+      throw createError({ statusCode: 500, message: error.message });
+    }
+    studentsCount.value = count || 0;
   };
   const addStudent = async (student: Student) => {
     loading.value = true;
@@ -224,7 +383,221 @@ export const useStudentStore = defineStore("students", () => {
   const getSpesificStudentIndex = (studentId: string) => {
     return studentsData.value.findIndex((student) => student.id === studentId);
   };
+  /**
+   * إعادة تعيين التخزين المؤقت
+   */
+  const resetStudentsCache = () => {
+    studentsData.value = [];
+    studentsCount.value = 0;
+  };
 
+  /**
+   * جلب الطلاب بناءً على academic_class_id
+   * @param academicClassId - معرف الشعبة الدراسية
+   * @param monthlyPlanId - معرف خطة الشهر (للتحقق من التقارير الموجودة)
+   */
+  const getStudentsByAcademicClassIdAndPlanId = async (
+    academicClassId: number,
+    monthlyPlanId?: number
+  ) => {
+    loading.value = true;
+    let students: Student[] = [];
+    let planId: number;
+    try {
+      // get planId
+      await plansStore.fetchMonthsPlans();
+      planId =
+        plansStore.monthsPlansData.find((mp) => mp.id === monthlyPlanId)
+          ?.plan_id ?? 0;
+
+      let query = client
+        .from("students")
+        .select(
+          `*, 
+            behavioral_issues:students_behavioral_issues(id, description, created_at),
+            academic_class:academic_classes(id,title,group,floor,wing),
+            quran_class:quran_classes(id,title,group,floor,wing),
+            driver:drivers(name, car_type, car_color, phone_no),
+            plan:plans(id,year,semester,stage,total_pages, months_plans(id,month,pages,plan_id)),
+            quran_achievement_reports:students_quran_achievement_reports(id,month,achieved_pages,created_at,status,monthly_plan_id,manager_id),
+            level:levels(title)`
+        )
+        .eq("academic_class_id", academicClassId);
+
+      // تصفية الطلاب بناءً على plan_id إذا كان monthlyPlanId
+      if (planId) {
+        query = query.eq("plan_id", planId);
+      }
+      query = query.order("id", { ascending: true });
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      // return data;
+      // تصفية الطلاب الذين ليس لديهم تقرير لهذا الشهر
+      if (monthlyPlanId) {
+        students = data.filter((student: Student) => {
+          return !student?.quran_achievement_reports?.some(
+            (report) => report.monthly_plan_id === monthlyPlanId
+          );
+        });
+      } else {
+        students = data;
+      }
+
+      // studentsCount.value = studentsData.value.length;
+      console.log("Fetched students by academic class:", students);
+      toastSuccess({ title: "تم جلب الطلاب بنجاح" });
+      return students;
+    } catch (err) {
+      // studentsData.value = [];
+      // studentsCount.value = 0;
+      toastError({
+        title: "خطأ في جلب الطلاب",
+        description: (err as Error).message || "حدث خطأ غير متوقع",
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  /**
+   * جلب الطلاب بناءً على academic_class_id
+   * @param academicClassId - معرف الشعبة الدراسية
+   */
+  const getStudentsCountByAcademicClassId = async (academicClassId: number) => {
+    loading.value = true;
+    let studentsCount: number;
+    try {
+      let query = client
+        .from("students")
+        .select("*", { count: "exact", head: true })
+        .eq("academic_class_id", academicClassId);
+
+      const { count, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      studentsCount = Number(count);
+
+      return studentsCount;
+    } catch (err) {
+      toastError({
+        title: "خطأ في جلب الطلاب",
+        description: (err as Error).message || "حدث خطأ غير متوقع",
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  /**
+   * جلب الطلاب بناءً على academic_class_id
+   * @param academicClassId - معرف الشعبة الدراسية
+   * @param monthlyPlanId - معرف خطة الشهر (للتحقق من التقارير الموجودة)
+   */
+  const getStudentsCountByAcademicClassIdAndPlanId = async (
+    academicClassId: number,
+    monthlyPlanId?: number
+  ) => {
+    loading.value = true;
+    let studentsCount: number;
+    let planId: number;
+    try {
+      // get planId
+      await plansStore.fetchMonthsPlans();
+      planId =
+        plansStore.monthsPlansData.find((mp) => mp.id === monthlyPlanId)
+          ?.plan_id ?? 0;
+
+      let query = client
+        .from("students")
+        .select("*", { count: "exact", head: true })
+        .eq("academic_class_id", academicClassId);
+
+      // تصفية الطلاب بناءً على plan_id إذا كان monthlyPlanId
+      if (planId) {
+        query = query.eq("plan_id", planId);
+      }
+      query = query.order("id", { ascending: true });
+
+      const { count, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      // return data;
+      console.log(count);
+
+      studentsCount = Number(count);
+
+      console.log(
+        "Fetched students count by academic class and planId:",
+        studentsCount
+      );
+      toastSuccess({ title: "تم جلب عدد الطلاب بنجاح" });
+      return studentsCount;
+    } catch (err) {
+      // studentsData.value = [];
+      // studentsCount.value = 0;
+      toastError({
+        title: "خطأ في جلب الطلاب",
+        description: (err as Error).message || "حدث خطأ غير متوقع",
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
+  /**
+   * جلب الطلاب بناءً على academic_class_id
+   * @param academicClassId - معرف الشعبة الدراسية
+   */
+  const getStudentsByAcademicClassId = async (academicClassId: number) => {
+    // loading.value = true;
+    let students: Student[] = [];
+    let planId: number;
+    try {
+      let query = client
+        .from("students")
+        .select(
+          `*, 
+            behavioral_issues:students_behavioral_issues(id, description, created_at),
+            academic_class:academic_classes(id,title,group,floor,wing),
+            quran_class:quran_classes(id,title,group,floor,wing),
+            driver:drivers(name, car_type, car_color, phone_no),
+            plan:plans(id,year,semester,stage,total_pages, months_plans(id,month,pages,plan_id)),
+            quran_achievement_reports:students_quran_achievement_reports(id,month,achieved_pages,created_at,status,monthly_plan_id,manager_id),
+            level:levels(title)`
+        )
+        .eq("academic_class_id", academicClassId)
+        .order("id", { ascending: true });
+      // تصفية الطلاب بناءً على plan_id إذا كان monthlyPlanId
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data;
+
+      // studentsCount.value = studentsData.value.length;
+      console.log("Fetched students by academic class:", students);
+      toastSuccess({ title: "تم جلب الطلاب بنجاح" });
+      return students;
+    } catch (err) {
+      // studentsData.value = [];
+      // studentsCount.value = 0;
+      toastError({
+        title: "خطأ في جلب الطلاب",
+        description: (err as Error).message || "حدث خطأ غير متوقع",
+      });
+    } finally {
+      loading.value = false;
+    }
+  };
   // behavioral_issues operations
   const fetchBehavioralIssues = async () => {
     loading.value = true;
@@ -408,9 +781,9 @@ export const useStudentStore = defineStore("students", () => {
       (issue) => issue.id !== undefined && +issue.id === +issueId
     );
   };
-  const addQuranAchievmentReport = async (
+  const addQuranQuranAchievementReport = async (
     generalPlanId: number,
-    newReport: AchievmentReport
+    newReport: QuranAchievementReport
   ) => {
     const targetedStudent = getSpesificStudent(newReport.student_id || "");
     // check if student exists
@@ -466,16 +839,15 @@ export const useStudentStore = defineStore("students", () => {
               : "غير مكتمل"
             : "",
       };
+
       const { data } = await api.post(
         "/students/quran-achievement-report",
         payload
       );
-      // console.log(data);
+
       toastSuccess({
         title: "تم إضافة تقرير الإنجاز القرآني بنجاح",
       });
-
-      navigateTo({ name: "students-view-students_table" });
 
       // add report locally
       const studentIndex = getSpesificStudentIndex(newReport.student_id || "");
@@ -487,6 +859,7 @@ export const useStudentStore = defineStore("students", () => {
           data[0],
         ];
       }
+      navigateTo({ name: "students-view" });
     } catch (err) {
       toastError({
         title: "حدثت مشكلة أثناء إضافة تقرير الإنجاز القرآني",
@@ -506,7 +879,6 @@ export const useStudentStore = defineStore("students", () => {
   function removeInvalidFields(student: Student): Partial<Student> {
     const allowedFields = [
       "id",
-      // "full_name",
       "first_name",
       "second_name",
       "third_name",
@@ -515,7 +887,7 @@ export const useStudentStore = defineStore("students", () => {
       "father_identity_number",
       "phone_number",
       "birth_date",
-      "level",
+      "level_id",
       "masjed",
       "address",
       "memorization_status",
@@ -538,14 +910,23 @@ export const useStudentStore = defineStore("students", () => {
     // Getters
     sortedStudents,
     sortedIssues,
+    studentsCountData,
     // student operations
     fetchStudents,
+    getStudentsCount,
     fetchBehavioralIssues,
     addStudent,
     editStudent,
     deleteStudent,
     deleteMultipleStudents,
-    addQuranAchievmentReport,
+    resetStudentsCache,
+
+    addQuranQuranAchievementReport,
+    getStudentsByAcademicClassId,
+    getStudentsCountByAcademicClassId,
+    getStudentsByAcademicClassIdAndPlanId,
+    getStudentsCountByAcademicClassIdAndPlanId,
+
     // updateAcademicClassForStudents,
     // updatesDriverForStudents,
     // updateQuranClassForStudents,

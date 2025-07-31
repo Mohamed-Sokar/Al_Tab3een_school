@@ -275,11 +275,11 @@ onMounted(async () => {
               "
             >
               <UInput
-                color="secondary"
+                :color="scoreErrors[index] ? 'error' : 'secondary'"
+                :highlight="scoreErrors[index] ? true : false"
                 v-model="studentsWithGrades[index].score"
                 @update:model-value="validateScore(index)"
                 @input="() => validateScore(index)"
-                :class="scoreErrors[index] ? 'border-error' : ''"
               />
               <p v-if="scoreErrors[index]" class="text-error text-xs mt-1">
                 {{ scoreErrors[index] }}

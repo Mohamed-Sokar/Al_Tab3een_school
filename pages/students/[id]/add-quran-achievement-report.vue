@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { number, object, string } from "yup";
-import type { AchievmentReport, Student } from "~/types";
+import type { QuranAchievementReport, Student } from "~/types";
 import { useStudentStore } from "@/stores/students";
 import { months } from "~/constants";
 
@@ -28,7 +28,7 @@ const schema = object({
 });
 
 const state = reactive({
-  month: months[new Date().getMonth()],
+  month: months[new Date().getMonth() + 1],
   achieved_pages: undefined as number | undefined,
 });
 
@@ -49,12 +49,12 @@ const onSubmit = async () => {
     monthly_plan_id: monthlyPlanId,
   };
 
-  await studentsStore.addQuranAchievmentReport(
+  await studentsStore.addQuranQuranAchievementReport(
     generalPlanId,
-    newReport as AchievmentReport
+    newReport as QuranAchievementReport
   );
 
-  // navigateTo({ name: "students-view-students_table" }); => I do that in the store action
+  // navigateTo({ name: "students-view" }); //=> I do that in the store action
 };
 </script>
 
