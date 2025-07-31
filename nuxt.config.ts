@@ -47,9 +47,10 @@ export default defineNuxtConfig({
     redirect: true,
   },
   ssr: true,
-  nitro: {
-    preset: "netlify",
-  },
+  // nitro: {
+  //   preset: "netlify",
+  // },
+  // I commented this
   runtimeConfig: {
     public: {
       baseUrl: process.env.BASE_URL ?? "http://localhost:3000",
