@@ -8,7 +8,7 @@
           color="secondary"
           class="bg-blue-600 px-3 py-2 font-bold"
           variant="solid"
-          to="/payments/add"
+          :to="{ name: 'financial-payments-add' }"
           >إضافة دفعة جديدة</UButton
         >
       </template>
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 const route = useRoute();
-useHead({ title: "المدفوعات الشهرية" });
+useHead({ title: "الصادر والوارد" });
 useSeoMeta({
   title: "المدفوعات الشهرية",
   description: "متابعة وتحليل جميع المدفوعات الشهرية والفواتير الخاصة بالمدرسة",

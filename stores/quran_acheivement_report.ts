@@ -1,13 +1,12 @@
 import type {
   Student,
-  BehavioralIssue,
   QuranAchievementReport,
-  StudentFilters,
   MonthlyPlan,
   StudentQuranAcheivementReportFilters,
 } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
+import { date } from "zod/v4";
 
 export const useQuranAcheivementReport = defineStore(
   "QuranAcheivementReport",
@@ -195,9 +194,9 @@ export const useQuranAcheivementReport = defineStore(
         let query = client
           .from("students_quran_achievement_reports")
           .select(
-            `id, student_id, month, achieved_pages, status, monthly_plan_id, manager_id, created_at,
+            `id, student_id, achieved_pages, status, monthly_plan_id, manager_id, created_at,
         student:students(id, first_name, second_name, third_name, last_name, identity_number, academic_class_id,
-          academic_class:academic_classes(id, title, group)),
+        academic_class:academic_classes(id, title, group)),
         monthly_plan:months_plans(id, month, pages, plan:plans(id, year, semester, stage, students_type))`
           )
           .range(start, end);
@@ -342,94 +341,94 @@ export const useQuranAcheivementReport = defineStore(
         loading.value = false;
       }
     };
-    const addStudent = async (student: Student) => {
-      loading.value = true;
-      // console.log("student: ", student);
-      try {
-        const { data } = await api.post("/students", student);
-        toastSuccess({
-          title: `:تم إضافة الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
-        });
-        // console.log("student from backend: ", data[0]);
-        // add student locally
-        studentsData.value.unshift({ ...data[0] });
-      } catch (err) {
-        toastError({
-          title: "حدث مشكلة في إضافة الطالب",
-        });
-        throw Error(err instanceof Error ? err.message : String(err));
-      } finally {
-        loading.value = false;
-      }
-    };
-    const editStudent = async (studentId: string, newStudent: Student) => {
-      try {
-        loading.value = true;
-        const cleaned = removeInvalidFields(newStudent); // 🧹 remove unfound columns in DB
+    // const addStudent = async (student: Student) => {
+    //   loading.value = true;
+    //   // console.log("student: ", student);
+    //   try {
+    //     const { data } = await api.post("/students", student);
+    //     toastSuccess({
+    //       title: `:تم إضافة الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
+    //     });
+    //     // console.log("student from backend: ", data[0]);
+    //     // add student locally
+    //     studentsData.value.unshift({ ...data[0] });
+    //   } catch (err) {
+    //     toastError({
+    //       title: "حدث مشكلة في إضافة الطالب",
+    //     });
+    //     throw Error(err instanceof Error ? err.message : String(err));
+    //   } finally {
+    //     loading.value = false;
+    //   }
+    // };
+    // const editStudent = async (studentId: string, newStudent: Student) => {
+    //   try {
+    //     loading.value = true;
+    //     const cleaned = removeInvalidFields(newStudent); // 🧹 remove unfound columns in DB
 
-        const { data } = await api.put(`students/${studentId}`, cleaned);
+    //     const { data } = await api.put(`students/${studentId}`, cleaned);
 
-        toastSuccess({
-          title: `:تم تحديث بيانات الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
-        });
-        // update student locally
-        const studentIndex = getSpesificStudentIndex(studentId);
+    //     toastSuccess({
+    //       title: `:تم تحديث بيانات الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
+    //     });
+    //     // update student locally
+    //     const studentIndex = getSpesificStudentIndex(studentId);
 
-        // Keep existing behavioral_issues from old data
-        if (studentsData.value && studentIndex !== -1) {
-          const existingIssues =
-            studentsData.value[studentIndex].behavioral_issues;
-          // Merge new data and keep behavioral_issues field
-          studentsData.value[studentIndex] = {
-            ...data[0],
-            behavioral_issues: existingIssues,
-          };
-        }
-      } catch (err) {
-        toastError({
-          title: "حدث مشكلة في تعديل الطالب",
-        });
-        throw Error(err instanceof Error ? err.message : String(err));
-      } finally {
-        loading.value = false;
-      }
-    };
-    const deleteStudent = async (studentId: string) => {
-      try {
-        loading.value = true;
-        const { data } = await api.delete(`students/${studentId}`);
-        toastSuccess({
-          title: `:تم حذف الطالب ( ${data[0].full_name} ) بنجاح`,
-        });
-        // delete student locally
-        const studentIndex = getSpesificStudentIndex(studentId);
-        (studentsData.value || []).splice(studentIndex, 1);
-      } catch (err) {
-        toastError({
-          title: "حدث مشكلة في حذف الطالب",
-        });
-      } finally {
-        loading.value = false;
-      }
-    };
-    const deleteMultipleStudents = async (ids: string[]) => {
-      try {
-        loading.value = true;
+    //     // Keep existing behavioral_issues from old data
+    //     if (studentsData.value && studentIndex !== -1) {
+    //       const existingIssues =
+    //         studentsData.value[studentIndex].behavioral_issues;
+    //       // Merge new data and keep behavioral_issues field
+    //       studentsData.value[studentIndex] = {
+    //         ...data[0],
+    //         behavioral_issues: existingIssues,
+    //       };
+    //     }
+    //   } catch (err) {
+    //     toastError({
+    //       title: "حدث مشكلة في تعديل الطالب",
+    //     });
+    //     throw Error(err instanceof Error ? err.message : String(err));
+    //   } finally {
+    //     loading.value = false;
+    //   }
+    // };
+    // const deleteStudent = async (studentId: string) => {
+    //   try {
+    //     loading.value = true;
+    //     const { data } = await api.delete(`students/${studentId}`);
+    //     toastSuccess({
+    //       title: `:تم حذف الطالب ( ${data[0].full_name} ) بنجاح`,
+    //     });
+    //     // delete student locally
+    //     const studentIndex = getSpesificStudentIndex(studentId);
+    //     (studentsData.value || []).splice(studentIndex, 1);
+    //   } catch (err) {
+    //     toastError({
+    //       title: "حدث مشكلة في حذف الطالب",
+    //     });
+    //   } finally {
+    //     loading.value = false;
+    //   }
+    // };
+    // const deleteMultipleStudents = async (ids: string[]) => {
+    //   try {
+    //     loading.value = true;
 
-        await api.delete("/students/delete-many", { data: { ids } });
+    //     await api.delete("/students/delete-many", { data: { ids } });
 
-        // إزالة الطلاب من الواجهة مباشرة
-        studentsData.value = studentsData.value.filter(
-          (student) => !ids.includes(student.id || "")
-        );
+    //     // إزالة الطلاب من الواجهة مباشرة
+    //     studentsData.value = studentsData.value.filter(
+    //       (student) => !ids.includes(student.id || "")
+    //     );
 
-        toastSuccess({ title: "تم حذف الطلاب بنجاح" });
-      } catch (error) {
-        toastError({ title: "فشل في حذف الطلاب" });
-      } finally {
-        loading.value = false;
-      }
-    };
+    //     toastSuccess({ title: "تم حذف الطلاب بنجاح" });
+    //   } catch (error) {
+    //     toastError({ title: "فشل في حذف الطلاب" });
+    //   } finally {
+    //     loading.value = false;
+    //   }
+    // };
     const getSpesificReport = (reportId: number) => {
       return reports.value?.find((report) => report.id === reportId);
     };
@@ -438,77 +437,6 @@ export const useQuranAcheivementReport = defineStore(
     };
 
     /**
-     * جلب الطلاب بناءً على academic_class_id
-     * @param academicClassId - معرف الشعبة الدراسية
-     * @param monthlyPlanId - معرف خطة الشهر (للتحقق من التقارير الموجودة)
-     */
-    const getStudentsByAcademicClassId = async (
-      academicClassId: number,
-      monthlyPlanId?: number
-    ) => {
-      loading.value = true;
-      let students: Student[] = [];
-      let planId: number;
-      try {
-        // get planId
-        await plansStore.fetchMonthsPlans();
-        planId =
-          plansStore.monthsPlansData.find((mp) => mp.id === monthlyPlanId)
-            ?.plan_id ?? 0;
-
-        let query = client
-          .from("students")
-          .select(
-            `*, 
-            behavioral_issues:students_behavioral_issues(id, description, created_at),
-            academic_class:academic_classes(id,title,group,floor,wing),
-            quran_class:quran_classes(id,title,group,floor,wing),
-            driver:drivers(name, car_type, car_color, phone_no),
-            plan:plans(id,year,semester,stage,total_pages, months_plans(id,month,pages,plan_id)),
-            quran_achievement_reports:students_quran_achievement_reports(id,month,achieved_pages,created_at,status,monthly_plan_id,manager_id),
-            level:levels(title)`
-          )
-          .eq("academic_class_id", academicClassId);
-
-        // تصفية الطلاب بناءً على plan_id إذا كان monthlyPlanId
-        if (planId) {
-          query = query.eq("plan_id", planId);
-        }
-        query = query.order("id", { ascending: true });
-
-        const { data, error } = await query;
-
-        if (error) {
-          throw new Error(error.message);
-        }
-        // return data;
-        // تصفية الطلاب الذين ليس لديهم تقرير لهذا الشهر
-        if (monthlyPlanId) {
-          students = data.filter((student: Student) => {
-            return !student?.quran_achievement_reports?.some(
-              (report) => report.monthly_plan_id === monthlyPlanId
-            );
-          });
-        } else {
-          students = data;
-        }
-
-        // studentsCount.value = studentsData.value.length;
-        console.log("Fetched students by academic class:", students);
-        toastSuccess({ title: "تم جلب الطلاب بنجاح" });
-        return students;
-      } catch (err) {
-        // studentsData.value = [];
-        // studentsCount.value = 0;
-        toastError({
-          title: "خطأ في جلب الطلاب",
-          description: (err as Error).message || "حدث خطأ غير متوقع",
-        });
-      } finally {
-        loading.value = false;
-      }
-    };
-    /**
      * حفظ تقارير إنجاز القرآن للطلاب
      * @param reports - مصفوفة تقارير الإنجاز
      */
@@ -516,19 +444,20 @@ export const useQuranAcheivementReport = defineStore(
       newReports: QuranAchievementReport[]
     ) => {
       try {
-        console.log("reports", reports);
-
-        const { error } = await client
+        const { data, error } = await client
           .from("students_quran_achievement_reports")
           .upsert(newReports, {
-            onConflict: ["student_id", "month"],
-            // onConflict: "unique_student_month_plan",
-            // update: ["achieved_pages", "status", "monthly_plan_id"],
-          });
+            onConflict: ["student_id", "monthly_plan_id"],
+          })
+          .select();
 
         if (error) {
           throw new Error(error.message);
         }
+
+        console.log(data);
+
+        // reports.value.unshift(...date);
 
         toastSuccess({ title: "تم حفظ تقارير الإنجاز بنجاح" });
       } catch (err) {
@@ -590,31 +519,31 @@ export const useQuranAcheivementReport = defineStore(
       }
     };
     // helper Methods
-    function removeInvalidFields(student: Student): Partial<Student> {
-      const allowedFields = [
-        "id",
-        "first_name",
-        "second_name",
-        "third_name",
-        "last_name",
-        "identity_number",
-        "father_identity_number",
-        "phone_number",
-        "birth_date",
-        "level_id",
-        "masjed",
-        "address",
-        "memorization_status",
-        "memorized_juz",
-        "daily_recitation",
-        "class_group",
-        "created_at",
-      ];
+    // function removeInvalidFields(student: Student): Partial<Student> {
+    //   const allowedFields = [
+    //     "id",
+    //     "first_name",
+    //     "second_name",
+    //     "third_name",
+    //     "last_name",
+    //     "identity_number",
+    //     "father_identity_number",
+    //     "phone_number",
+    //     "birth_date",
+    //     "level_id",
+    //     "masjed",
+    //     "address",
+    //     "memorization_status",
+    //     "memorized_juz",
+    //     "daily_recitation",
+    //     "class_group",
+    //     "created_at",
+    //   ];
 
-      return Object.fromEntries(
-        Object.entries(student).filter(([key]) => allowedFields.includes(key))
-      );
-    }
+    //   return Object.fromEntries(
+    //     Object.entries(student).filter(([key]) => allowedFields.includes(key))
+    //   );
+    // }
     return {
       // state
       reportsData,
@@ -628,14 +557,14 @@ export const useQuranAcheivementReport = defineStore(
       fetchReportsByMonthlyPlanId,
       getReportsCount,
 
-      addStudent,
-      editStudent,
-      deleteStudent,
-      deleteMultipleStudents,
+      // addStudent,
+      // editStudent,
+      // deleteStudent,
+      // deleteMultipleStudents,
       // resetStudentsCache,
 
       // addQuranQuranAchievementReport,
-      getStudentsByAcademicClassId,
+
       saveQuranAchievementReports,
       updateQuranAchievementReport,
 

@@ -4,7 +4,10 @@ import { months } from "~/constants";
 import { type EmployeeLoan, type Semester } from "~/types";
 
 const loansStore = useLoansStore();
+const { toastError, toastSuccess } = useAppToast();
 const route = useRoute();
+const client = useSupabaseClient();
+const isLoading = ref(false);
 const form = ref();
 
 const schema = object({
@@ -13,7 +16,9 @@ const schema = object({
   amount: number().required("القيمة مطلوبة"),
   notes: string(),
   created_at: date().required("تاريخ الدفعة مطلوب"),
+  updated_at: date().required("تاريخ الاسترداد مطلوب"),
 });
+
 const state = reactive<EmployeeLoan>({
   employee_id: String(route.params.id),
   month_id: undefined,
@@ -21,15 +26,57 @@ const state = reactive<EmployeeLoan>({
   notes: undefined,
   amount: undefined,
   created_at: undefined,
+  updated_at: new Date(),
   status: "غير مدفوع",
 });
+
+const fetchReport = async () => {
+  const reportId = Number(route.params.id);
+
+  if (isNaN(reportId)) {
+    toastError({ title: "معرف التقرير غير صالح" });
+    navigateTo({ name: "financial-employee-loans" });
+    return;
+  }
+  try {
+    isLoading.value = true;
+
+    const { data: report, error: reportError } = await client
+      .from("employees_loans")
+      .select(
+        `id, employee_id, semester_id, amount, notes, status, created_at,month_id`
+      )
+      .eq("id", reportId)
+      .single();
+
+    if (reportError) {
+      throw new Error(reportError.message);
+    }
+    console.log(report);
+    if (!report) {
+      throw new Error("التقرير غير موجود");
+    }
+
+    Object.assign(state, report);
+  } catch (err) {
+    toastError({
+      title: "خطأ في جلب التقرير",
+      description: (err as Error).message || "حدث خطأ غير متوقع",
+    });
+    setTimeout(() => {
+      navigateTo({ name: "financial-employee-loans" });
+    }, 1000);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const onSubmit = async () => {
   await loansStore.saveLoanReport(state);
   navigateTo({ name: "financial-employee-loans" });
 };
 
-const date_string = computed({
+const created_at_string = computed({
   get() {
     if (!state.created_at) return "";
     if (typeof state.created_at === "string") {
@@ -53,6 +100,32 @@ const date_string = computed({
     state.created_at = val;
   },
 });
+const updated_at_string = computed({
+  get() {
+    if (!state.updated_at) return "";
+    if (typeof state.updated_at === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.updated_at)) {
+        return state.updated_at;
+      }
+      // Try to parse and format
+      const d = new Date(state.updated_at);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (state.updated_at instanceof Date) {
+      return state.updated_at.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    state.updated_at = val;
+  },
+});
+
+onMounted(async () => await fetchReport());
 </script>
 
 <template>
@@ -96,10 +169,20 @@ const date_string = computed({
       </UFormField>
       <UFormField label="تاريخ السلفة" name="created_at">
         <UInput
+          disabled
           type="date"
-          v-model="date_string"
+          v-model="created_at_string"
           placeholder="تاريخ السلفة"
           label="تاريخ السلفة"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="تاريخ الاسترداد" name="updated_at">
+        <UInput
+          type="date"
+          v-model="updated_at_string"
+          placeholder="تاريخ الاسترداد"
+          label="تاريخ الاسترداد"
           class="w-full"
         />
       </UFormField>
@@ -110,6 +193,15 @@ const date_string = computed({
           placeholder="القيمة"
           label="القيمة"
           class="w-full"
+        />
+      </UFormField>
+      <UFormField label="الحالة" name="status" size="md">
+        <USelect
+          class="w-full"
+          v-model="state.status"
+          :items="['مدفوع', 'غير مدفوع']"
+          placeholder="اختر الحالة"
+          icon="i-heroicons-calendar"
         />
       </UFormField>
       <UFormField label="وصف الدفعة" name="notes">

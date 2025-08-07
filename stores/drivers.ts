@@ -31,9 +31,9 @@ export const useDriversStore = defineStore("drivers", () => {
       // console.log(data);
       // set levels data to ref locally
       drivers.value = data;
-      toastSuccess({
-        title: "تم تحميل السائقين بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل السائقين بنجاح",
+      // });
     } catch (err) {
       toastError({
         title: "حدث مشكلة أثناء تحميل السائقين",

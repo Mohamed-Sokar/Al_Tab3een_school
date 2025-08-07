@@ -2,8 +2,7 @@ import type {
   Student,
   BehavioralIssue,
   QuranAchievementReport,
-  StudentFilters,
-  MonthlyPlan,
+  Filters,
 } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
@@ -42,7 +41,7 @@ export const useStudentStore = defineStore("students", () => {
   const fetchStudents = async (
     pageNum: number = 1,
     pageSize: number = 10,
-    filters: StudentFilters,
+    filters: Filters,
     forceRefresh: boolean = false
   ): Promise<void> => {
     const start = (pageNum - 1) * pageSize; // بداية النطاق
@@ -88,7 +87,7 @@ export const useStudentStore = defineStore("students", () => {
       quran_class:quran_classes(id,title,group,floor,wing),
       driver:drivers(name, car_type, car_color, phone_no),
       plan:plans(id,year,semester,stage,total_pages, months_plans(id,month, pages, plan_id)),
-      quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id,month,achieved_pages,status),
+      quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id,achieved_pages,status),
       level:levels(title)`
         )
         .range(start, end)
@@ -145,9 +144,9 @@ export const useStudentStore = defineStore("students", () => {
         // set students data
         studentsData.value = [...studentsData.value, ...newData];
       }
-      toastSuccess({
-        title: "تم تحميل الطلاب بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل الطلاب بنجاح",
+      // });
     } catch (err) {
       toastError({
         title: "هناك مشكلة في تحميل الطلاب",
@@ -157,12 +156,7 @@ export const useStudentStore = defineStore("students", () => {
       loading.value = false;
     }
   };
-  /**
-   * جلب عدد الطلاب الكلي مع تطبيق الفلاتر
-   * @param {Object} filters - الفلاتر المطبقة (اختيارية)
-   * @returns {Promise<void>}
-   */
-  const getStudentsCount = async (filters: StudentFilters): Promise<void> => {
+  const getStudentsCount = async (filters: Filters): Promise<void> => {
     let query = client
       .from("students")
       .select("*", { count: "exact", head: true });
@@ -383,9 +377,6 @@ export const useStudentStore = defineStore("students", () => {
   const getSpesificStudentIndex = (studentId: string) => {
     return studentsData.value.findIndex((student) => student.id === studentId);
   };
-  /**
-   * إعادة تعيين التخزين المؤقت
-   */
   const resetStudentsCache = () => {
     studentsData.value = [];
     studentsCount.value = 0;
@@ -419,7 +410,7 @@ export const useStudentStore = defineStore("students", () => {
             quran_class:quran_classes(id,title,group,floor,wing),
             driver:drivers(name, car_type, car_color, phone_no),
             plan:plans(id,year,semester,stage,total_pages, months_plans(id,month,pages,plan_id)),
-            quran_achievement_reports:students_quran_achievement_reports(id,month,achieved_pages,created_at,status,monthly_plan_id,manager_id),
+            quran_achievement_reports:students_quran_achievement_reports(id,achieved_pages,created_at,status,monthly_plan_id,manager_id),
             level:levels(title)`
         )
         .eq("academic_class_id", academicClassId);
@@ -557,7 +548,6 @@ export const useStudentStore = defineStore("students", () => {
   const getStudentsByAcademicClassId = async (academicClassId: number) => {
     // loading.value = true;
     let students: Student[] = [];
-    let planId: number;
     try {
       let query = client
         .from("students")
@@ -582,14 +572,7 @@ export const useStudentStore = defineStore("students", () => {
       }
 
       return data;
-
-      // studentsCount.value = studentsData.value.length;
-      console.log("Fetched students by academic class:", students);
-      toastSuccess({ title: "تم جلب الطلاب بنجاح" });
-      return students;
     } catch (err) {
-      // studentsData.value = [];
-      // studentsCount.value = 0;
       toastError({
         title: "خطأ في جلب الطلاب",
         description: (err as Error).message || "حدث خطأ غير متوقع",
@@ -606,10 +589,10 @@ export const useStudentStore = defineStore("students", () => {
       // console.log("behavioralIssues: ", data);
       // set behavioral Issues data to ref locally
       behavioralIssuesStudentData.value = data;
-      toastSuccess({
-        title: "تم تحميل المخالفات بنجاح",
-      });
-      tableKey.value = Math.random();
+      // toastSuccess({
+      //   title: "تم تحميل المخالفات بنجاح",
+      // });
+      // tableKey.value = Math.random();
     } catch (err) {
       // toastError({
       //   title: err.message,

@@ -4,7 +4,7 @@ import type { EmployeeLoan } from "~/types";
 import { months } from "~/constants";
 import { useTeachersStore } from "@/stores/teachers";
 
-useHead({ title: "القروض" });
+useHead({ title: "سلف المدرسين" });
 
 const { getArabicDayName, getDate } = useDateUtils();
 const teachersStore = useTeachersStore();
@@ -26,13 +26,14 @@ const columns: TableColumn<EmployeeLoan>[] = [
     accessorKey: "rowNumber",
     header: "الرقم",
   },
-
   {
     accessorKey: "اسم المعلم",
     header: "اسم المعلم",
     cell: ({ row }) => {
       return (
-        row.original.employee.first_name + " " + row.original.employee.last_name
+        row.original?.employee?.first_name +
+        " " +
+        row.original?.employee?.last_name
       );
     },
   },
@@ -60,6 +61,7 @@ const columns: TableColumn<EmployeeLoan>[] = [
     id: "action",
   },
 ];
+
 function getDropdownActions(loan: EmployeeLoan): DropdownMenuItem[] {
   return [
     [
@@ -67,8 +69,10 @@ function getDropdownActions(loan: EmployeeLoan): DropdownMenuItem[] {
         label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
-          // console.log("Edit action for user:", student);
-          navigateTo(`/teachers/${loan.id}/edit_loan`);
+          navigateTo({
+            name: "employees-id-edit-loan",
+            params: { id: loan.id },
+          });
         },
       },
       {

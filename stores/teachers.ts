@@ -4,13 +4,16 @@ import type {
   EmployeeAbsenceReport,
   EmployeeLoan,
   SupervisoryVisitTeacher,
+  Filters,
 } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
 export const useTeachersStore = defineStore("teachers", () => {
   const { toastSuccess, toastError } = useAppToast();
+  const client = useSupabaseClient();
   const teachersData = ref<Employee[]>([]);
+  const employeesCount = ref(0);
   const loading = ref(false);
   const behavioralIssuesTeachersData = ref<BehavioralIssueEmployee[]>([]);
   const supervisoryVisitsTeachersData = ref<SupervisoryVisitTeacher[]>([]);
@@ -53,24 +56,79 @@ export const useTeachersStore = defineStore("teachers", () => {
   });
 
   // Actions
-  const fetchTeachers = async () => {
-    if (teachersData.value.length) return; // تجنب الجلب أكثر من مرة
+  const fetchTeachers = async (
+    filters?: Filters,
+    forceRefresh: boolean = false
+  ) => {
+    console.log(filters);
+    if (!forceRefresh) {
+      if (teachersData.value.length) return; // تجنب الجلب أكثر من مرة
+    }
     loading.value = true;
+    let employees: Employee[] = [];
     try {
-      const { data } = await api.get("/employees");
-      // console.log(data);
-      // set students data to ref locally
-      teachersData.value = data;
-      toastSuccess({
-        title: "تم تحميل المعلمين بنجاح",
-      });
-      tableKey.value = Math.random();
+      // const { data } = await api.get("/employees");
+      let { data, error } = await client.from("employees").select(
+        `*, behavioral_issues:employees_behavioral_issues(id, description,created_at),
+      loans:employees_loans(id,amount,created_at),
+      absence:employees_absence(id, date, reason, excuse_status),
+      academic_classes:teachers_academic_classes(class:academic_classes(id,title, group)),
+      supervisory_visits(notes,date,supervisor,type),
+      salaries:employee_salaries(*)
+      `
+      );
+
+      if (filters?.monthFilter) {
+        employees = (data as Employee[]).filter((employee: Employee) => {
+          return !employee.salaries?.some(
+            (report) => report.month_id === filters.monthFilter
+          );
+        });
+        console.log("employees after filtered: ", employees);
+      } else {
+        employees = data as Employee[];
+      }
+      // .order("full_name", { ascending: true });
+      if (error) {
+        throw createError({ statusCode: 500, message: error.message });
+      }
+
+      teachersData.value = employees;
+      // return data;
     } catch (err) {
       toastError({
-        title: "هناك مشكلة في تحميل المعلمين",
-        description: "تحقق من الاتصال بالنترنت",
+        title: "هناك مشكلة في تحميل الموظفين",
+        description: (err as Error).message,
       });
-      throw new Error("خطأ في تحميل المعلمين");
+    } finally {
+      loading.value = false;
+    }
+  };
+  const getEmployeesCount = async () => {
+    try {
+      loading.value = true;
+      let query = client
+        .from("employees")
+        .select("*", { count: "exact", head: true });
+
+      // Apply filtering based on month_id
+      // if (filters.monthFilter) {
+      //   query = query.eq("month_id", filters.monthFilter);
+      // }
+
+      // Apply filtering based on semester_id
+      // if (filters.semesterFilter) {
+      //   query = query.eq("semester_id", filters.semesterFilter);
+      // }
+      const { count, error } = await query;
+
+      if (error) {
+        throw createError({ statusCode: 500, message: error.message });
+      }
+      employeesCount.value = count || 0;
+      return count;
+    } catch (err) {
+      toastError({ title: "خطأ في جلب عدد الموظفين" });
     } finally {
       loading.value = false;
     }
@@ -173,9 +231,9 @@ export const useTeachersStore = defineStore("teachers", () => {
       // console.log(data);
       // set behavioral Issues data to ref locally
       behavioralIssuesTeachersData.value = data;
-      toastSuccess({
-        title: "تم تحميل المخالفات بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل المخالفات بنجاح",
+      // });
     } catch (err) {
       toastError({
         title: "حدث مشكلة في تحميل المخالفات الإدارية",
@@ -352,9 +410,9 @@ export const useTeachersStore = defineStore("teachers", () => {
       // console.log(data);
       // set supervisory visits data to ref locally
       supervisoryVisitsTeachersData.value = data;
-      toastSuccess({
-        title: "تم تحميل الزيارات بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل الزيارات بنجاح",
+      // });
     } catch (err) {
       toastError({
         title: "حدث مشكلة في تحميل الزيارات الإدارية",
@@ -533,9 +591,9 @@ export const useTeachersStore = defineStore("teachers", () => {
       // set loans data to ref locally
       teachersLoansData.value = data;
 
-      toastSuccess({
-        title: "تم تحميل السلف بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل السلف بنجاح",
+      // });
       // tableKey.value = Math.random();
     } catch (err) {
       toastError({
@@ -691,9 +749,9 @@ export const useTeachersStore = defineStore("teachers", () => {
       // set loans data to ref locally
       teachersAbsenceReportsData.value = data;
 
-      toastSuccess({
-        title: "تم تحميل تقارير الغياب بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل تقارير الغياب بنجاح",
+      // });
       // tableKey.value = Math.random();
     } catch (err) {
       toastError({
@@ -896,6 +954,7 @@ export const useTeachersStore = defineStore("teachers", () => {
     loading,
     // Actions
     fetchTeachers,
+    getEmployeesCount,
     addTeacher,
     updateTeacher,
     deleteTeacher,

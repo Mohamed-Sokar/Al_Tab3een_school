@@ -3,15 +3,21 @@ import { usePaymentsStore } from "@/stores/paymnets";
 import { useLevelsStore } from "@/stores/levels";
 
 const paymentsStore = usePaymentsStore();
-const { levelStudentsCount } = useLevelsStore();
+// const { levelStudentsCount } = useLevelsStore();
 
 const colorMode = useColorMode();
 
+// const RevenueData = [
+//   { level: "الصف السادس", mount: levelStudentsCount("الصف السادس") },
+//   { level: "الصف السابع", mount: levelStudentsCount("الصف السابع") },
+//   { level: "الصف الثامن", mount: levelStudentsCount("الصف الثامن") },
+//   { level: "الصف التاسع", mount: levelStudentsCount("الصف التاسع") },
+// ];
 const RevenueData = [
-  { level: "الصف السادس", mount: levelStudentsCount("الصف السادس") },
-  { level: "الصف السابع", mount: levelStudentsCount("الصف السابع") },
-  { level: "الصف الثامن", mount: levelStudentsCount("الصف الثامن") },
-  { level: "الصف التاسع", mount: levelStudentsCount("الصف التاسع") },
+  { level: "الصف السادس", mount: 20 },
+  { level: "الصف السابع", mount: 50 },
+  { level: "الصف الثامن", mount: 10 },
+  { level: "الصف التاسع", mount: 80 },
 ];
 const DonutData = [
   {

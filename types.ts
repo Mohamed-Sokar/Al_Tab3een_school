@@ -34,10 +34,16 @@ interface Student {
   academic_class_id?: number | undefined;
   quran_class_id?: number | undefined;
   quran_achievement_reports?: StudentMonthlyAchievements[] | undefined;
+  months_fees?: FeesReport[] | undefined;
 }
 
-interface StudentFilters {
+export interface Filters {
+  monthFilter?: number | undefined;
+  invoiceTypeFilter?: number | undefined;
+  semesterFilter?: number | undefined;
+  monthlyPlanFilter?: number | undefined;
   academicClassFilter?: number | undefined;
+
   quranClassFilter?: number | undefined;
   planFilter?: number | undefined;
   levelFilter?: number | undefined;
@@ -47,11 +53,8 @@ interface StudentFilters {
   secondNameFilter?: string | undefined;
   thirdNameFilter?: string | undefined;
   lastNameFilter?: string | undefined;
-}
 
-interface StudentQuranAcheivementReportFilters {
-  academicClassFilter?: number | undefined;
-  monthlyPlanFilter?: number | undefined;
+  statusFilter?: string | undefined;
 }
 
 type StudentModalFlag =
@@ -99,12 +102,14 @@ interface Employee {
   subject: string[] | undefined;
   level_id: number | undefined;
   created_at?: string | undefined | Date;
+  salary: number | undefined;
 
   behavioral_issues?: Array<BehavioralIssueEmployee> | undefined;
   supervisory_visits?: Array<SupervisoryVisitTeacher> | undefined;
   loans?: Array<EmployeeLoan> | undefined;
   absence?: Array<EmployeeAbsenceReport> | undefined;
-  academic_classes?: Array<Class> | undefined;
+  academic_classes?: Class[] | undefined;
+  salaries?: EmployeeSalaryReport[] | undefined;
 
   // behavioral_issues_count?: number | undefined;
   // loans_count?: number | undefined;
@@ -113,13 +118,22 @@ interface Employee {
 
 interface Payment {
   id?: number | undefined;
-  type: string | undefined;
+  type_id: number | undefined;
+  type?: { id: number; type: string };
+  month?: { id: number; name: string };
+  month_id: number | undefined;
   description: string | undefined;
-  date: Date | undefined;
+  created_at?: Date | undefined;
   amount: number | undefined;
   invoice_number: string | undefined;
 }
-
+export interface PaymentSum {
+  type_id: number;
+  type_name: string; // e.g., "وارد" or "صادر"
+  month_id: number;
+  month_name: string; // e.g., "2025-01"
+  total_amount: number;
+}
 interface Class {
   id?: number | undefined;
   title?: string | undefined;
@@ -158,10 +172,40 @@ interface MonthlyPlan {
   pages: number | undefined;
   plan: Plan;
 }
+
+interface EmployeeSalaryReport {
+  id?: number | undefined;
+  semester_id?: number | undefined;
+  employee_id?: string | undefined;
+  month_id?: number | undefined;
+  amount: number | undefined;
+  salary?: number | undefined;
+  month?: { id: number; name: string };
+  employee?: Employee;
+  created_at?: Date;
+  updated_at?: Date;
+  notes?: string;
+  status?: string;
+}
+interface FeesReport {
+  id?: number | undefined;
+  semester_id?: number | undefined;
+  student_id?: string | undefined;
+  month_id?: number | undefined;
+  month?: { id: number; name: string };
+  fees?: number | undefined;
+  amount: number | undefined;
+  status?: "مسدد" | "غير مسدد" | "متأخر" | undefined;
+  student?: Student;
+  created_at?: Date;
+  updated_at?: Date;
+  notes?: string;
+}
 interface QuranAchievementReport {
   id?: number | undefined;
   student_id?: string | undefined;
-  month: string | undefined;
+  // month: string | undefined;
+  semester_id: number | undefined;
   achieved_pages: number | undefined;
   monthly_plan_id: number | undefined;
   status?: "مكتمل" | "غير مكتمل" | undefined;
@@ -211,14 +255,23 @@ interface SupervisoryVisitTeacher {
 }
 
 interface EmployeeLoan {
-  id: number | undefined;
-  teacher_id: string | undefined;
-  employee: {
+  id?: number | undefined;
+  employee_id: string | undefined;
+  employee?: {
     first_name: string | undefined;
+    second_name: string | undefined;
+    third_name: string | undefined;
     last_name: string | undefined;
+    identity_number: string | undefined;
   };
-  amount: number;
+  amount: number | undefined;
+  month?: { id: number; name: string };
+  month_id: number | undefined;
+  semester_id: number | undefined;
+  notes: string | undefined;
+  status?: string | undefined;
   created_at?: Date | undefined;
+  updated_at?: Date | undefined;
 }
 
 interface EmployeeAbsenceReport {
@@ -300,6 +353,9 @@ export type {
   Student,
   StudentFilters,
   StudentQuranAcheivementReportFilters,
+  StudentFeesReportFilters,
+  EmployeeSalaryReportFilters,
+  PaymentReportFilters,
   StudentModalFlag,
   Class,
   Driver,
@@ -323,4 +379,6 @@ export type {
   AvgScoreResult,
   Subject,
   Grade,
+  FeesReport,
+  EmployeeSalaryReport,
 };

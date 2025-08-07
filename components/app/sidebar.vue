@@ -72,13 +72,13 @@ const links = [
     label: "الطلاب",
     icon: "i-lucide-users",
     to: "/students/view",
-    children: [
-      {
-        label: "الطلاب",
-        icon: "i-lucide-users",
-        to: "/students/view",
-      },
-    ],
+    // children: [
+    //   {
+    //     label: "الطلاب",
+    //     icon: "i-lucide-users",
+    //     to: "/students/view",
+    //   },
+    // ],
   },
   { label: "الدرجات", icon: "i-heroicons-academic-cap", to: "/grades" },
   {
@@ -86,7 +86,33 @@ const links = [
     icon: "i-lucide-book-open",
     to: "/quran-achievement-reports",
   },
-  { label: "المصروفات", icon: "i-lucide-credit-card", to: "/payments" },
+  {
+    label: "الملف المالي",
+    icon: "i-lucide-credit-card",
+    to: "/financial",
+    children: [
+      {
+        label: "رسوم الطلاب",
+        icon: "i-lucide-credit-card",
+        to: "/fees",
+      },
+      {
+        label: "رواتب العاملين",
+        icon: "i-lucide-credit-card",
+        to: "/employee-salaries",
+      },
+      {
+        label: "سلف العاملين",
+        icon: "i-lucide-credit-card",
+        to: "/employee-loans",
+      },
+      {
+        label: "الصادر والوارد",
+        icon: "i-lucide-credit-card",
+        to: "/payments",
+      },
+    ],
+  },
   // {
   //   label: "السائقين",
   //   icon: "i-lucide-car-taxi-front",
@@ -213,6 +239,7 @@ const items: DropdownMenuItem[] = [
         <nav class="mt-6 px-2 flex-1 space-y-2 text-right overflow-y-auto">
           <div v-for="link in links" :key="link.to">
             <NuxtLink
+              v-if="!link.children"
               :to="link.to"
               class="flex items-center font-semibold gap-3 px-4 py-2 rounded-lg transition hover:bg-blue-600"
               :class="{
@@ -226,26 +253,17 @@ const items: DropdownMenuItem[] = [
               <span class="text-base text-white dark:text-gray-200">
                 {{ link.label }}
               </span>
-              <UIcon
+              <!-- <UIcon
                 :name="link.star ? 'i-heroicons-sparkles-solid' : ''"
                 class="size-5 text-warning-300"
-              />
+              /> -->
             </NuxtLink>
-            <!-- <UCollapsible
-              v-if="link.children"
-              class="flex flex-col gap-2 w-full border-none"
-            >
+            <UCollapsible v-else class="flex flex-col gap-2 w-full border-none">
               <UButton
-                class="group data-[state=open]:bg-secondary/15 hover:bg-secondary/15 bg-transparent border-none text-white"
+                class="group data-[state=open]:bg-secondary/15 hover:bg-secondary/15 bg-transparent border-none text-white hover:cursor-pointer"
                 :label="link.label"
                 size="xl"
                 :icon="link.icon"
-                :class="{
-                  'bg-blue-800':
-                    link.to === '/'
-                      ? route.path === link.to
-                      : route.path.includes(link.to),
-                }"
                 color="secondary"
                 variant="soft"
                 trailing-icon="i-lucide-chevron-down"
@@ -257,27 +275,27 @@ const items: DropdownMenuItem[] = [
               />
 
               <template #content>
-                <div class="bg-transparent h-30">test</div>
-                <Placeholder class="h-48" />
+                <div class="bg-transparent flex flex-col gap-2 mb-5">
+                  <UButton
+                    v-for="child in link.children"
+                    color="secondary"
+                    variant="ghost"
+                    class="text-white w-full hover:bg-blue-600"
+                    :key="child.to"
+                    :label="child.label"
+                    :to="link.to + child.to"
+                    :class="{
+                      'bg-blue-600':
+                        link.to + child.to === '/'
+                          ? route.path === link.to + child.to
+                          : route.path.startsWith(link.to + child.to),
+                    }"
+                  />
+                </div>
               </template>
-            </UCollapsible> -->
+            </UCollapsible>
           </div>
         </nav>
-
-        <!-- Footer -->
-        <!-- <div
-        class="px-4 py-3 bg-blue-800 dark:bg-gray-900 flex items-center justify-between text-sm"
-      >
-        <div>
-          <p class="text-white dark:text-gray-200">مدير النظام</p>
-          <p class="text-blue-200 dark:text-gray-400">admin@school.com</p>
-        </div>
-        <div
-          class="w-10 h-10 rounded-full bg-blue-500 dark:bg-gray-700 flex items-center justify-center text-white font-bold"
-        >
-          م
-        </div>
-      </div> -->
       </aside>
     </Transition>
   </div>

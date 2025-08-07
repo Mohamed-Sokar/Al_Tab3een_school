@@ -34,9 +34,9 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
 
       // set levels data to ref locally
       classes.value = data;
-      toastSuccess({
-        title: "تم تحميل الصفوف بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل الصفوف بنجاح",
+      // });
       // tableKey.value = Math.random();
     } catch (err) {
       toastError({

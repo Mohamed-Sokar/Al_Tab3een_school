@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Payment, TeacherLoan } from "~/types";
+import type { EmployeeLoan, Payment } from "~/types";
 import { useStudentStore } from "@/stores/students";
 import { useTeachersStore } from "@/stores/teachers";
 import { usePaymentsStore } from "@/stores/paymnets";
@@ -15,16 +15,16 @@ const {
 const paymentsStore = usePaymentsStore();
 const { levelsData } = useLevelsStore();
 const totalPayments = computed(() =>
-  paymentsStore.totalPayments.reduce((sum: any, payment: Payment) => {
-    if (payment.type === "وارد") {
+  paymentsStore.totalExpense.reduce((sum: any, payment: Payment) => {
+    if (payment.type_id === 2) {
       return (sum += payment.amount);
     } else {
       return (sum -= payment.amount ?? 0);
     }
   }, 0)
 );
-const totalTeachersLoans = computed(() =>
-  teachersLoansData.reduce((sum: any, loan: TeacherLoan) => {
+const totalEmployeeLoans = computed(() =>
+  teachersLoansData.reduce((sum: any, loan: EmployeeLoan) => {
     return (sum += +loan.amount);
   }, 0)
 );
@@ -37,7 +37,7 @@ const studentsGradeAvarage = computed(() => "91.5%");
       <HomeCard
         to="/students/view/students_table"
         title="إجمالي الطلاب"
-        :value="studentsStore.sortedStudents.length"
+        :value="300"
         color="secondary"
         icon-name="i-heroicons-users"
         :loading="studentsStore.loading"
@@ -45,7 +45,7 @@ const studentsGradeAvarage = computed(() => "91.5%");
       <HomeCard
         to="/teachers/view"
         title="إجمالي المعلمين"
-        :value="teachersData.length"
+        :value="30"
         color="secondary"
         icon-name="i-heroicons-users"
         :loading="studentsStore.loading"
@@ -53,7 +53,7 @@ const studentsGradeAvarage = computed(() => "91.5%");
       <HomeCard
         to="/payments"
         title="إجمالي الصادر والوارد"
-        :value="totalPayments"
+        :value="1000"
         color="warning"
         icon-name="i-heroicons-currency-dollar"
         :loading="studentsStore.loading"
@@ -77,7 +77,7 @@ const studentsGradeAvarage = computed(() => "91.5%");
       <HomeCard
         to="/teachers/view/loans"
         title="مجموع سلف المدرسين"
-        :value="totalTeachersLoans"
+        :value="totalEmployeeLoans"
         color="warning"
         icon-name="i-heroicons-currency-dollar"
         :loading="studentsStore.loading"

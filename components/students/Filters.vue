@@ -1,4 +1,3 @@
-<!-- components/StudentFilters.vue -->
 <script setup lang="ts">
 import type { StudentFilters } from "~/types";
 import { useAcademicClassesStore } from "@/stores/academic_classes";
@@ -6,7 +5,7 @@ import { useQuranClassesStore } from "@/stores/quran_classes";
 import { usePlansStore } from "@/stores/plans";
 import { useLevelsStore } from "@/stores/levels";
 
-// تعريف props
+// init props
 defineProps<{
   filters: StudentFilters;
   //   academicClasses: ReturnType<typeof useAcademicClassesStore>["classesData"];

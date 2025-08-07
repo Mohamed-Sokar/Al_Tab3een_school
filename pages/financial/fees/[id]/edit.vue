@@ -1,66 +1,74 @@
 <script setup lang="ts">
 import { object, number } from "yup";
-import type { MonthlyPlan, QuranAchievementReport, Semester } from "~/types";
+import type { FeesReport, Semester } from "~/types";
 import { ref, reactive, onMounted } from "vue";
+import { months } from "~/constants";
 
 // SEO
 useHead({ title: "تعديل تقرير إنجاز القرآن" });
 
 // init
-const quranAchievementReportsStore = useQuranAcheivementReport();
+
 const { toastError } = useAppToast();
 const route = useRoute();
 const client = useSupabaseClient();
-
+const feesStore = useFeesStore();
 const schema = object({
-  achieved_pages: number()
-    .required("الصفحات المنجزة مطلوبة")
-    .typeError("يجب إدخال رقم")
-    .min(0, "الصفحات المنجزة يجب ألا تكون سالبة"),
-  monthly_plan_id: number().required("الشهر مطلوب"),
+  fees: number()
+    .typeError("يجب أن تدخل رقما")
+    .required("الرسوم المستحقة مطلوبة")
+    .min(0, "الرسوم المستحقة يجب ألا تكون سالبة"),
+  amount: number()
+    .typeError("يجب أن تدخل رقما")
+    .required("الرسوم المطلوبة مطلوبة")
+    .min(0, "الرسوم المطلوبة يجب ألا تكون سالبة")
+    .test(
+      "amount-not-greater-than-fees",
+      "الرسوم المطلوبة يجب ألا تتجاوز الرسوم المستحقة",
+      function (value) {
+        const { fees } = this.parent;
+        return value <= fees;
+      }
+    ),
+  month_id: number().required("الشهر مطلوب"),
   semester_id: number().required("الفصل الدراسي مطلوب"),
 });
 
 // state
 const state = reactive<{
-  report: QuranAchievementReport | null;
-  required_pages: number;
+  report: FeesReport | null;
   student_name: string;
   identity_number: string;
   academic_class: string;
-  semester_id: number;
-  monthly_plan_id: number;
 }>({
   report: null,
-  required_pages: 0,
   student_name: "",
   identity_number: "",
   academic_class: "",
-  semester_id: 0,
-  monthly_plan_id: 0,
 });
 const isLoading = ref(false);
 const pageError = ref("");
 
 const fetchReport = async () => {
   const reportId = Number(route.params.id);
+
   if (isNaN(reportId)) {
     toastError({ title: "معرف التقرير غير صالح" });
-    navigateTo({ name: "quran-achievement-reports" });
+    navigateTo({ name: "financial-fees" });
     return;
   }
 
   try {
     isLoading.value = true;
 
-    // جلب التقرير مع بيانات الطالب والخطة الشهرية
+    // جلب التقرير مع بيانات الطالب
     const { data: report, error: reportError } = await client
-      .from("students_quran_achievement_reports")
+      .from("student_monthly_fees")
       .select(
-        `id, student_id, achieved_pages, status, monthly_plan_id, manager_id, created_at,
-        student:students(id, first_name, second_name, third_name, last_name, identity_number, academic_class_id,
-        academic_class:academic_classes(id, title, group)),
-        monthly_plan:months_plans(id, month, pages, plan:plans(id, year, semester, stage, students_type))`
+        `id, student_id, fees, amount, status, notes, created_at, month_id, semester_id,
+          student:students(id, first_name, second_name, third_name, last_name, identity_number, academic_class_id, academic_class:academic_classes(id, title, group)),
+          month:months(id)
+          `
       )
       .eq("id", reportId)
       .single();
@@ -72,21 +80,22 @@ const fetchReport = async () => {
     if (!report) {
       throw new Error("التقرير غير موجود");
     }
-    // const targetedReport = report as QuranAchievementReport;
-    const targetedReport = quranAchievementReportsStore.getSpesificReport(
-      reportId
-    ) as QuranAchievementReport;
+
+    const targetedReport = report as FeesReport;
+    // const targetedReport = feesStore.getSpesificReport(reportId) as FeesReport;
+    // console.log("targetedReport: ", targetedReport);
 
     state.report = {
       id: targetedReport.id,
       student_id: targetedReport.student_id,
+      month_id: targetedReport.month_id,
       semester_id: targetedReport.semester_id,
-      achieved_pages: targetedReport.achieved_pages,
+      amount: targetedReport.amount,
+      fees: targetedReport.fees,
       status: targetedReport.status,
-      monthly_plan_id: targetedReport.monthly_plan_id,
+      notes: targetedReport.notes,
+      updated_at: new Date(),
     };
-
-    state.required_pages = targetedReport.monthly_plan?.pages || 0;
 
     state.student_name = [
       targetedReport?.student?.first_name,
@@ -108,7 +117,9 @@ const fetchReport = async () => {
       title: "خطأ في جلب التقرير",
       description: (err as Error).message || "حدث خطأ غير متوقع",
     });
-    navigateTo({ name: "quran-achievement-reports" });
+    setTimeout(() => {
+      navigateTo({ name: "financial-fees" });
+    }, 1000);
   } finally {
     isLoading.value = false;
   }
@@ -116,18 +127,11 @@ const fetchReport = async () => {
 
 const saveReport = async () => {
   if (!state.report) return;
-
-  if (pageError.value) {
-    toastError({ title: "يرجى تصحيح الأخطاء قبل الحفظ" });
-    return;
-  }
-
-  isLoading.value = true;
   try {
-    await quranAchievementReportsStore.updateQuranAchievementReport(
-      state.report
-    );
-    navigateTo({ name: "quran-achievement-reports" });
+    isLoading.value = true;
+    await feesStore.updateFeesReport(state.report);
+    state.report = null;
+    navigateTo({ name: "financial-fees" });
   } catch (err) {
     toastError({
       title: "خطأ في تحديث التقرير",
@@ -139,16 +143,20 @@ const saveReport = async () => {
 };
 
 const assignReportStatus = () => {
-  const required_pages = Number(state.required_pages);
-  const achieved_pages = Number(state.report?.achieved_pages);
+  const amount = Number(state.report?.amount);
+  const fees = Number(state.report?.fees);
 
   if (state.report) {
     // check if amount and fees were grater than 0
-    if (required_pages && achieved_pages) {
+    if (amount && fees) {
       state.report.status =
-        achieved_pages >= required_pages ? "مكتمل" : "غير مكتمل";
+        amount >= fees
+          ? "مسدد"
+          : amount < fees && amount > 0
+          ? "متأخر"
+          : "غير مسدد";
     } else {
-      state.report.status = "غير مكتمل";
+      state.report.status = "غير مسدد";
     }
   }
 };
@@ -170,16 +178,28 @@ onMounted(async () => {
       :state="state.report"
       :schema="schema"
       @submit="saveReport"
+      class="flex flex-col gap-4"
     >
       <UCard>
         <template #header>
-          <div class="flex justify-start items-center gap-2">
-            <h1>تعديل تقرير إنجاز القرآن</h1>
-            <UIcon
-              name="i-heroicons-book-open"
-              size="xl"
-              class="text-secondary text-2xl"
-            />
+          <div class="flex justify-between">
+            <div class="flex justify-start items-center gap-2">
+              <h1>تعديل تقرير الرسوم</h1>
+              <UIcon
+                name="i-heroicons-book-open"
+                size="xl"
+                class="text-secondary text-2xl"
+              />
+            </div>
+            <div>
+              <UButton
+                icon="i-heroicons-arrow-left"
+                color="secondary"
+                size="sm"
+                class="w-10 flex justify-center items-center hover:cursor-pointer"
+                @click="navigateTo({ name: 'financial-fees' })"
+              />
+            </div>
           </div>
         </template>
         <template #default>
@@ -188,9 +208,9 @@ onMounted(async () => {
             <USkeleton class="h-8 w-full my-2" />
             <USkeleton class="h-8 w-full my-2" />
           </div>
-          <div v-else-if="state.report">
+          <div v-else-if="state.report" class="flex flex-col gap-4">
             <!-- معلومات الطالب -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <UFormField label="اسم الطالب" name="student_name" size="md">
                 <UInput :value="state.student_name" disabled class="w-full" />
               </UFormField>
@@ -209,55 +229,71 @@ onMounted(async () => {
                 <UInput :value="state.academic_class" disabled class="w-full" />
               </UFormField>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
-
-            <!-- الصفحات المطلوبة والحالة -->
+            <!-- fees and status -->
             <div class="flex flex-wrap gap-2 mb-5">
               <div class="p-3 bg-secondary/15 rounded-md flex gap-3">
-                <span class="font-bold">الصفحات المطلوبة</span>
+                <span class="font-bold">الرسوم المستحقة</span>
                 <UBadge color="secondary" size="lg">
-                  {{ state.required_pages }}
+                  {{ state.report.fees }}
                 </UBadge>
               </div>
               <UBadge
                 :label="state.report.status"
                 class="font-bold text-xl flex justify-center items-center"
                 :color="
-                  (state.report.achieved_pages ?? 0) >= state.required_pages
+                  state.report.status === 'مسدد'
                     ? 'success'
+                    : state.report.status === 'متأخر'
+                    ? 'warning'
                     : 'error'
                 "
               />
             </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- الرسوم المستحقة و المدفوعة -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <UFormField
-                label="الصفحات المنجزة"
+                label="الرسوم المستحقة"
                 required
-                name="achieved_pages"
+                name="fees"
                 size="md"
               >
                 <UInput
-                  v-model.number="state.report.achieved_pages"
+                  v-model.number="state.report.fees"
                   class="w-full"
+                  :class="pageError ? 'border-error' : ''"
                   type="number"
                   color="secondary"
                 />
+                <p v-if="pageError" class="text-error text-xs mt-1">
+                  {{ pageError }}
+                </p>
               </UFormField>
               <UFormField
-                label="الشهر"
+                label="الرسوم المدفوعة"
                 required
-                name="monthly_plan_id"
+                name="amount"
                 size="md"
               >
+                <UInput
+                  v-model.number="state.report.amount"
+                  class="w-full"
+                  :class="pageError ? 'border-error' : ''"
+                  type="number"
+                  color="secondary"
+                />
+                <p v-if="pageError" class="text-error text-xs mt-1">
+                  {{ pageError }}
+                </p>
+              </UFormField>
+              <UFormField label="الشهر" required name="month_id" size="md">
                 <USelect
                   class="w-full"
-                  v-model="state.report.monthly_plan_id"
+                  v-model="state.report.month_id"
                   :items="[
                     { label: 'اختر الشهر', value: undefined },
-                    ...usePlansStore().monthsPlansData.map((mp:MonthlyPlan) => ({
-                      label: `(${mp?.month} - ${mp?.plan.year}) - ( ${mp?.plan.stage} - ${mp?.plan.students_type} - ${mp?.plan.semester} )`,
-                      value: mp.id,
+                    ...months.map((m) => ({
+                      label: `${m.label} - ${m.value}`,
+                      value: m.value,
                     })),
                   ]"
                   placeholder="اختر الشهر"
@@ -273,19 +309,29 @@ onMounted(async () => {
                 <USelect
                   class="w-full"
                   v-model="state.report.semester_id"
-                  :items="[{label: 'اختر الفصل الدراسي', value: undefined},
-                    ...useGradsStore().semestersData.map((s:Semester) => ({
+                  :items="
+                  [{ label: 'اختر الفصل', value: undefined },...useGradsStore().semestersData.map((s:Semester) => ({
                     label: `${s.year} - ${s.name}`,
                     value: s.id,
                   }))]
-            "
+                  "
                   placeholder="اختر الفصل الدراسي"
                 />
               </UFormField>
+              <UFormField
+                label="ملاحظات"
+                name="notes"
+                size="md"
+                class="lg:col-span-4"
+              >
+                <UTextarea
+                  class="w-full"
+                  :rows="8"
+                  v-model="state.report.notes"
+                  placeholder="أدخل ملاحظات"
+                />
+              </UFormField>
             </div>
-          </div>
-          <div v-else>
-            <p class="text-center text-error">لم يتم العثور على التقرير</p>
           </div>
         </template>
         <template #footer v-if="state.report">
@@ -302,11 +348,31 @@ onMounted(async () => {
               variant="soft"
               color="neutral"
               :loading="isLoading"
-              :to="{ name: 'quran-achievement-reports' }"
+              :to="{ name: 'financial-fees' }"
             />
           </div>
         </template>
       </UCard>
     </UForm>
+    <UCard v-else>
+      <template #header>
+        <div class="flex justify-start items-center gap-2">
+          <h1>تعديل تقرير الرسوم</h1>
+          <UIcon
+            name="i-heroicons-book-open"
+            size="xl"
+            class="text-secondary text-2xl"
+          />
+        </div>
+      </template>
+      <template #default>
+        <div v-if="isLoading">
+          <USkeleton class="h-8 w-full my-2" />
+          <USkeleton class="h-8 w-full my-2" />
+          <USkeleton class="h-8 w-full my-2" />
+        </div>
+        <p v-else class="text-center text-error">لم يتم العثور على التقرير</p>
+      </template>
+    </UCard>
   </div>
 </template>

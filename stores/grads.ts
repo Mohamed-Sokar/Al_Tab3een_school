@@ -265,7 +265,7 @@ export const useGradsStore = defineStore("grads", () => {
     if (semesters.value.length) return; // تجنب الجلب أكثر من مرة
     loading.value = true;
     try {
-      const { data, error } = await client.from("semester").select();
+      const { data, error } = await client.from("semesters").select();
 
       // console.log(data);
       if (error) {
@@ -273,9 +273,9 @@ export const useGradsStore = defineStore("grads", () => {
       }
       // set semesters data to ref locally
       semesters.value = data;
-      toastSuccess({
-        title: "تم تحميل الفصول بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل الفصول بنجاح",
+      // });
     } catch (err) {
       toastError({
         title: "حدث مشكلة أثناء تحميل الفصول",
@@ -295,9 +295,9 @@ export const useGradsStore = defineStore("grads", () => {
       }
       // set semesters data to ref locally
       examTypes.value = data;
-      toastSuccess({
-        title: "تم تحميل أنواع الاختبار بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل أنواع الاختبار بنجاح",
+      // });
     } catch (err) {
       toastError({
         title: "حدث مشكلة أثناء تحميل أنواع الاختبار",
@@ -319,9 +319,9 @@ export const useGradsStore = defineStore("grads", () => {
       }
       // set semesters data to ref locally
       subjects.value = data;
-      toastSuccess({
-        title: "تم تحميل المواد بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل المواد بنجاح",
+      // });
     } catch (err) {
       toastError({
         title: "حدث مشكلة أثناء تحميل المواد",

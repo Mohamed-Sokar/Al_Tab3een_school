@@ -1,32 +1,33 @@
 <script setup lang="ts">
 import { number, object, string, date } from "yup";
-import { months } from "~/constants";
-import { type EmployeeLoan, type Semester } from "~/types";
+import { invoiceTypes, months } from "~/constants";
+import { type Payment } from "~/types";
 
-const loansStore = useLoansStore();
-const route = useRoute();
-const form = ref();
+import { usePaymentsStore } from "@/stores/paymnets";
+
+const paymentsStore = usePaymentsStore();
 
 const schema = object({
+  type_id: number().required("نوع الدفعة مطلوب"),
   month_id: number().required("الشهر مطلوب"),
-  semester_id: number().required("الفصل مطلوب"),
-  amount: number().required("القيمة مطلوبة"),
-  notes: string(),
+  description: string().required("وصف الدفعة مطلوب"),
   created_at: date().required("تاريخ الدفعة مطلوب"),
-});
-const state = reactive<EmployeeLoan>({
-  employee_id: String(route.params.id),
-  month_id: undefined,
-  semester_id: undefined,
-  notes: undefined,
-  amount: undefined,
-  created_at: undefined,
-  status: "غير مدفوع",
+  amount: number().required("القيمة مطلوبة"),
 });
 
+const state = reactive<Payment>({
+  type_id: undefined,
+  month_id: undefined,
+  invoice_number: undefined,
+  description: undefined,
+  amount: undefined,
+});
+
+const form = ref();
+
 const onSubmit = async () => {
-  await loansStore.saveLoanReport(state);
-  navigateTo({ name: "financial-employee-loans" });
+  await paymentsStore.addPayment(state);
+  navigateTo({ name: "financial-payments" });
 };
 
 const date_string = computed({
@@ -57,7 +58,7 @@ const date_string = computed({
 
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
-    <div v-if="loansStore.loading">Loading</div>
+    <div v-if="paymentsStore.loading">Loading</div>
     <UForm
       v-else
       ref="form"
@@ -81,25 +82,27 @@ const date_string = computed({
           icon="i-heroicons-calendar"
         />
       </UFormField>
-      <UFormField label="الفصل الدراسي" required name="semester_id" size="md">
+      <UFormField label="نوع الدفعات" name="type_id" size="md">
         <USelect
           class="w-full"
-          v-model="state.semester_id"
-          :items="
-                useGradsStore().semestersData.map((s:Semester) => ({
-                label: `${s.year} - ${s.name}`,
-                value: s.id,
-              }))
-            "
-          placeholder="اختر الفصل الدراسي"
+          v-model="state.type_id"
+          :items="[
+            { label: 'اختر نوع الدفعات', value: undefined },
+            ...invoiceTypes.map((m) => ({
+              label: `${m.label}`,
+              value: m.value,
+            })),
+          ]"
+          placeholder="اختر نوع الدفعات"
+          icon="i-lucide-credit-card"
         />
       </UFormField>
-      <UFormField label="تاريخ السلفة" name="created_at">
+      <UFormField label="تاريخ الدفعة" name="created_at">
         <UInput
           type="date"
           v-model="date_string"
-          placeholder="تاريخ السلفة"
-          label="تاريخ السلفة"
+          placeholder="تاريخ الدفعة"
+          label="تاريخ الدفعة"
           class="w-full"
         />
       </UFormField>
@@ -112,11 +115,19 @@ const date_string = computed({
           class="w-full"
         />
       </UFormField>
-      <UFormField label="وصف الدفعة" name="notes">
+      <UFormField label="وصف الدفعة" name="description">
         <UInput
-          v-model="state.notes"
+          v-model="state.description"
           placeholder="وصف الدفعة"
           label="وصف الدفعة"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField label="رقم الوصل" name="invoice_number">
+        <UInput
+          v-model="state.invoice_number"
+          placeholder="رقم الوصل"
+          label="رقم الوصل"
           class="w-full"
         />
       </UFormField>
@@ -127,13 +138,13 @@ const date_string = computed({
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="حفظ"
-          :loading="loansStore.loading"
+          :loading="paymentsStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'financial-employee-loans' })"
+          @click="navigateTo({ name: 'financial-payments' })"
           label="إلغاء"
         />
       </div>

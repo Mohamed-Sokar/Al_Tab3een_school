@@ -4,7 +4,9 @@
     <AppSidebar />
 
     <!-- Page content -->
-    <div class="lg:w-[calc(100%-190px)] min-h-screen w-full dark:bg-gray-950">
+    <div
+      class="lg:max-w-[calc(100%-250px)] min-h-screen w-full dark:bg-gray-950"
+    >
       <div
         class="w-full min-h-screen px-4 pt-4 pb-10 dark:from-gray-900 dark:to-gray-800"
       >
@@ -52,7 +54,7 @@ useHead({
   ],
 });
 
-const colorMode = useColorMode();
+// const colorMode = useColorMode();
 // colorMode.preference = "system"; // Set default color mode
 
 const studentsStore = useStudentStore();
@@ -76,8 +78,8 @@ onMounted(async () => {
   await academicClassesStore.fetchClasses();
   await plansStore.fetchPlans();
   await quranClassesStore.fetchClasses();
-  await driversStore.fetchDrivers();
-  await paymentsStore.fetchPayments();
+  // await driversStore.fetchDrivers();
+  // await paymentsStore.fetchReports();
   await teachersStore.fetchTeachers();
   await teachersStore.fetchAbsenceReports();
   await teachersStore.fetchTeachersLoans();

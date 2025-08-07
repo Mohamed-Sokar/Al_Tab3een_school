@@ -61,20 +61,40 @@ export const grades_level_options = [
 ];
 export const payment_type_options = ["صادر", "وارد"];
 export const modeOptions = ref(["light", "dark"]);
+
+// export const months = [
+//   "كل الأشهر",
+//   "يناير",
+//   "فبراير",
+//   "مارس",
+//   "أبريل",
+//   "مايو",
+//   "يونيو",
+//   "يوليو",
+//   "أغسطس",
+//   "سبتمبر",
+//   "أكتوبر",
+//   "نوفمبر",
+//   "ديسمبر",
+// ];
+
+export const invoiceTypes = [
+  { label: "صادر", value: 1 },
+  { label: "وارد", value: 2 },
+];
 export const months = [
-  "كل الأشهر",
-  "يناير",
-  "فبراير",
-  "مارس",
-  "أبريل",
-  "مايو",
-  "يونيو",
-  "يوليو",
-  "أغسطس",
-  "سبتمبر",
-  "أكتوبر",
-  "نوفمبر",
-  "ديسمبر",
+  { label: "يناير", value: 1 },
+  { label: "فبراير", value: 2 },
+  { label: "مارس", value: 3 },
+  { label: "أبريل", value: 4 },
+  { label: "مايو", value: 5 },
+  { label: "يونيو", value: 6 },
+  { label: "يوليو", value: 7 },
+  { label: "أغسطس", value: 8 },
+  { label: "سبتمبر", value: 9 },
+  { label: "أكتوبر", value: 10 },
+  { label: "نوفمبر", value: 11 },
+  { label: "ديسمبر", value: 12 },
 ];
 export const semesterOptions = ["الفصل الأول", "الفصل الثاني"];
 export const plan_stage_options = [

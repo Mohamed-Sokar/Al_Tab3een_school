@@ -35,9 +35,9 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
       // console.log(data);
       // set levels data to ref locally
       classes.value = data;
-      toastSuccess({
-        title: "تم تحميل الصفوف بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل الصفوف بنجاح",
+      // });
       // tableKey.value = Math.random();
     } catch (err) {
       toastError({

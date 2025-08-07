@@ -33,9 +33,9 @@ export const useLevelsStore = defineStore("levels", () => {
       // console.log("levels: ", data);
       // set levels data to ref locally
       levels.value = data;
-      toastSuccess({
-        title: "تم تحميل المستويات بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل المستويات بنجاح",
+      // });
       isLoaded.value = true;
       // tableKey.value = Math.random();
     } catch (err) {

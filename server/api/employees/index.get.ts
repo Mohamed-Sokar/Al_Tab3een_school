@@ -9,7 +9,8 @@ export default defineEventHandler(async (event) => {
       loans:employees_loans(id,amount,created_at),
       absence:employees_absence(id, date, reason, excuse_status),
       academic_classes:teachers_academic_classes(class:academic_classes(id,title, group)),
-      supervisory_visits(notes,date,supervisor,type)
+      supervisory_visits(notes,date,supervisor,type),
+      salaries:employee_salaries(*)
       `
   );
   // .order("full_name", { ascending: true });

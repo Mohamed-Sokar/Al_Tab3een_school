@@ -21,9 +21,9 @@ export const usePlansStore = defineStore("plans", () => {
       const { data } = await api.get("/plans");
       // set payments data to ref locally
       plans.value = data;
-      toastSuccess({
-        title: "تم تحميل الخطط بنجاح",
-      });
+      // toastSuccess({
+      //   title: "تم تحميل الخطط بنجاح",
+      // });
       plansIsLoaded.value = true;
       tableKey.value = Math.random();
     } catch (err) {

@@ -3,40 +3,35 @@ import { ref, reactive, onMounted } from "vue";
 import { useStudentStore } from "@/stores/students";
 import { useAcademicClassesStore } from "@/stores/academic_classes";
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import { usePlansStore } from "@/stores/plans";
-import type {
-  QuranAchievementReport,
-  SelectOption,
-  Student,
-  StudentQuranAcheivementReportFilters,
-} from "~/types";
+
+import type { FeesReport, Semester } from "~/types";
+import { months } from "~/constants";
 
 // SEO
-useHead({ title: "تقارير إنجاز القرآن" });
+useHead({ title: "تقارير رسوم الطلاب" });
 
 // init
-const studentsStore = useStudentStore();
 const academicClassesStore = useAcademicClassesStore();
-const quranAchievementReportsStore = useQuranAcheivementReport();
-const plansStore = usePlansStore();
-const client = useSupabaseClient();
+const feesStore = useFeesStore();
 const { exportToExcel } = useExportToExcel();
-const { toastError, toastSuccess } = useAppToast();
+const { getDate } = useDateUtils();
 
-const filters = reactive<StudentQuranAcheivementReportFilters>({
+const filters = reactive({
   academicClassFilter: undefined,
-  monthlyPlanFilter: undefined,
+  monthFilter: undefined,
+  semesterFilter: undefined,
 });
 
-// const reports = ref<QuranAchievementReport[]>([]);
+// const reports = ref<FeesReport[]>([]);
 const isLoading = ref(false);
 const pageCountOptions = [1, 2, 5, 10, 20, 50];
 const table = ref();
-const pageNum = ref(1); // الصفحة الحالية
-const pageSize = ref(5); // عدد الصفوف لكل صفحة
+const pageNum = ref(1);
+const pageSize = ref(5);
+const tableKey = ref(Math.random());
 const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
-const columns: TableColumn<QuranAchievementReport>[] = [
+const columns: TableColumn<FeesReport>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
@@ -82,31 +77,65 @@ const columns: TableColumn<QuranAchievementReport>[] = [
       `${row.original.student?.academic_class?.title} - ${row.original.student?.academic_class?.group}`,
   },
   {
-    accessorKey: "monthly_plan",
-    header: "الخطة الشهرية",
+    accessorKey: "month",
+    header: "الشهر",
     cell: ({ row }) =>
-      row.original.monthly_plan
-        ? `(${row.original.monthly_plan.month} - ${row.original.monthly_plan.plan.year}) - (${row.original.monthly_plan.plan.stage} - ${row.original.monthly_plan.plan.students_type})`
+      row.original.month
+        ? `${row.original.month.name} ( ${row.original.month.id} )`
         : "غير متوفر",
   },
   {
-    accessorKey: "required_pages",
-    header: "الصفحات المطلوبة",
-    cell: ({ row }) => `${row.original.monthly_plan?.pages}`,
+    accessorKey: "fees",
+    header: "الرسوم المستحقة",
+    cell: ({ row }) => {
+      return h(
+        UBadge,
+        {
+          variant: "soft",
+          color: "neutral",
+        },
+        () => row.original.fees
+      );
+    },
   },
   {
-    accessorKey: "achieved_pages",
-    header: "الصفحات المنجزة",
-    cell: ({ row }) => `${row.original.achieved_pages}`,
+    accessorKey: "amount",
+    header: "الرسوم المدفوعة",
+    cell: ({ row }) => {
+      return h(
+        UBadge,
+        {
+          variant: "soft",
+          color: "neutral",
+        },
+        () => row.original.amount
+      );
+    },
+  },
+  {
+    accessorKey: "المتبقي",
+    header: "المتبقي",
+    cell: ({ row }) => {
+      const remain = Number(row.original.fees) - Number(row.original.amount);
+      if (remain === 0) return "لا يوجد باقي";
+      return h(
+        UBadge,
+        {
+          color: `${remain === 0 ? "success" : "error"}`,
+        },
+        () => remain
+      );
+    },
   },
   {
     accessorKey: "status",
     header: "الحالة",
     cell: ({ row }) => {
-      const status = row.original.status ?? "غير مكتمل";
+      const status = row.original.status ?? "غير مسدد";
       const color = {
-        مكتمل: "success",
-        "غير مكتمل": "error",
+        مسدد: "success",
+        متأخر: "warning",
+        "غير مسدد": "error",
       }[status];
 
       return h(
@@ -120,6 +149,35 @@ const columns: TableColumn<QuranAchievementReport>[] = [
     },
   },
   {
+    accessorKey: "created_at",
+    header: "تاريخ الإضافة",
+    cell: ({ row }) => getDate(row?.original?.created_at ?? new Date()),
+  },
+  {
+    accessorKey: "updated_at",
+    header: "تاريخ التعديل",
+    cell: ({ row }) => getDate(row?.original?.updated_at ?? new Date()),
+  },
+  {
+    accessorKey: "notes",
+    header: "الملاحظات",
+    cell: ({ row }) => {
+      const notes = row.original.notes;
+      if (!notes?.length) {
+        return `لا يوجد ملاحظات`;
+      }
+      return h(
+        UBadge,
+        {
+          class: `capitalize`,
+          variant: "solid",
+          color: "neutral",
+        },
+        () => notes
+      );
+    },
+  },
+  {
     id: "action",
   },
 ];
@@ -127,8 +185,8 @@ const columns: TableColumn<QuranAchievementReport>[] = [
 // fetch reports
 const fetchReports = async (forceRefresh: boolean = false) => {
   isLoading.value = true;
-  await quranAchievementReportsStore.getReportsCount(filters);
-  await quranAchievementReportsStore.fetchReports(
+  await feesStore.getReportsCount(filters);
+  await feesStore.fetchReports(
     pageNum.value,
     pageSize.value,
     filters,
@@ -139,25 +197,9 @@ const fetchReports = async (forceRefresh: boolean = false) => {
 
 const deleteReport = async (reportId: number) => {
   if (!confirm("هل أنت متأكد من حذف هذا التقرير؟")) return;
-
-  isLoading.value = true;
   try {
-    const { error } = await client
-      .from("students_quran_achievement_reports")
-      .delete()
-      .eq("id", reportId);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    toastSuccess({ title: "تم حذف التقرير بنجاح" });
-    await fetchReports(); // إعادة جلب التقارير بعد الحذف
-  } catch (err) {
-    toastError({
-      title: "خطأ في حذف التقرير",
-      description: (err as Error).message || "حدث خطأ غير متوقع",
-    });
+    isLoading.value = true;
+    await feesStore.deleteReport(reportId);
   } finally {
     isLoading.value = false;
   }
@@ -166,7 +208,6 @@ const deleteReport = async (reportId: number) => {
 onMounted(async () => {
   await Promise.all([
     academicClassesStore.fetchClasses(),
-    plansStore.fetchMonthsPlans(),
     // quranAchievementReportsStore.fetchReports(
     //   pageNum.value,
     //   pageSize.value,
@@ -175,18 +216,15 @@ onMounted(async () => {
   ]);
 });
 
-// إعادة جلب التقارير عند تغيير التصفية
+// refetch reports when filtering
 const applyFilters = async () => {
-  await quranAchievementReportsStore.getReportsCount(filters);
+  await feesStore.getReportsCount(filters);
   await fetchReports(true);
   pageNum.value = 1;
 };
+
 const updateRows = async () => {
-  await quranAchievementReportsStore.fetchReports(
-    pageNum.value,
-    pageSize.value,
-    filters
-  );
+  await feesStore.fetchReports(pageNum.value, pageSize.value, filters);
 };
 
 const rowSelection = ref({});
@@ -197,7 +235,7 @@ const sorting = ref([
   },
 ]);
 const numberedReports = computed(() =>
-  quranAchievementReportsStore.reportsData.map((report, index) => {
+  feesStore.reportsData.map((report, index) => {
     return {
       ...report,
       rowNumber: index + 1,
@@ -209,26 +247,26 @@ const numberedReports = computed(() =>
 const rows = computed(() => {
   const start = (pageNum.value - 1) * pageSize.value;
   const end = start + pageSize.value;
+  console.log("rows; ", numberedReports.value.slice(start, end));
   return numberedReports.value.slice(start, end);
 });
 const totalPages = computed(() => {
   return Math.ceil(
-    quranAchievementReportsStore.reportsCountData > 0
-      ? Math.ceil(
-          quranAchievementReportsStore.reportsCountData / pageSize.value
-        )
+    feesStore.reportsCountData > 0
+      ? Math.ceil(feesStore.reportsCountData / pageSize.value)
       : 1
   );
 });
-function getDropdownActions(
-  report: QuranAchievementReport
-): DropdownMenuItem[] {
+function getDropdownActions(report: FeesReport): DropdownMenuItem[] {
   return [
     {
       label: "تعديل",
       icon: "i-lucide-edit",
       onSelect: () => {
-        navigateTo(`/quran-achievement-reports/${report.id}/edit`);
+        navigateTo({
+          name: "financial-fees-id-edit",
+          params: { id: report.id },
+        });
       },
     },
     {
@@ -287,47 +325,60 @@ watch(pageSize, () => {
 // reset rowSelection when pageNum is changed
 watch(pageNum, async () => {
   updateRows();
-  rowSelection.value = {}; // إعادة تعيين الاختيارات عند تغيير الصفحة
+  rowSelection.value = {}; // reset selections
 });
 </script>
 
 <template>
   <div>
     <!-- start base header -->
-    <BaseHeader
-      title="تقارير إنجاز القرآن"
-      description="إدارة إنجاز الطلاب القرآني الشهريي"
-    >
+    <BaseHeader title="رسوم الطلاب" description="إدارة رسوم الطلاب الشهرية">
       <template #actions>
         <UButton
           color="secondary"
-          label="أضف تقرير إنجاز قرآن"
+          label="أضف تقرير رسوم"
           size="lg"
           icon="heroicons-plus-circle-20-solid"
           class="bg-secondary-600 font-bold hover:cursor-pointer"
-          :to="{ name: 'quran-achievement-reports-add' }"
+          :to="{ name: 'financial-fees-add' }"
         />
       </template>
     </BaseHeader>
 
     <div class="mt-5">
-      <!-- نموذج التصفية -->
+      <!-- start filters -->
       <div class="mb-5">
-        <UForm
-          :state="filters"
-          @submit="applyFilters"
-          class="flex gap-2 flex-col lg:flex-row justify-between items-end"
-        >
-          <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-2">
+        <UForm :state="filters" @submit="applyFilters" class="">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 items-end mb-2">
+            <UFormField
+              label="الفصل الدراسي"
+              required
+              name="semester_id"
+              size="md"
+            >
+              <USelect
+                class="w-full"
+                v-model="filters.semesterFilter"
+                :items="
+                useGradsStore().semestersData.map((s:Semester) => ({
+                label: `${s.year} - ${s.name}`,
+                value: s.id,
+              }))
+            "
+                placeholder="اختر الفصل الدراسي"
+              />
+            </UFormField>
             <UFormField
               label="الشعبة الدراسية"
+              required
               name="academic_class_id"
               size="md"
             >
               <USelect
+                class="w-full"
                 v-model="filters.academicClassFilter"
                 :items="[
-                  { label: 'جميع الشعب', value: undefined },
+                  { label: 'اختر الشعبة الدراسية', value: undefined },
                   ...academicClassesStore.classesData.map((c) => ({
                     label: `${c.title} - شعبة ${c.group}`,
                     value: c.id,
@@ -335,22 +386,21 @@ watch(pageNum, async () => {
                 ]"
                 placeholder="اختر الشعبة الدراسية"
                 icon="i-heroicons-presentation-chart-bar"
-                class="w-full"
               />
             </UFormField>
-            <UFormField label="الخطة الشهرية" name="monthly_plan_id" size="md">
+            <UFormField label="الشهر" required name="month_id" size="md">
               <USelect
-                v-model="filters.monthlyPlanFilter"
+                class="w-full"
+                v-model="filters.monthFilter"
                 :items="[
-                  { label: 'جميع الخطط', value: undefined },
-                  ...plansStore.monthsPlansData.map((mp) => ({
-                    label: `(${mp.month} - ${mp.plan.year}) - (${mp.plan.stage} - ${mp.plan.students_type} - ${mp.plan.semester})`,
-                    value: mp.id,
+                  { label: 'اختر الشهر', value: undefined },
+                  ...months.map((m) => ({
+                    label: `${m.label} - ${m.value}`,
+                    value: m.value,
                   })),
                 ]"
-                placeholder="اختر الخطة الشهرية"
+                placeholder="اختر الشهر"
                 icon="i-heroicons-calendar"
-                class="w-full"
               />
             </UFormField>
           </div>
@@ -359,88 +409,86 @@ watch(pageNum, async () => {
             color="secondary"
             type="submit"
             label="تصفية"
-            class="hover:cursor-pointer rounded-sm mt-2 lg:mt-0"
+            class="hover:cursor-pointer rounded-sm"
             :loading="isLoading"
           />
         </UForm>
       </div>
-      <div>
-        <!-- change pageSize -->
-        <UFormField
-          label="عدد الصفوف لكل صفحة"
-          name="pageSize"
-          class="flex items-center gap-2 mb-2"
-        >
-          <USelect v-model="pageSize" :items="pageCountOptions" id="pageSize" />
-        </UFormField>
-        <!-- Students table -->
-        <BaseTable
-          v-model:row-selection="rowSelection"
-          v-model:sorting="sorting"
-          :loading="quranAchievementReportsStore.loading"
-          :key="studentsStore.tableKey"
-          :ref="table"
-          :data="rows"
-          :columns="columns"
-          :get-dropdown-actions="getDropdownActions"
-        >
-          <template #actions>
-            <div
-              v-if="selectedReports.length"
-              class="flex flex-wrap justify-end gap-2 items-center"
-            >
-              <!-- Excel export button -->
-              <UButton
-                icon="heroicons-document-chart-bar-solid"
-                variant="outline"
-                color="primary"
-                size="xs"
-                class="p-2 font-bold text-green-700 h-full"
-                @click="exportReports"
-              >
-                <span>({{ selectedReports.length }})</span>
-                <span> Excel </span>
-              </UButton>
-            </div>
-          </template>
-        </BaseTable>
 
-        <!-- pagination tools -->
-        <div class="flex justify-between items-center mt-4">
-          <!-- زر السابق -->
-          <UButton
-            :disabled="pageNum === 1"
-            @click="pageNum--"
-            color="secondary"
-            class="px-4 py-2 text-white rounded hover:cursor-pointer disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-            label="السابق"
-          />
-
-          <!-- أرقام الصفحات -->
-          <div class="flex gap-2">
+      <!-- change pageSize -->
+      <UFormField
+        label="عدد الصفوف لكل صفحة"
+        name="pageSize"
+        class="flex items-center gap-2 mb-2"
+      >
+        <USelect v-model="pageSize" :items="pageCountOptions" id="pageSize" />
+      </UFormField>
+      <!-- Students table -->
+      <BaseTable
+        v-model:row-selection="rowSelection"
+        v-model:sorting="sorting"
+        :loading="feesStore.loading"
+        :key="tableKey"
+        :ref="table"
+        :data="rows"
+        :columns="columns"
+        :get-dropdown-actions="getDropdownActions"
+      >
+        <template #actions>
+          <div
+            v-if="selectedReports.length"
+            class="flex flex-wrap justify-end gap-2 items-center"
+          >
+            <!-- Excel export button -->
             <UButton
-              color="secondary"
-              :variant="pageNum === p ? 'solid' : 'outline'"
-              v-for="p in totalPages"
-              :key="p"
-              @click="pageNum = p"
-              :class="['px-3 py-1 rounded hover:cursor-pointer']"
+              icon="heroicons-document-chart-bar-solid"
+              variant="outline"
+              color="primary"
+              size="xs"
+              class="p-2 font-bold text-green-700 h-full"
+              @click="exportReports"
             >
-              {{ p }}
+              <span>({{ selectedReports.length }})</span>
+              <span> Excel </span>
             </UButton>
           </div>
+        </template>
+      </BaseTable>
 
-          <!-- زر التالي -->
+      <!-- pagination tools -->
+      <div class="flex justify-between items-center mt-4">
+        <!-- زر السابق -->
+        <UButton
+          :disabled="pageNum === 1"
+          @click="pageNum--"
+          color="secondary"
+          class="px-4 py-2 text-white rounded hover:cursor-pointer disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+          label="السابق"
+        />
+
+        <!-- أرقام الصفحات -->
+        <div class="flex gap-2">
           <UButton
-            :disabled="pageNum >= totalPages"
-            @click="pageNum++"
             color="secondary"
-            class="px-4 py-2 text-white rounded hover:cursor-pointer disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
-            label="التالي"
-          />
+            :variant="pageNum === p ? 'solid' : 'outline'"
+            v-for="p in totalPages"
+            :key="p"
+            @click="pageNum = p"
+            :class="['px-3 py-1 rounded hover:cursor-pointer']"
+          >
+            {{ p }}
+          </UButton>
         </div>
+
+        <!-- زر التالي -->
+        <UButton
+          :disabled="pageNum >= totalPages"
+          @click="pageNum++"
+          color="secondary"
+          class="px-4 py-2 text-white rounded hover:cursor-pointer disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+          label="التالي"
+        />
       </div>
-      <!-- جدول التقارير -->
     </div>
   </div>
 </template>
