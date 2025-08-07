@@ -155,8 +155,13 @@ const columns: TableColumn<FeesReport>[] = [
   },
   {
     accessorKey: "updated_at",
-    header: "تاريخ التعديل",
-    cell: ({ row }) => getDate(row?.original?.updated_at ?? new Date()),
+    header: "تاريخ الحديث",
+    cell: ({ row }) => {
+      if (!row.original.updated_at) {
+        return "لم يتم التحديث";
+      }
+      return getDate(row?.original?.updated_at);
+    },
   },
   {
     accessorKey: "notes",
@@ -294,16 +299,16 @@ const exportReports = () => {
         report.student?.academic_class?.title +
         " - " +
         report.student?.academic_class?.group,
-      "الخطة الشهرية": report.monthly_plan
-        ? `(${report.monthly_plan.month} - ${report.monthly_plan.plan.year}) - (${report.monthly_plan.plan.stage} - ${report.monthly_plan.plan.students_type})`
-        : "غير متوفر",
-
-      "الصفحات المطلوبة": report.monthly_plan?.pages,
-      "الصفحات المنجزة": report.achieved_pages,
+      "الرسوم المستحقة": report.fees,
+      "الرسوم المدفوعة": report.amount,
+      المتبقي: Number(report.fees) - Number(report.amount),
+      "تاريخ الإضافة": report.created_at,
+      "تاريخ التحديث": report.updated_at ?? "لم يتم التحديث",
       الحالة: report.status,
+      الملاحظات: report.notes,
     })),
-    fileName: "التقارير القرآنية الشهرية",
-    sheetName: "التقارير القرآنية",
+    fileName: "رسوم الطلاب الشهرية",
+    sheetName: "الرسوم الشهرية",
   });
 };
 const selectedReports = computed(() => {
