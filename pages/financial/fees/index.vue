@@ -4,7 +4,7 @@ import { useStudentStore } from "@/stores/students";
 import { useAcademicClassesStore } from "@/stores/academic_classes";
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 
-import type { FeesReport, Semester } from "~/types";
+import type { FeesReport, Filters, Semester } from "~/types";
 import { months } from "~/constants";
 
 // SEO
@@ -16,19 +16,7 @@ const feesStore = useFeesStore();
 const { exportToExcel } = useExportToExcel();
 const { getDate } = useDateUtils();
 
-const filters = reactive({
-  academicClassFilter: undefined,
-  monthFilter: undefined,
-  semesterFilter: undefined,
-});
-
-// const reports = ref<FeesReport[]>([]);
-const isLoading = ref(false);
-const pageCountOptions = [1, 2, 5, 10, 20, 50];
-const table = ref();
-const pageNum = ref(1);
-const pageSize = ref(5);
-const tableKey = ref(Math.random());
+// data
 const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
 const columns: TableColumn<FeesReport>[] = [
@@ -141,7 +129,7 @@ const columns: TableColumn<FeesReport>[] = [
       return h(
         UBadge,
         {
-          class: `capitalize hover:cursor-pointer hover:outline`,
+          class: `capitalize`,
           color,
         },
         () => status
@@ -186,11 +174,32 @@ const columns: TableColumn<FeesReport>[] = [
     id: "action",
   },
 ];
+const pageCountOptions = [1, 2, 5, 10, 20, 50];
 
-// fetch reports
+// state
+const filters = reactive<Filters>({
+  academicClassFilter: undefined,
+  monthFilter: undefined,
+  semesterFilter: undefined,
+  dateFilter: undefined,
+});
+const isLoading = ref(false);
+const table = ref();
+const pageNum = ref(1);
+const pageSize = ref(5);
+const tableKey = ref(Math.random());
+const rowSelection = ref({});
+const sorting = ref([
+  {
+    id: "id",
+    desc: false,
+  },
+]);
+
+// Actions
 const fetchReports = async (forceRefresh: boolean = false) => {
   isLoading.value = true;
-  await feesStore.getReportsCount(filters);
+  // await feesStore.getReportsCount(filters);
   await feesStore.fetchReports(
     pageNum.value,
     pageSize.value,
@@ -199,7 +208,6 @@ const fetchReports = async (forceRefresh: boolean = false) => {
   );
   isLoading.value = false;
 };
-
 const deleteReport = async (reportId: number) => {
   if (!confirm("هل أنت متأكد من حذف هذا التقرير؟")) return;
   try {
@@ -209,79 +217,14 @@ const deleteReport = async (reportId: number) => {
     isLoading.value = false;
   }
 };
-
-onMounted(async () => {
-  await Promise.all([
-    academicClassesStore.fetchClasses(),
-    // quranAchievementReportsStore.fetchReports(
-    //   pageNum.value,
-    //   pageSize.value,
-    //   filters
-    // ),
-  ]);
-});
-
-// refetch reports when filtering
 const applyFilters = async () => {
-  await feesStore.getReportsCount(filters);
+  // await feesStore.getReportsCount(filters);
   await fetchReports(true);
   pageNum.value = 1;
 };
-
 const updateRows = async () => {
   await feesStore.fetchReports(pageNum.value, pageSize.value, filters);
 };
-
-const rowSelection = ref({});
-const sorting = ref([
-  {
-    id: "id",
-    desc: false,
-  },
-]);
-const numberedReports = computed(() =>
-  feesStore.reportsData.map((report, index) => {
-    return {
-      ...report,
-      rowNumber: index + 1,
-    };
-  })
-);
-
-// pagination rows
-const rows = computed(() => {
-  const start = (pageNum.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  console.log("rows; ", numberedReports.value.slice(start, end));
-  return numberedReports.value.slice(start, end);
-});
-const totalPages = computed(() => {
-  return Math.ceil(
-    feesStore.reportsCountData > 0
-      ? Math.ceil(feesStore.reportsCountData / pageSize.value)
-      : 1
-  );
-});
-function getDropdownActions(report: FeesReport): DropdownMenuItem[] {
-  return [
-    {
-      label: "تعديل",
-      icon: "i-lucide-edit",
-      onSelect: () => {
-        navigateTo({
-          name: "financial-fees-id-edit",
-          params: { id: report.id },
-        });
-      },
-    },
-    {
-      label: "حذف",
-      icon: "i-lucide-trash",
-      color: "error",
-      onSelect: () => deleteReport(report.id ?? 0),
-    },
-  ];
-}
 const exportReports = () => {
   exportToExcel({
     data: selectedReports.value.map((report, i) => ({
@@ -307,10 +250,38 @@ const exportReports = () => {
       الحالة: report.status,
       الملاحظات: report.notes,
     })),
-    fileName: "رسوم الطلاب الشهرية",
-    sheetName: "الرسوم الشهرية",
+    sheetName: `رسوم تاريخ ${filters.dateFilter || "كل التواريخ"} - شهر (${
+      months.find((m) => filters.monthFilter === m.value)?.label || "كل الأشهر"
+    })`,
+    fileName: `تقرير رسوم تاريخ ${filters.dateFilter || "كل التواريخ"} - شهر (${
+      months.find((m) => filters.monthFilter === m.value)?.label || "كل الأشهر"
+    })`,
+    // fileName: "رسوم الطلاب الشهرية",
+    // sheetName: "الرسوم الشهرية",
   });
 };
+function getDropdownActions(report: FeesReport): DropdownMenuItem[] {
+  return [
+    {
+      label: "تعديل",
+      icon: "i-lucide-edit",
+      onSelect: () => {
+        navigateTo({
+          name: "financial-fees-id-edit",
+          params: { id: report.id },
+        });
+      },
+    },
+    {
+      label: "حذف",
+      icon: "i-lucide-trash",
+      color: "error",
+      onSelect: () => deleteReport(report.id ?? 0),
+    },
+  ];
+}
+
+// Computed
 const selectedReports = computed(() => {
   // calculate offset
   const offset = (pageNum.value - 1) * pageSize.value;
@@ -323,7 +294,54 @@ const selectedReports = computed(() => {
     })
     .filter((report) => report !== undefined); // تصفية أي قيم غير موجودة
 });
+const date_string = computed({
+  get() {
+    if (!filters.dateFilter) return "";
+    if (typeof filters.dateFilter === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(filters.dateFilter)) {
+        return filters.dateFilter;
+      }
+      // Try to parse and format
+      const d = new Date(filters.dateFilter);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (filters.dateFilter instanceof Date) {
+      return filters.dateFilter.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    filters.dateFilter = val;
+  },
+});
+// pagination rows
+const rows = computed(() => {
+  const start = (pageNum.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  console.log("rows; ", numberedReports.value.slice(start, end));
+  return numberedReports.value.slice(start, end);
+});
+const totalPages = computed(() => {
+  return Math.ceil(
+    feesStore.reportsCountData > 0
+      ? Math.ceil(feesStore.reportsCountData / pageSize.value)
+      : 1
+  );
+});
+const numberedReports = computed(() =>
+  feesStore.reportsData.map((report: FeesReport, index: number) => {
+    return {
+      ...report,
+      rowNumber: index + 1,
+    };
+  })
+);
 
+// Watches
 watch(pageSize, () => {
   pageNum.value = 1;
 });
@@ -331,6 +349,20 @@ watch(pageSize, () => {
 watch(pageNum, async () => {
   updateRows();
   rowSelection.value = {}; // reset selections
+});
+// clean monthFilter if conflicts with dateFilter
+watch(filters, () => {
+  if (filters.dateFilter && filters.monthFilter) {
+    const selectedDate = new Date(filters.dateFilter);
+    const month = selectedDate.getMonth() + 1; // 1-12
+    if (month !== filters.monthFilter) {
+      filters.monthFilter = undefined; // Clear month filter if it conflicts
+    }
+  }
+});
+
+onMounted(async () => {
+  await academicClassesStore.fetchClasses();
 });
 </script>
 
@@ -354,7 +386,7 @@ watch(pageNum, async () => {
       <!-- start filters -->
       <div class="mb-5">
         <UForm :state="filters" @submit="applyFilters" class="">
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 items-end mb-2">
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-2 items-end mb-2">
             <UFormField
               label="الفصل الدراسي"
               required
@@ -391,6 +423,15 @@ watch(pageNum, async () => {
                 ]"
                 placeholder="اختر الشعبة الدراسية"
                 icon="i-heroicons-presentation-chart-bar"
+              />
+            </UFormField>
+            <UFormField label="التاريخ" name="date" size="md">
+              <UInput
+                type="date"
+                class="w-full"
+                v-model="date_string"
+                placeholder="اختر التاريخ"
+                trailing-icon="i-heroicons-calendar"
               />
             </UFormField>
             <UFormField label="الشهر" required name="month_id" size="md">

@@ -1,44 +1,46 @@
 <script setup lang="ts">
 import { number, object, string } from "yup";
-import type { Plan } from "~/types";
+import type { Level, Plan, Semester } from "~/types";
 import { usePlansStore } from "@/stores/plans";
-import {
-  plan_stage_options,
-  semesterOptions,
-  students_type_options,
-} from "~/constants";
+import { students_type_options } from "~/constants";
 import { USelect } from "#components";
 
 const plansStore = usePlansStore();
 const route = useRoute();
 const planId = route.params.id;
 
-const targetedPlan = plansStore.getSpecificPlan(+planId);
+// const targetedPlan = plansStore.getSpecificPlan(+planId);
 
 const schema = object({
-  year: number().required("السنة الدراسية مطلوبة"),
-  stage: string().required("المرحلة مطلوبة"),
-  semester: string().required("الفصل الدراسي مطلوب"),
+  level_id: number().required("المرحلة مطلوبة"),
+  semester_id: number().required("الفصل الدراسي مطلوب"),
   total_pages: number().required("عدد الصفحات مطلوبة"),
   students_type: string().required("نوع الطلاب مطلوب"),
 });
 
 const state = reactive<Plan>({
-  year: new Date().getFullYear(),
-  stage: undefined,
-  semester: undefined,
-  total_pages: undefined,
+  level_id: undefined as number | undefined,
+  semester_id: undefined as number | undefined,
+  total_pages: undefined as number | undefined,
   students_type: students_type_options[0],
 });
-
-Object.assign(state, targetedPlan);
 
 const form = ref();
 
 const onSubmit = async () => {
   await plansStore.updatePlan(+planId, state);
-  navigateTo({ name: "plans" });
+  navigateTo({ name: "plans", query: { planId } });
 };
+
+const fetchPlan = async () => {
+  const plan = await plansStore.getPlanById(Number(planId));
+  console.log(plan);
+  Object.assign(state, plan);
+};
+
+onMounted(async () => {
+  await fetchPlan();
+});
 </script>
 
 <template>
@@ -50,40 +52,43 @@ const onSubmit = async () => {
       class="grid grid-cols-1 md:grid-cols-2 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="السنة الدراسية" name="year">
-        <UInput
-          type="number"
-          v-model.number="state.year"
-          placeholder="السنة الدراسية"
-          label="السنة الدراسية"
+      <UFormField label="الفصل الدراسي" required name="semester_id" size="md">
+        <USelect
           class="w-full"
+          v-model="state.semester_id"
+          :items="
+                [{ label: 'اختر الفصل الدراسي', value: undefined },
+                ...useGradsStore().semestersData.map((s:Semester) => ({
+                label: `${s.year} - ${s.name}`,
+                value: s.id,
+              }))]
+            "
+          placeholder="اختر الفصل الدراسي"
         />
       </UFormField>
-      <UFormField label="الفصل الدراسي" name="semester">
+      <UFormField label="المرحلة الدراسية" name="level_id" size="md">
         <USelect
-          :items="semesterOptions"
-          v-model="state.semester"
-          placeholder="الفصل الدراسي"
-          label="الفصل الدراسي"
           class="w-full"
+          v-model="state.level_id"
+          :items="[{ label: 'اختر المرحلة الدراسية', value: undefined }
+              ,...useLevelsStore().levelsData.map((s:Level) => ({
+                label: s.title,
+                value: s.id,
+              }))]
+            "
+          placeholder="اختر المرحلة الدراسية"
         />
       </UFormField>
-      <UFormField label="المرحلة" name="stage">
+      <UFormField label="نوع الطلاب" name="students_type" size="md">
         <USelect
-          :items="plan_stage_options"
-          v-model="state.stage"
-          placeholder="المرحلة"
-          label="المرحلة"
           class="w-full"
-        />
-      </UFormField>
-      <UFormField label="نوع الطلاب" name="students_type">
-        <USelect
-          :items="students_type_options"
           v-model="state.students_type"
-          placeholder="نوع الطلاب"
-          label="نوع الطلاب"
-          class="w-full"
+          :items="[
+            { label: 'اختر نوع الطلاب', value: undefined },
+            { label: 'طلاب قدامى', value: 'طلاب قدامى' },
+            { label: 'طلاب جدد', value: 'طلاب جدد' },
+          ]"
+          placeholder="اختر نوع الطلاب"
         />
       </UFormField>
       <UFormField label="عدد الصفحات الكلية" name="total_pages">
@@ -101,14 +106,14 @@ const onSubmit = async () => {
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          label="تعديل"
+          label="إضافة"
           :loading="plansStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'plans' })"
+          @click="navigateTo({ name: 'plans', query: { planId } })"
           label="إلغاء"
         />
       </div>

@@ -40,11 +40,6 @@ const links = [
     to: "/employees/view/behavioral-issues",
   },
   {
-    label: "القروض",
-    icon: "i-heroicons-banknotes",
-    to: "/employees/view/loans",
-  },
-  {
     label: "الحضور والغياب",
     icon: "i-lucide-user-minus",
     to: "/employees/view/absence",

@@ -24,7 +24,7 @@ const schema = object({
   subject_id: number().required("المادة الدراسية مطلوبة"),
 });
 
-// data
+// state
 const state = reactive<{
   semester_id: number | undefined;
   exam_type_id: number | undefined;
@@ -33,6 +33,7 @@ const state = reactive<{
   subject_exam_id: number | undefined;
   min_score: number | undefined;
   max_score: number | undefined;
+  reportsCount: number | undefined;
 }>({
   // semester_id: gradsReportsStore.semestersData[0]?.id,
   // exam_type_id: gradsReportsStore.examTypesData[2].id,
@@ -45,6 +46,7 @@ const state = reactive<{
   subject_exam_id: undefined,
   min_score: undefined,
   max_score: undefined,
+  reportsCount: undefined,
 });
 const isLoading = ref(false);
 const students = ref<Student[]>([]);
@@ -123,10 +125,12 @@ const validateScore = (index: number) => {
   const score = Number(grades.value[index].score);
   if (isNaN(score)) {
     scoreErrors.value[index] = "الدرجة غير صالحة";
-  } else if (score < 5) {
-    scoreErrors.value[index] = `الدرجة أقل من الحد الأدنى (${5})`;
-  } else if (score > 10) {
-    scoreErrors.value[index] = `الدرجة أكبر من الحد الأعلى (${10})`;
+  } else if (score < Number(state?.min_score)) {
+    scoreErrors.value[index] = `الدرجة أقل من الحد الأدنى (${state.min_score})`;
+  } else if (score > Number(state?.max_score)) {
+    scoreErrors.value[
+      index
+    ] = `الدرجة أكبر من الحد الأعلى (${state.max_score})`;
   } else {
     scoreErrors.value[index] = "";
   }
@@ -174,19 +178,65 @@ const saveGrades = async () => {
     isLoading.value = false;
   }
 };
+
+const calculateStatus = (row: Grade) => {
+  const percentage = ((row.score ?? 0) / (state?.max_score ?? 10)) * 100;
+  console.log(percentage);
+  return percentage >= 90 && percentage <= 100
+    ? "ممتاز"
+    : percentage >= 80 && percentage < 90
+    ? "جيد جدا"
+    : percentage >= 70 && percentage < 80
+    ? "جيد"
+    : percentage >= 60 && percentage < 70
+    ? "مقبول"
+    : percentage >= 50 && percentage < 60
+    ? "ضعيف"
+    : "راسب";
+};
+// Function to map status to badge color
+const getBadgeColor = (status: string) => {
+  switch (status) {
+    case "ممتاز":
+      return "success"; // Green
+    case "جيد جدا":
+      return "info"; // Blue
+    case "جيد":
+      return "warning"; // Orange
+    case "مقبول":
+      return "neutral"; // black
+    case "ضعيف":
+      return "error"; // black
+    case "راسب":
+      return "error"; // Red
+    default:
+      return "info"; // Fallback color
+  }
+};
 </script>
 
 <template>
   <div class="max-w-4xl mx-auto mt-15">
     <UCard class="max-w-4xl mx-auto mt-15">
       <template #header>
-        <div class="flex justify-start items-center gap-2">
-          <h1>إضافة علامات الطلاب</h1>
-          <UIcon
-            name="i-heroicons-academic-cap"
-            size="xl"
-            class="text-secondary text-2xl"
-          />
+        <div class="flex justify-between">
+          <div class="flex justify-start items-center gap-2">
+            <h1>إضافة علامات الطلاب</h1>
+            <UIcon
+              name="i-heroicons-academic-cap"
+              size="xl"
+              class="text-secondary text-2xl"
+            />
+          </div>
+          <div>
+            <UButton
+              icon="i-heroicons-arrow-left"
+              color="secondary"
+              size="sm"
+              class="w-10 flex justify-center items-center hover:cursor-pointer"
+              @click="navigateTo({ name: 'grades' })"
+            />
+          </div>
         </div>
       </template>
       <template #default>
@@ -310,17 +360,18 @@ const saveGrades = async () => {
         <table class="w-full">
           <thead>
             <tr
-              class="grid grid-cols-3 font-bold bg-secondary text-white place-items-center border-t border-b border-accented"
+              class="grid grid-cols-4 font-bold bg-secondary text-white place-items-center border-t border-b border-accented"
             >
               <th class="border-x border-accented p-2 w-full">هوية الطالب</th>
-              <th class="border-x border-accented p-2 w-full">الاسم رباعي</th>
+              <th class="border-x border-accented p-2 w-full">اسم الطالب</th>
+              <th class="border-x border-accented p-2 w-full">علامة الطالب</th>
               <th class="border-x border-accented p-2 w-full">علامة الطالب</th>
             </tr>
           </thead>
           <tbody v-if="!isLoading">
             <tr
               v-if="students.length"
-              class="grid grid-cols-3 place-items-center"
+              class="grid grid-cols-4 place-items-center"
               v-for="(student, index) in students"
               :key="student.id"
             >
@@ -337,8 +388,6 @@ const saveGrades = async () => {
                   " " +
                   student.second_name +
                   " " +
-                  student.third_name +
-                  " " +
                   student.last_name
                 }}
               </td>
@@ -347,9 +396,10 @@ const saveGrades = async () => {
                 v-if="grades.length > index && grades[index]"
               >
                 <UInput
+                  type="number"
                   :color="scoreErrors[index] ? 'error' : 'secondary'"
                   :highlight="scoreErrors[index] ? true : false"
-                  v-model="grades[index].score"
+                  v-model.number="grades[index].score"
                   @update:model-value="validateScore(index)"
                   @input="() => validateScore(index)"
                   :class="scoreErrors[index] ? 'border-error' : ''"
@@ -357,6 +407,17 @@ const saveGrades = async () => {
                 <p v-if="scoreErrors[index]" class="text-error text-xs mt-1">
                   {{ scoreErrors[index] }}
                 </p>
+              </td>
+              <td
+                class="w-full h-full p-2 text-center border-x border-b border-accented flex flex-col justify-center items-center"
+                v-if="grades.length > index && grades[index]"
+              >
+                <UBadge
+                  :color="getBadgeColor(calculateStatus(grades[index]))"
+                  size="lg"
+                >
+                  {{ calculateStatus(grades[index]) }}
+                </UBadge>
               </td>
             </tr>
             <tr

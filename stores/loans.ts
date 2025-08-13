@@ -41,7 +41,7 @@ export const useLoansStore = defineStore("loans", () => {
   const fetchReports = async (
     pageNum: number = 1,
     pageSize: number = 10,
-    filters: Filters,
+    filters?: Filters,
     forceRefresh: boolean = false
   ): Promise<void> => {
     const start = (pageNum - 1) * pageSize;
@@ -71,28 +71,42 @@ export const useLoansStore = defineStore("loans", () => {
           `id, employee_id, semester_id, amount, notes, status, created_at,updated_at,
           employee:employees(id, first_name, second_name, third_name, last_name, identity_number),
           month:months(id, name)
-          `
+          `,
+          { count: "exact" }
         )
-        .range(start, end)
         .order("id", { ascending: false });
 
       // Apply filtering based on month_id and semester_id
-      if (filters.monthFilter) {
-        query = query.eq("month_id", filters.monthFilter);
+      if (filters?.monthFilter) {
+        query = query.eq("month_id", filters?.monthFilter);
       }
       // Apply filtering based on semester_id
-      if (filters.semesterFilter) {
-        query = query.eq("semester_id", filters.semesterFilter);
+      if (filters?.semesterFilter) {
+        query = query.eq("semester_id", filters?.semesterFilter);
       }
       // Apply filtering based on semester_id
-      if (filters.statusFilter) {
-        query = query.eq("status", filters.statusFilter);
+      if (filters?.statusFilter) {
+        query = query.eq("status", filters?.statusFilter);
       }
+      if (filters?.dateFilter) {
+        const startOfDay = `${filters?.dateFilter}T00:00:00.000Z`;
+        const endOfDay = `${filters?.dateFilter}T23:59:59.999Z`;
+        query = query.gte("created_at", startOfDay).lte("created_at", endOfDay);
+      }
+      const { count, error: countError } = await query;
+
+      // Apply pagination
+      query = query.range(start, end);
 
       const { data, error } = await query;
+      if (countError) {
+        throw new Error(countError.message);
+      }
       if (error) {
         throw new Error(error.message);
       }
+
+      reportsCount.value = count || 0;
 
       if (forceRefresh) {
         reports.value = data as EmployeeLoan[];
@@ -104,8 +118,6 @@ export const useLoansStore = defineStore("loans", () => {
         );
         // set reports data
         reports.value = [...reports.value, ...newData];
-
-        toastSuccess({ title: "" });
       }
     } catch (err) {
       toastError({
@@ -117,39 +129,39 @@ export const useLoansStore = defineStore("loans", () => {
       loading.value = false;
     }
   };
-  const getReportsCount = async (filters: Filters): Promise<void> => {
-    try {
-      loading.value = true;
-      let query = client
-        .from("employees_loans")
-        .select("*", { count: "exact", head: true });
+  // const getReportsCount = async (filters: Filters): Promise<void> => {
+  //   try {
+  //     loading.value = true;
+  //     let query = client
+  //       .from("employees_loans")
+  //       .select("*", { count: "exact", head: true });
 
-      // Apply filtering based on month_id
-      if (filters.monthFilter) {
-        query = query.eq("month_id", filters.monthFilter);
-      }
+  //     // Apply filtering based on month_id
+  //     if (filters.monthFilter) {
+  //       query = query.eq("month_id", filters.monthFilter);
+  //     }
 
-      // Apply filtering based on semester_id
-      if (filters.semesterFilter) {
-        query = query.eq("semester_id", filters.semesterFilter);
-      }
-      // Apply filtering based on status
-      if (filters.statusFilter) {
-        query = query.eq("status", filters.statusFilter);
-      }
+  //     // Apply filtering based on semester_id
+  //     if (filters.semesterFilter) {
+  //       query = query.eq("semester_id", filters.semesterFilter);
+  //     }
+  //     // Apply filtering based on status
+  //     if (filters.statusFilter) {
+  //       query = query.eq("status", filters.statusFilter);
+  //     }
 
-      const { count, error } = await query;
+  //     const { count, error } = await query;
 
-      if (error) {
-        throw createError({ statusCode: 500, message: error.message });
-      }
-      reportsCount.value = count || 0;
-    } catch (err) {
-      toastError({ title: "خطأ في جلب عدد التقارير" });
-    } finally {
-      loading.value = false;
-    }
-  };
+  //     if (error) {
+  //       throw createError({ statusCode: 500, message: error.message });
+  //     }
+  //     reportsCount.value = count || 0;
+  //   } catch (err) {
+  //     toastError({ title: "خطأ في جلب عدد التقارير" });
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
   const getSpesificReport = (reportId: number) => {
     return reports.value?.find((report) => report.id === reportId);
   };
@@ -266,7 +278,7 @@ export const useLoansStore = defineStore("loans", () => {
     // reports operations
     fetchReports,
     // fetchStudentsByAcademicClassIdAndMonthId,
-    getReportsCount,
+    // getReportsCount,
 
     saveLoanReport,
     updateLoanReport,

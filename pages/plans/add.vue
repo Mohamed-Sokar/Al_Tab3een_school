@@ -1,30 +1,23 @@
 <script setup lang="ts">
 import { number, object, string } from "yup";
-import type { Plan } from "~/types";
+import type { Level, Plan, Semester } from "~/types";
 import { usePlansStore } from "@/stores/plans";
-import { useStudentStore } from "@/stores/students";
-import {
-  plan_stage_options,
-  semesterOptions,
-  students_type_options,
-} from "~/constants";
+
+import { students_type_options } from "~/constants";
 import { USelect } from "#components";
 
 const plansStore = usePlansStore();
-const studentsStore = useStudentStore();
 
 const schema = object({
-  year: number().required("السنة الدراسية مطلوبة"),
-  stage: string().required("المرحلة مطلوبة"),
-  semester: string().required("الفصل الدراسي مطلوب"),
+  level_id: number().required("المرحلة مطلوبة"),
+  semester_id: number().required("الفصل الدراسي مطلوب"),
   total_pages: number().required("عدد الصفحات مطلوبة"),
   students_type: string().required("نوع الطلاب مطلوب"),
 });
 
 const state = reactive<Plan>({
-  year: new Date().getFullYear() as number | undefined,
-  stage: undefined as string | undefined,
-  semester: undefined as string | undefined,
+  level_id: undefined as number | undefined,
+  semester_id: undefined as number | undefined,
   total_pages: undefined as number | undefined,
   students_type: students_type_options[0],
 });
@@ -33,7 +26,7 @@ const form = ref();
 
 const onSubmit = async () => {
   await plansStore.addPlan(state);
-  await navigateTo({ name: "plans" });
+  // await navigateTo({ name: "plans" }); => I moved navigation to addPlan function in plans store
 };
 </script>
 
@@ -46,40 +39,43 @@ const onSubmit = async () => {
       class="grid grid-cols-1 md:grid-cols-2 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="السنة الدراسية" name="year">
-        <UInput
-          type="number"
-          v-model.number="state.year"
-          placeholder="السنة الدراسية"
-          label="السنة الدراسية"
+      <UFormField label="الفصل الدراسي" required name="semester_id" size="md">
+        <USelect
           class="w-full"
+          v-model="state.semester_id"
+          :items="
+                [{ label: 'اختر الفصل الدراسي', value: undefined },
+                ...useGradsStore().semestersData.map((s:Semester) => ({
+                label: `${s.year} - ${s.name}`,
+                value: s.id,
+              }))]
+            "
+          placeholder="اختر الفصل الدراسي"
         />
       </UFormField>
-      <UFormField label="الفصل الدراسي" name="semester">
+      <UFormField label="المرحلة الدراسية" name="level_id" size="md">
         <USelect
-          :items="semesterOptions"
-          v-model="state.semester"
-          placeholder="الفصل الدراسي"
-          label="الفصل الدراسي"
           class="w-full"
+          v-model="state.level_id"
+          :items="[{ label: 'اختر المرحلة الدراسية', value: undefined }
+              ,...useLevelsStore().levelsData.map((s:Level) => ({
+                label: s.title,
+                value: s.id,
+              }))]
+            "
+          placeholder="اختر المرحلة الدراسية"
         />
       </UFormField>
-      <UFormField label="المرحلة" name="stage">
+      <UFormField label="نوع الطلاب" name="students_type" size="md">
         <USelect
-          :items="plan_stage_options"
-          v-model="state.stage"
-          placeholder="المرحلة"
-          label="المرحلة"
           class="w-full"
-        />
-      </UFormField>
-      <UFormField label="نوع الطلاب" name="students_type">
-        <USelect
-          :items="students_type_options"
           v-model="state.students_type"
-          placeholder="نوع الطلاب"
-          label="نوع الطلاب"
-          class="w-full"
+          :items="[
+            { label: 'اختر نوع الطلاب', value: undefined },
+            { label: 'طلاب قدامى', value: 'طلاب قدامى' },
+            { label: 'طلاب جدد', value: 'طلاب جدد' },
+          ]"
+          placeholder="اختر نوع الطلاب"
         />
       </UFormField>
       <UFormField label="عدد الصفحات الكلية" name="total_pages">

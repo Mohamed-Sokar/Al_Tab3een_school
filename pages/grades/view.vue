@@ -1,24 +1,15 @@
 <script setup lang="ts">
-import type {
-  Class,
-  ExamType,
-  Grade,
-  GradesReport,
-  Semester,
-  Subject,
-} from "~/types";
+import type { Class, ExamType, Grade, Semester, Subject } from "~/types";
 
 // seo
-useHead({ title: "تعديل كشف درجات" });
+useHead({ title: "عرض كشف درجات" });
 
 // init
 const route = useRoute();
 const query = route.query;
 const gradsReportsStore = useGradsStore();
-const studentsCount = ref(0);
-const studentsStore = useStudentStore();
 const { exportToExcel } = useExportToExcel();
-const { toastError } = useAppToast();
+const studentsStore = useStudentStore();
 
 // data
 const semester = gradsReportsStore.semestersData.find(
@@ -39,6 +30,7 @@ const subject = gradsReportsStore.subjectsData.find(
 
 // state
 const isLoading = ref(false);
+const studentsCount = ref(0);
 const studentsWithGrades = ref<Grade[]>([]);
 const scoreErrors = ref<string[]>([]);
 const state = reactive({
@@ -69,47 +61,6 @@ const validateScore = (index: number) => {
     scoreErrors.value[index] = `الدرجة أكبر من الحد الأعلى (${10})`;
   } else {
     scoreErrors.value[index] = "";
-  }
-};
-const checkScoreInputs = () => {
-  let hasError = false;
-
-  studentsWithGrades.value.forEach((_: any, index: number) => {
-    validateScore(index);
-    if (scoreErrors.value[index]) {
-      hasError = true;
-    }
-  });
-
-  return { hasError };
-};
-const saveGrades = async () => {
-  isLoading.value = true;
-  try {
-    const { hasError } = checkScoreInputs();
-    if (hasError) {
-      toastError({
-        title: "يرجى تصحيح الأخطاء قبل الحفظ",
-      });
-      return;
-    }
-
-    // prepare payload
-    const payload = studentsWithGrades.value.map((swg) => ({
-      semester_id: state.semester_id,
-      academic_class_id: state.academic_class_id,
-      student_id: swg?.student?.id,
-      subject_exam_id: state.subject_exam_id,
-      subject_id: state.subject_id,
-      score: Number(swg.score),
-    })) as GradesReport[];
-    // // save students exam results
-    await gradsReportsStore.saveGrades(payload);
-    await gradsReportsStore.get_avg_scores_filtered();
-    navigateTo({ name: "grades" });
-  } finally {
-    isLoading.value = false;
-    // studentsWithGrades.value = [];
   }
 };
 const getStudentsWithGrades = async () => {
@@ -160,12 +111,11 @@ onMounted(async () => {
   await getSubjectExams();
   // get students with their grades
   await getStudentsWithGrades();
-  // get students count
+  // to get students count
   await studentsStore.getStudentsCount({
     academicClassFilter: academicClass?.id,
   });
 });
-
 const calculateStatus = (row: Grade) => {
   const percentage = ((row.score ?? 0) / state.max_score) * 100;
   console.log(percentage);
@@ -207,7 +157,7 @@ const getBadgeColor = (status: string) => {
     <template #header>
       <div class="flex justify-between">
         <div class="flex justify-start items-center gap-2">
-          <h1>تعديل علامات الطلاب</h1>
+          <h1>عرض علامات الطلاب</h1>
           <UIcon
             name="i-heroicons-academic-cap"
             size="xl"
@@ -228,12 +178,7 @@ const getBadgeColor = (status: string) => {
     <template #default>
       <!-- select buttons -->
       <div class="w-full grid grid-cols-1 lg:grid-cols-4 gap-2 mb-5">
-        <UFormField
-          label="السنة الدراسية"
-          required
-          name="semester_id"
-          size="md"
-        >
+        <UFormField label="السنة الدراسية" name="semester_id" size="md">
           <USelect
             disabled
             class="w-full"
@@ -248,7 +193,7 @@ const getBadgeColor = (status: string) => {
           />
         </UFormField>
 
-        <UFormField label="نوع الاختبار" name="exam_type_id" size="md" required>
+        <UFormField label="نوع الاختبار" name="exam_type_id" size="md">
           <USelect
             disabled
             class="w-full"
@@ -263,12 +208,7 @@ const getBadgeColor = (status: string) => {
           />
         </UFormField>
 
-        <UFormField
-          label="الشعبة الدراسية"
-          name="academic_class_id"
-          size="md"
-          required
-        >
+        <UFormField label="الشعبة الدراسية" name="academic_class_id" size="md">
           <USelect
             disabled
             class="w-full"
@@ -283,12 +223,7 @@ const getBadgeColor = (status: string) => {
           />
         </UFormField>
 
-        <UFormField
-          label="المادة الدراسية"
-          name="subject_id"
-          size="md"
-          required
-        >
+        <UFormField label="المادة الدراسية" name="subject_id" size="md">
           <USelect
             disabled
             class="w-full"
@@ -306,27 +241,27 @@ const getBadgeColor = (status: string) => {
 
       <!-- max & min score -->
       <div
-        class="flex flex-wrap gap-2 mb-5 justify-between items-end"
+        class="flex flex-wrap gap-2 mb-2 justify-between items-end"
         v-if="studentsWithGrades.length"
       >
         <div class="flex flex-wrap gap-2">
           <div
             color="secondary"
             size="lg"
-            class="p-3 bg-error/15 rounded-md flex gap-3"
+            class="p-2 bg-error/15 rounded-md flex gap-3 items-center"
           >
             <span class="font-bold">العلامة الصغرى</span>
-            <UBadge color="error" size="lg">
+            <UBadge color="error" size="lg" class="font-bold">
               {{ state?.min_score }}
             </UBadge>
           </div>
           <div
             color="secondary"
             size="lg"
-            class="p-3 bg-secondary/15 rounded-md flex gap-3"
+            class="p-2 bg-secondary/15 rounded-md flex gap-3 items-center"
           >
             <span class="font-bold">العلامة الكبرى</span>
-            <UBadge color="secondary" size="lg">
+            <UBadge color="secondary" size="lg" class="font-bold">
               {{ state?.max_score }}
             </UBadge>
           </div>
@@ -403,6 +338,7 @@ const getBadgeColor = (status: string) => {
               "
             >
               <UInput
+                disabled
                 :color="scoreErrors[index] ? 'error' : 'secondary'"
                 :highlight="scoreErrors[index] ? true : false"
                 v-model="studentsWithGrades[index].score"
@@ -443,25 +379,6 @@ const getBadgeColor = (status: string) => {
           <USkeleton class="h-8 w-full my-2" />
         </tbody>
       </table>
-    </template>
-    <template #footer v-if="studentsWithGrades.length">
-      <div class="gap-2 flex">
-        <UButton
-          label="حفظ"
-          color="secondary"
-          class="w-20 flex justify-center"
-          type="submit"
-          :loading="isLoading"
-          @click="saveGrades"
-        />
-        <UButton
-          label="إلغاء"
-          variant="soft"
-          color="neutral"
-          :loading="isLoading"
-          :to="{ name: 'grades' }"
-        />
-      </div>
     </template>
   </UCard>
 </template>

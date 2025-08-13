@@ -1,42 +1,51 @@
 <script setup lang="ts">
-import { number, object, string } from "yup";
+import { number, object } from "yup";
 import { usePlansStore } from "@/stores/plans";
 import { months } from "~/constants";
+import type { Plan } from "~/types";
 
+// init
 const plansStore = usePlansStore();
-
-const schema = object({
-  month: string().required("الشهر مطلوب"),
-  pages: number().required("عدد الصفحات مطلوبة"),
-});
-
-const state = reactive({
-  id: undefined as number | undefined,
-  month: undefined as string | undefined,
-  pages: undefined as number | undefined,
-});
 const route = useRoute();
 
+// data
+const schema = object({
+  month_id: number().required("الشهر مطلوب"),
+  pages: number().required("عدد الصفحات مطلوبة"),
+});
 const generalPlanId = route.query.generalPlanId ?? 0;
 const monthlyPlanId = +route.params.id;
 
-const targetedGeneralPlan =
-  generalPlanId != null
-    ? plansStore.plansData.find((plan) => plan.id === +generalPlanId)
-    : undefined;
-
-const targetedMonthlyPlan = targetedGeneralPlan?.months_plans?.find(
-  (plan) => plan.id === +monthlyPlanId
-);
-
-Object.assign(state, targetedMonthlyPlan);
-
+// state
 const form = ref();
+const state = reactive({
+  // id: undefined as number | undefined,
+  month_id: undefined as number | undefined,
+  pages: undefined as number | undefined,
+});
 
+// Actions
+const fetchMonthlyPlan = async () => {
+  const targetedGeneralPlan = (await plansStore.getPlanById(
+    Number(generalPlanId)
+  )) as Plan | undefined;
+
+  const targetedMonthlyPlan = targetedGeneralPlan?.months_plans?.find(
+    (plan) => plan.id === +monthlyPlanId
+  );
+
+  state.month_id = targetedMonthlyPlan?.month_id;
+  state.pages = targetedMonthlyPlan?.pages;
+};
 const onSubmit = async () => {
   await plansStore.updateMonthlyPlan(+monthlyPlanId, +generalPlanId, state);
   navigateTo({ name: "plans", query: { planId: generalPlanId } });
 };
+
+// on Mounted
+onMounted(async () => {
+  await fetchMonthlyPlan();
+});
 </script>
 
 <template>
@@ -48,13 +57,18 @@ const onSubmit = async () => {
       class="grid grid-cols-1 md:grid-cols-2 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="الشهر" name="month">
+      <UFormField label="اختر الشهر" name="month_id">
         <USelect
-          :items="months"
-          v-model="state.month"
-          placeholder="الشهر"
-          label="الشهر"
           class="w-full"
+          v-model="state.month_id"
+          :items="[
+            { label: 'اختر الشهر', value: undefined },
+            ...months.map((s) => ({
+              label: `${s.label} - ${s.value}`,
+              value: s.value,
+            })),
+          ]"
+          placeholder="اختر الشهر"
         />
       </UFormField>
       <UFormField label="عدد الصفحات" name="pages">
@@ -79,7 +93,9 @@ const onSubmit = async () => {
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'plans' })"
+          @click="
+            navigateTo({ name: 'plans', query: { planId: generalPlanId } })
+          "
           label="إلغاء"
         />
       </div>

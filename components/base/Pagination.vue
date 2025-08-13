@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <TeachersLoans />
-  </div>
+  <div>Pagination</div>
 </template>
 
 <script setup lang="ts"></script>

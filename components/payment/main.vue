@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import { type Payment } from "~/types";
+import { type Filters, type Payment } from "~/types";
 import { invoiceTypes, months } from "~/constants";
 import { usePaymentsStore } from "@/stores/paymnets";
 
@@ -8,6 +8,8 @@ import { usePaymentsStore } from "@/stores/paymnets";
 const paymentsStore = usePaymentsStore();
 const { exportToExcel } = useExportToExcel();
 const { getArabicDayName, getDate } = useDateUtils();
+
+// data
 const UBadge = resolveComponent("UBadge");
 const columns: TableColumn<Payment>[] = [
   {
@@ -31,6 +33,11 @@ const columns: TableColumn<Payment>[] = [
         () => status
       );
     },
+  },
+  {
+    accessorKey: "invoice_number",
+    header: "رقم الوصل",
+    cell: ({ row }) => row.original.invoice_number,
   },
   {
     accessorKey: "اليوم",
@@ -61,6 +68,59 @@ const columns: TableColumn<Payment>[] = [
     id: "action",
   },
 ];
+
+// State
+const globalFilter = ref("");
+const tableKey = ref(Math.random());
+const pageCountOptions = [1, 2, 5, 10, 20, 50];
+const pageNum = ref(1);
+const pageSize = ref(10);
+const rowSelection = ref({});
+const filters = reactive<Filters>({
+  monthFilter: undefined,
+  invoiceTypeFilter: undefined,
+  dateFilter: undefined,
+});
+
+// Actions
+const exportReports = () => {
+  exportToExcel({
+    data: selectedReports.value.map((report, i) => ({
+      الرقم: i + 1,
+      "نوع الدفعة": report.type?.type,
+      "رقم الوصل": report.invoice_number,
+      اليوم: getArabicDayName(report.created_at ?? ""),
+      التاريخ: getDate(report.created_at ?? ""),
+      القيمة: report.amount,
+      الوصف: report.description,
+    })),
+    fileName: "تقارير الغياب",
+    sheetName: "تقارير الغياب",
+  });
+};
+const fetchReports = async (forceRefresh: boolean = false) => {
+  // await paymentsStore.getReportsCount(filters);
+  await paymentsStore.fetchReports(
+    pageNum.value,
+    pageSize.value,
+    filters,
+    forceRefresh
+  );
+  await paymentsStore.fetchPaymentSums(filters);
+  console.log("paymentSumsData: ", paymentsStore.paymentSumsData);
+};
+const applyFilters = async () => {
+  // await paymentsStore.getReportsCount(filters);
+  await fetchReports(true);
+  pageNum.value = 1;
+};
+const updateRows = async () => {
+  await paymentsStore.fetchReports(pageNum.value, pageSize.value, filters);
+};
+const deleteReport = async (reportId: number) => {
+  if (!confirm("هل أنت متأكد من حذف هذا التقرير؟")) return;
+  paymentsStore.deletePayment(reportId ?? 0);
+};
 function getDropdownActions(report: Payment): DropdownMenuItem[] {
   return [
     {
@@ -78,75 +138,15 @@ function getDropdownActions(report: Payment): DropdownMenuItem[] {
       icon: "i-lucide-trash",
       color: "error",
       onSelect: () => {
-        paymentsStore.deletePayment(report.id ?? 0);
+        deleteReport(report.id ?? 0);
       },
     },
   ];
 }
 
-// State
-const globalFilter = ref("");
-const tableKey = ref(Math.random());
-const pageCountOptions = [1, 2, 5, 10, 20, 50];
-const pageNum = ref(1);
-const pageSize = ref(2);
-const rowSelection = ref({});
-const filters = reactive({
-  monthFilter: undefined,
-  invoiceTypeFilter: undefined,
-});
-
-// Actions
-const exportReports = () => {
-  exportToExcel({
-    data: selectedReports.value.map((report, i) => ({
-      الرقم: i + 1,
-      "نوع الدفعة": report.type,
-      "رقم الوصل": report.invoice_number,
-      اليوم: getArabicDayName(report.date ?? ""),
-      التاريخ: getDate(report.date ?? ""),
-      القيمة: report.amount,
-      الوصف: report.description,
-    })),
-    fileName: "تقارير الغياب",
-    sheetName: "تقارير الغياب",
-  });
-};
-const fetchReports = async (forceRefresh: boolean = false) => {
-  await paymentsStore.getReportsCount(filters);
-  await paymentsStore.fetchReports(
-    pageNum.value,
-    pageSize.value,
-    filters,
-    forceRefresh
-  );
-  await paymentsStore.fetchPaymentSums(filters);
-  console.log("paymentSumsData: ", paymentsStore.paymentSumsData);
-};
-// refetch reports when filtering
-const applyFilters = async () => {
-  await paymentsStore.getReportsCount(filters);
-  await fetchReports(true);
-  pageNum.value = 1;
-};
-const updateRows = async () => {
-  await paymentsStore.fetchReports(pageNum.value, pageSize.value, filters);
-};
-
 // Computed
 const filteredPayments = computed(() => {
-  // if (selectedMonth.value === "كل الأشهر") return paymentsStore.sortedPayment;
   return paymentsStore.sortedReports;
-  // tableKey.value = Math.random();
-  // return paymentsStore.sortedPayment.filter((payment) =>
-  //   // payment.date === selectedDate.value &&
-  //   {
-  //     return (
-  //       new Date(payment.date ?? new Date()).getMonth() ===
-  //       months.indexOf(selectedMonth.value)
-  //     );
-  //   }
-  // );
 });
 const numberedReports = computed(() =>
   filteredPayments.value.map((payment, index) => ({
@@ -170,6 +170,30 @@ const totalPages = computed(() => {
       : 1
   );
 });
+const date_string = computed({
+  get() {
+    if (!filters.dateFilter) return "";
+    if (typeof filters.dateFilter === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(filters.dateFilter)) {
+        return filters.dateFilter;
+      }
+      // Try to parse and format
+      const d = new Date(filters.dateFilter);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (filters.dateFilter instanceof Date) {
+      return filters.dateFilter.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    filters.dateFilter = val;
+  },
+});
 
 // Watches
 watch(pageSize, () => {
@@ -181,6 +205,16 @@ watch(pageNum, async () => {
   updateRows();
   rowSelection.value = {}; // reset selections
 });
+// clean monthFilter if conflicts with dateFilter
+watch(filters, () => {
+  if (filters.dateFilter && filters.monthFilter) {
+    const selectedDate = new Date(filters.dateFilter);
+    const month = selectedDate.getMonth() + 1; // 1-12
+    if (month !== filters.monthFilter) {
+      filters.monthFilter = undefined; // Clear month filter if it conflicts
+    }
+  }
+});
 </script>
 
 <template>
@@ -188,9 +222,9 @@ watch(pageNum, async () => {
     <UForm
       :state="filters"
       @submit="applyFilters"
-      class="flex gap-2 flex-col justify-between items-start lg:items-start mb-5 mt-5"
+      class="flex flex-col justify-between items-start lg:items-start mb-3 mt-5"
     >
-      <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-2 mb-5">
+      <div class="w-full grid grid-cols-1 lg:grid-cols-3 gap-2 mb-3">
         <UFormField label="الشهر" name="monthFilter" size="md">
           <USelect
             class="w-full"
@@ -204,6 +238,15 @@ watch(pageNum, async () => {
             ]"
             placeholder="اختر الشهر"
             icon="i-heroicons-calendar"
+          />
+        </UFormField>
+        <UFormField label="التاريخ" name="date" size="md">
+          <UInput
+            type="date"
+            class="w-full"
+            v-model="date_string"
+            placeholder="اختر التاريخ"
+            trailing-icon="i-heroicons-calendar"
           />
         </UFormField>
         <UFormField label="نوع الدفعات" name="invoiceTypeFilter" size="md">
@@ -247,7 +290,6 @@ watch(pageNum, async () => {
       </div>
       <div
         class="p-3 w-full md:w-fit bg-secondary/15 rounded-md flex justify-between gap-3"
-        v-if="paymentsStore.totalExpense"
       >
         <span class="font-bold">مجموع الصادرات</span>
         <UBadge color="secondary" size="lg" class="font-bold">
@@ -256,7 +298,6 @@ watch(pageNum, async () => {
       </div>
       <div
         class="p-3 w-full md:w-fit bg-secondary/15 rounded-md flex justify-between gap-3"
-        v-if="paymentsStore.totalIncome"
       >
         <span class="font-bold">مجموع الإيرادات</span>
         <UBadge color="secondary" size="lg" class="font-bold">

@@ -5,7 +5,7 @@
 
     <!-- Page content -->
     <div
-      class="lg:max-w-[calc(100%-250px)] min-h-screen w-full dark:bg-gray-950"
+      class="lg:max-w-[calc(100%-255px)] min-h-screen w-full dark:bg-gray-950"
     >
       <div
         class="w-full min-h-screen px-4 pt-4 pb-10 dark:from-gray-900 dark:to-gray-800"
@@ -72,11 +72,11 @@ onMounted(async () => {
   await gradesReportStore.fetchExamTypes();
   await gradesReportStore.fetchSubjects();
   // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
-  await studentsStore.fetchBehavioralIssues();
-  // await studentsStore.fetchStudents();
+  // await studentsStore.fetchBehavioralIssues();
+  await studentsStore.fetchStudents();
   await levelsStore.fetchLevels();
   await academicClassesStore.fetchClasses();
-  await plansStore.fetchPlans();
+  // await plansStore.fetchPlans();
   await quranClassesStore.fetchClasses();
   // await driversStore.fetchDrivers();
   // await paymentsStore.fetchReports();
@@ -133,6 +133,7 @@ onMounted(async () => {
 
 <style>
 body {
-  font-family: "Cairo", sans-serif;
+  /*font-family: "Cairo", sans-serif;*/
+  font-family: sans-serif;
 }
 </style>

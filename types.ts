@@ -39,6 +39,7 @@ interface Student {
 
 export interface Filters {
   monthFilter?: number | undefined;
+  dateFilter?: Date | undefined;
   invoiceTypeFilter?: number | undefined;
   semesterFilter?: number | undefined;
   monthlyPlanFilter?: number | undefined;
@@ -55,6 +56,11 @@ export interface Filters {
   lastNameFilter?: string | undefined;
 
   statusFilter?: string | undefined;
+
+  subjectFilter?: number | undefined;
+  subjectExamFilter?: number | undefined;
+
+  studentsTypeFilter?: string | undefined;
 }
 
 type StudentModalFlag =
@@ -157,10 +163,11 @@ interface Driver {
 }
 interface Plan {
   id?: number | undefined;
-  year: number | undefined;
-  stage: string | undefined;
+  level?: { title: string };
+  level_id: number | undefined;
   total_pages: number | undefined;
-  semester: string | undefined;
+  semester?: { name: string; year: string };
+  semester_id: number | undefined;
   months_plans?: Array<MonthlyPlan> | undefined;
   students_type?: string | undefined;
   rowNumber?: number | undefined; // For display purposes, not in the database
@@ -168,9 +175,10 @@ interface Plan {
 interface MonthlyPlan {
   id?: number | undefined;
   plan_id?: number | undefined;
-  month: string | undefined;
+  month?: { name: string; id: number };
+  month_id: number | undefined;
   pages: number | undefined;
-  plan: Plan;
+  plan?: Plan;
 }
 
 interface EmployeeSalaryReport {

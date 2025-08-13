@@ -9,7 +9,7 @@ const paymentsStore = usePaymentsStore();
 
 const schema = object({
   type_id: number().required("نوع الدفعة مطلوب"),
-  month_id: number().required("الشهر مطلوب"),
+  // month_id: number().required("الشهر مطلوب"),
   description: string().required("وصف الدفعة مطلوب"),
   created_at: date().required("تاريخ الدفعة مطلوب"),
   amount: number().required("القيمة مطلوبة"),
@@ -21,11 +21,13 @@ const state = reactive<Payment>({
   invoice_number: undefined,
   description: undefined,
   amount: undefined,
+  created_at: new Date(),
 });
 
 const form = ref();
 
 const onSubmit = async () => {
+  state.month_id = (state?.created_at?.getMonth() ?? 0) + 1;
   await paymentsStore.addPayment(state);
   navigateTo({ name: "financial-payments" });
 };
@@ -67,7 +69,7 @@ const date_string = computed({
       class="grid grid-cols-2 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="الشهر" name="month_id" size="md">
+      <!-- <UFormField label="الشهر" name="month_id" size="md">
         <USelect
           class="w-full"
           v-model="state.month_id"
@@ -81,7 +83,7 @@ const date_string = computed({
           placeholder="اختر الشهر"
           icon="i-heroicons-calendar"
         />
-      </UFormField>
+      </UFormField> -->
       <UFormField label="نوع الدفعات" name="type_id" size="md">
         <USelect
           class="w-full"

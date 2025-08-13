@@ -1,4 +1,4 @@
-import type { MonthlyPlan, Plan, Student } from "~/types";
+import type { Filters, MonthlyPlan, Plan, Student } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
@@ -7,30 +7,116 @@ export const usePlansStore = defineStore("plans", () => {
   const client = useSupabaseClient();
   const { toastSuccess, toastError } = useAppToast();
   const plans = ref<Plan[]>([]);
+  const plansCount = ref(0);
   const monthsPlans = ref<MonthlyPlan[]>([]);
-  const plansIsLoaded = ref(false);
+  // const plansIsLoaded = ref(false);
   const monthsPlansIsLoaded = ref(false);
   const loading = ref(false);
   const tableKey = ref(Math.random());
 
-  const fetchPlans = async () => {
+  // const fetchPlans = async () => {
+  //   try {
+  //     if (plansIsLoaded.value) return; // تجنب الجلب أكثر من مرة
+  //     loading.value = true;
+
+  //     const { data } = await api.get("/plans");
+  //     // set payments data to ref locally
+  //     plans.value = data;
+  //     // toastSuccess({
+  //     //   title: "تم تحميل الخطط بنجاح",
+  //     // });
+  //     plansIsLoaded.value = true;
+  //     tableKey.value = Math.random();
+  //   } catch (err) {
+  //     toastError({
+  //       title: "حدث مشكلة أثناء تحميل الخطط",
+  //     });
+  //     throw Error(err instanceof Error ? err.message : String(err));
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
+
+  const fetchPlans = async (
+    // pageNum: number = 1,
+    // pageSize: number = 10,
+    filters?: Filters,
+    forceRefresh: boolean = false
+  ): Promise<void> => {
+    // const start = (pageNum - 1) * pageSize;
+    // const end = start + pageSize - 1;
+
+    const shouldForceRefresh = forceRefresh;
+
+    if (!shouldForceRefresh) {
+      // التحقق مما إذا كانت البيانات موجودة بالفعل
+      const hasEnoughData = plansData.value.length > 0;
+      if (hasEnoughData) return;
+    }
     try {
-      if (plansIsLoaded.value) return; // تجنب الجلب أكثر من مرة
       loading.value = true;
 
-      const { data } = await api.get("/plans");
-      // set payments data to ref locally
-      plans.value = data;
-      // toastSuccess({
-      //   title: "تم تحميل الخطط بنجاح",
-      // });
-      plansIsLoaded.value = true;
-      tableKey.value = Math.random();
+      let query = client
+        .from("plans")
+        .select(
+          "*, months_plans(id,month:months(id, name), pages, month_id), semester:semesters(id,name,year), level:levels(title)"
+        )
+        .order("total_pages", { ascending: false });
+
+      // Apply filtering based on students_type, academic_class_id and semester_id
+      if (filters?.semesterFilter) {
+        query = query.eq("semester_id", filters.semesterFilter);
+      }
+      if (filters?.studentsTypeFilter) {
+        query = query.eq("students_type", filters.studentsTypeFilter);
+      }
+      if (filters?.levelFilter) {
+        query = query.eq("level_id", filters.levelFilter);
+      }
+
+      const { data, error } = await query;
+      console.log(data);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // set data to plans ref
+      plans.value = data as Plan[];
     } catch (err) {
       toastError({
-        title: "حدث مشكلة أثناء تحميل الخطط",
+        title: "خطأ في جلب الخطط",
+        description: (err as Error).message || "حدث خطأ غير متوقع",
       });
-      throw Error(err instanceof Error ? err.message : String(err));
+      plans.value = [];
+    } finally {
+      loading.value = false;
+    }
+  };
+  const getPlansCount = async (filters?: Filters): Promise<void> => {
+    try {
+      loading.value = true;
+      let query = client
+        .from("plans")
+        .select("*", { count: "exact", head: true });
+
+      // Apply filtering based on students_type, academic_class_id and semester_id
+      if (filters?.semesterFilter) {
+        query = query.eq("semester_id", filters.semesterFilter);
+      }
+      if (filters?.studentsTypeFilter) {
+        query = query.eq("students_type", filters.studentsTypeFilter);
+      }
+      if (filters?.levelFilter) {
+        query = query.eq("level_id", filters.levelFilter);
+      }
+      const { count, error } = await query;
+
+      if (error) {
+        throw createError({ statusCode: 500, message: error.message });
+      }
+      plansCount.value = count || 0;
+    } catch (err) {
+      toastError({ title: "خطأ في جلب عدد الخطط" });
     } finally {
       loading.value = false;
     }
@@ -40,39 +126,55 @@ export const usePlansStore = defineStore("plans", () => {
 
     try {
       // check is plan in exist
-      plans.value.find(
-        (p) =>
-          p.stage === plan.stage &&
-          p.semester === plan.semester &&
-          p.students_type === plan.students_type &&
-          p.year === plan.year
-      );
-      if (
-        plans.value.find(
-          (p) =>
-            p.stage === plan.stage &&
-            p.semester === plan.semester &&
-            p.students_type === plan.students_type &&
-            p.year === plan.year
-        )
-      ) {
+      let { count, error: isExistError } = await client
+        .from("plans")
+        .select("*", { count: "exact", head: true })
+        .eq("level_id", Number(plan.level_id))
+        .eq("semester_id", Number(plan.semester_id))
+        .eq("students_type", String(plan.students_type));
+
+      if (isExistError) {
+        throw isExistError;
+      }
+
+      if (count) {
         toastError({
           title: "هذه الخطة موجودة بالفعل",
         });
         return;
       }
-
-      const { data } = await api.post("/plans", {
-        ...plan,
-      });
-      toastSuccess({
-        title: `:تم إضافة الخطة بنجاح`,
-      });
-      // console.log(data);
+      // save plan in DB
+      const savedPlan = await savePlan(plan);
       // add plan locally
-      plans.value.unshift({
-        ...data[0],
+      plans.value.unshift(savedPlan);
+      await navigateTo({ name: "plans" });
+    } catch (err) {
+      toastError({
+        title: "حدث مشكلة في إضافة الخطة",
       });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
+  const savePlan = async (plan: Plan) => {
+    loading.value = true;
+    try {
+      const { data, error } = await client
+        .from("plans")
+        .upsert(plan, { onConflict: "id" })
+        .select(
+          "*, months_plans(id,month:months(id, name), pages), semester:semesters(id,name,year), level:levels(title)"
+        );
+      console.log("plan data: ", data);
+      // const { data } = await api.post("/plans", {
+      //   ...plan,
+      // });
+      // toastSuccess({
+      //   title: `:تم إضافة الخطة بنجاح`,
+      // });
+
+      return data[0];
     } catch (err) {
       toastError({
         title: "حدث مشكلة في إضافة الخطة",
@@ -84,6 +186,8 @@ export const usePlansStore = defineStore("plans", () => {
   };
   const deletePlan = async (planId: number) => {
     try {
+      if (!confirm("هل أنت متأكد من حذف الخطة؟")) return;
+
       loading.value = true;
       await api.delete(`plans/${planId}`);
 
@@ -104,23 +208,23 @@ export const usePlansStore = defineStore("plans", () => {
   const updatePlan = async (planId: number, newPlan: Plan) => {
     try {
       loading.value = true;
-      const cleaned = removeInvalidFields(newPlan);
-      const { data } = await api.put(`/plans/${planId}`, cleaned);
+      // const cleaned = removeInvalidFields(newPlan);
+      const targetedPlan = (await savePlan({ ...newPlan, id: planId })) as Plan;
+      // const { data } = await api.put(`/plans/${planId}`, cleaned);
 
       toastSuccess({
         title: `:تم تحديث بيانات الخطة بنجاح`,
       });
 
-      // console.log(data);
-
       // update plan locally
       const targetedPlanIndex = getSpecificPlanIndex(planId);
-      const targetedPlan = getSpecificPlan(planId);
+      // const targetedPlan = getSpecificPlan(planId);
 
-      plans.value[targetedPlanIndex] = {
-        ...targetedPlan,
-        ...data[0],
-      };
+      if (targetedPlanIndex !== -1) {
+        plans.value[targetedPlanIndex] = {
+          ...targetedPlan,
+        };
+      }
     } catch (err) {
       toastError({
         title: "حدث مشكلة في تعديل بيانات الخطة",
@@ -166,14 +270,17 @@ export const usePlansStore = defineStore("plans", () => {
     };
     try {
       loading.value = true;
-      // check if monthly plan in general plan is exist
-      if (
-        plans.value
-          .find((plan) => plan.id === generalPlanId)
-          ?.months_plans?.find(
-            (monthPlan) => monthPlan.month === monthlyPlan.month
-          )
-      ) {
+      const generalPlanResult = await getPlanById(generalPlanId);
+      const generalPlan = generalPlanResult as Plan | undefined;
+
+      console.log("generalPlan", generalPlan);
+
+      const mpIdx = generalPlan?.months_plans?.findIndex(
+        (mp) =>
+          mp.plan_id === generalPlanId && mp.month_id === monthlyPlan.month_id
+      );
+
+      if (mpIdx !== -1) {
         toastError({
           title: "هذه الخطة موجودة بالفعل",
         });
@@ -181,11 +288,11 @@ export const usePlansStore = defineStore("plans", () => {
       }
 
       const { data } = await api.post("/plans/months_plans", newMonthlyPlan);
-      // console.log(data);
+
       toastSuccess({
         title: `:تم إضافة الخطة بنجاح`,
       });
-      console.log(data);
+
       // add monthly plan locally
       const plan = plans.value.find((p) => p.id === generalPlanId);
       if (plan) {
@@ -196,24 +303,24 @@ export const usePlansStore = defineStore("plans", () => {
           ...data[0],
         });
         // update the students monthly plan
-        studentsStore.studentsData = studentsStore.studentsData.map(
-          (student: Student) => {
-            if (
-              student.plan_id === generalPlanId &&
-              student.plan &&
-              Array.isArray(student.plan.months_plans)
-            ) {
-              return {
-                ...student,
-                plan: {
-                  ...student.plan,
-                  months_plans: [...student.plan.months_plans, data[0]],
-                },
-              };
-            }
-            return student;
-          }
-        );
+        // studentsStore.studentsData = studentsStore.studentsData.map(
+        //   (student: Student) => {
+        //     if (
+        //       student.plan_id === generalPlanId &&
+        //       student.plan &&
+        //       Array.isArray(student.plan.months_plans)
+        //     ) {
+        //       return {
+        //         ...student,
+        //         plan: {
+        //           ...student.plan,
+        //           months_plans: [...student.plan.months_plans, data[0]],
+        //         },
+        //       };
+        //     }
+        //     return student;
+        //   }
+        // );
       }
     } catch (err) {
       toastError({
@@ -230,6 +337,7 @@ export const usePlansStore = defineStore("plans", () => {
   ) => {
     try {
       loading.value = true;
+      if (!confirm("هل أنت متأكد من حذف الخطة الشهرية؟")) return;
       await api.delete(`plans/months_plans/${monthlyPlanId}`);
 
       toastSuccess({
@@ -316,23 +424,30 @@ export const usePlansStore = defineStore("plans", () => {
       loading.value = false;
     }
   };
-
   const getPlanById = async (planId: number) => {
     try {
       loading.value = true;
-      const { data, status } = await api.get(`plans/${planId}`);
+      // const { data, status } = await api.get(`plans/${planId}`);
 
-      if (status !== 200) {
+      let { data, error } = await client
+        .from("plans")
+        .select(
+          "*, months_plans(id, month_id, month:months(id, name), pages, plan_id)"
+        )
+        .eq("id", Number(planId));
+
+      if (error) {
         toastError({
           title: "حدث مشكلة في جلب الخطة",
         });
         throw Error("مشكلة في السيرفر");
       }
 
-      toastSuccess({
-        title: `:تم جلب الخطة بنجاح`,
-      });
       return data[0];
+
+      // toastSuccess({
+      //   title: `:تم جلب الخطة بنجاح`,
+      // });
     } catch (err) {
       // toastError({
       //   title: "حدث مشكلة في جلب الدفعة",
@@ -347,7 +462,6 @@ export const usePlansStore = defineStore("plans", () => {
   const getSpecificPlanIndex = (planId: number) => {
     return plans.value.findIndex((plan) => plan.id === planId);
   };
-
   const assignPlanToStudents = async (studentIds: string[], planId: number) => {
     try {
       loading.value = true;
@@ -372,7 +486,6 @@ export const usePlansStore = defineStore("plans", () => {
       loading.value = false;
     }
   };
-
   // helper methods
   function removeInvalidFields(plan: Plan): Partial<Plan> {
     const allowedFields = [
@@ -400,6 +513,7 @@ export const usePlansStore = defineStore("plans", () => {
     tableKey,
     // Actions
     fetchPlans,
+    getPlansCount,
     fetchMonthsPlans,
     addPlan,
     addMonthlyPlan,

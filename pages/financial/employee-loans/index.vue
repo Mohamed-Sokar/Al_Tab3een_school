@@ -29,6 +29,7 @@ const filters = reactive<Filters>({
   monthFilter: undefined,
   semesterFilter: undefined,
   statusFilter: undefined,
+  dateFilter: undefined,
 });
 const sorting = ref([
   {
@@ -156,7 +157,7 @@ const columns: TableColumn<EmployeeLoan>[] = [
 // Actions
 const fetchReports = async (forceRefresh: boolean = false) => {
   isLoading.value = true;
-  await loansStore.getReportsCount(filters);
+  // await loansStore.getReportsCount(filters);
   await loansStore.fetchReports(
     pageNum.value,
     pageSize.value,
@@ -204,18 +205,26 @@ const exportReports = () => {
         .filter(Boolean)
         .join(" "),
       "رقم الهوية": report.employee?.identity_number,
+      اليوم: getArabicDayName(report.created_at ?? ""),
       الشهر: report.month?.name,
       "قيمة السلفة": report.amount,
-      الملاحظات: report.notes,
+      "تاريخ الاستلاف": getDate(report.created_at ?? ""),
+      "تاريخ الاسترداد": getDate(report.updated_at ?? "لم يتم استردادها"),
       الحالة: report.status,
+      الملاحظات: report.notes,
     })),
-    fileName: "التقارير القرآنية الشهرية",
-    sheetName: "التقارير القرآنية",
+    sheetName: `سلف تاريخ ${filters.dateFilter || "كل التواريخ"} - شهر (${
+      months.find((m) => filters.monthFilter === m.value)?.label || "كل الأشهر"
+    })`,
+    fileName: `تقرير سلف تاريخ ${filters.dateFilter || "كل التواريخ"} - شهر (${
+      months.find((m) => filters.monthFilter === m.value)?.label || "كل الأشهر"
+    })`,
   });
 };
 // refetch reports when filtering
 const applyFilters = async () => {
-  await loansStore.getReportsCount(filters);
+  console.log("filters", filters);
+  // await loansStore.getReportsCount(filters);
   await fetchReports(true);
   pageNum.value = 1;
 };
@@ -223,11 +232,7 @@ const updateRows = async () => {
   await loansStore.fetchReports(pageNum.value, pageSize.value, filters);
 };
 
-onMounted(async () => {
-  await Promise.all([useGradsStore().fetchSemesters()]);
-});
-
-// computed properties
+// Computed properties
 const numberedReports = computed(() =>
   loansStore.reportsData.map((report, index) => {
     return {
@@ -261,6 +266,30 @@ const selectedReports = computed(() => {
     })
     .filter((report) => report !== undefined); // تصفية أي قيم غير موجودة
 });
+const date_string = computed({
+  get() {
+    if (!filters.dateFilter) return "";
+    if (typeof filters.dateFilter === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(filters.dateFilter)) {
+        return filters.dateFilter;
+      }
+      // Try to parse and format
+      const d = new Date(filters.dateFilter);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (filters.dateFilter instanceof Date) {
+      return filters.dateFilter.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    filters.dateFilter = val;
+  },
+});
 
 // watch
 watch(pageSize, () => {
@@ -270,6 +299,20 @@ watch(pageSize, () => {
 watch(pageNum, async () => {
   updateRows();
   rowSelection.value = {}; // reset selections
+});
+// clean monthFilter if conflicts with dateFilter
+watch(filters, () => {
+  if (filters.dateFilter && filters.monthFilter) {
+    const selectedDate = new Date(filters.dateFilter);
+    const month = selectedDate.getMonth() + 1; // 1-12
+    if (month !== filters.monthFilter) {
+      filters.monthFilter = undefined; // Clear month filter if it conflicts
+    }
+  }
+});
+
+onMounted(async () => {
+  await Promise.all([useGradsStore().fetchSemesters()]);
 });
 </script>
 
@@ -282,7 +325,7 @@ watch(pageNum, async () => {
       <!-- start filters -->
       <div class="mb-5">
         <UForm :state="filters" @submit="applyFilters" class="">
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 items-end mb-2">
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-2 items-end mb-2">
             <UFormField label="الفصل الدراسي" name="semester_id" size="md">
               <USelect
                 class="w-full"
@@ -311,7 +354,15 @@ watch(pageNum, async () => {
                 icon="i-heroicons-calendar"
               />
             </UFormField>
-
+            <UFormField label="تاريخ السلفة" name="date" size="md">
+              <UInput
+                type="date"
+                class="w-full"
+                v-model="date_string"
+                placeholder="اختر التاريخ"
+                trailing-icon="i-heroicons-calendar"
+              />
+            </UFormField>
             <UFormField label="الحالة" name="status" size="md">
               <USelect
                 class="w-full"
@@ -321,7 +372,7 @@ watch(pageNum, async () => {
                   { label: 'مدفوع', value: 'مدفوع' },
                   { label: 'غير مدفوع', value: 'غير مدفوع' },
                 ]"
-                placeholder="اختر الشهر"
+                placeholder="اختر الحالة"
                 icon="i-heroicons-calendar"
               />
             </UFormField>

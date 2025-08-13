@@ -107,7 +107,7 @@ const selectedReports = computed(() =>
   Object.keys(rowSelection.value).map((index) => numberedReports.value[+index])
 );
 
-// actions
+// Actions
 const exportReports = () => {
   exportToExcel({
     data: selectedReports.value.map((r, i) => ({
@@ -115,7 +115,7 @@ const exportReports = () => {
       الشعبة: r?.academic_class_title + " - " + r.academic_class_group,
       المبحث: r?.subject_name,
       الامتحان: r.exam_type_name,
-      المعدل: r.average_score,
+      المعدل: calculatePercentage(r),
     })),
     fileName: "درجات الطلاب",
     sheetName: "معدل درجات الطلاب",
@@ -130,7 +130,7 @@ const search = async () => {
   );
   console.log(gradsReportsStore.avg_scores_by_class);
 };
-// دالة لحساب النسبة المئوية
+
 const calculatePercentage = (row: AvgScoreResult) => {
   if (!row.max_score || row.max_score === 0) return "غير متاح"; // تجنب القسمة على صفر
   const percentage = ((row.average_score ?? 0) / row.max_score) * 100;
@@ -165,7 +165,7 @@ watchEffect(() => {
     </BaseHeader>
     <!-- Start filters -->
     <UForm :schema="schema" :state="state" class="space-y-4" @submit="search">
-      <div class="w-full grid md:grid-cols-2 xl:grid-cols-4 gap-3 my-10">
+      <div class="w-full grid md:grid-cols-2 xl:grid-cols-4 gap-3 my-5">
         <UFormField label="السنة الدراسية" required name="semester" size="md">
           <USelect
             class="w-full"
@@ -229,7 +229,7 @@ watchEffect(() => {
             icon="i-lucide-search"
             color="secondary"
             :loading="gradsReportsStore.loading"
-            class="flex px-4 py-2 rounded-sm mt-5 hover:cursor-pointer font-bold"
+            class="flex px-4 py-2 rounded-sm hover:cursor-pointer font-bold"
           />
         </div>
       </div>
@@ -264,22 +264,43 @@ watchEffect(() => {
         </div>
       </template>
       <template #action-cell="{ row }">
-        <UButton
-          icon="i-lucide-edit"
-          color="secondary"
-          @click="
-            navigateTo({
-              name: 'grades-edit',
-              query: {
-                semester_id: state.semester,
-                academic_class_id: row.original.academic_class_id,
-                subject_id: row.original.subject_id,
-                subject_exam_id: row.original.subject_exam_id,
-                exam_type_id: row.original.exam_type_id,
-              },
-            })
-          "
-        />
+        <div class="flex gap-2">
+          <UButton
+            icon="i-lucide-edit"
+            color="secondary"
+            class="hover:cursor-pointer"
+            @click="
+              navigateTo({
+                name: 'grades-edit',
+                query: {
+                  semester_id: state.semester,
+                  academic_class_id: row.original.academic_class_id,
+                  subject_id: row.original.subject_id,
+                  subject_exam_id: row.original.subject_exam_id,
+                  exam_type_id: row.original.exam_type_id,
+                },
+              })
+            "
+          />
+          <UButton
+            icon="i-lucide-eye"
+            color="neutral"
+            variant="outline"
+            class="hover:cursor-pointer"
+            @click="
+              navigateTo({
+                name: 'grades-view',
+                query: {
+                  semester_id: state.semester,
+                  academic_class_id: row.original.academic_class_id,
+                  subject_id: row.original.subject_id,
+                  subject_exam_id: row.original.subject_exam_id,
+                  exam_type_id: row.original.exam_type_id,
+                },
+              })
+            "
+          />
+        </div>
       </template>
     </BaseTable>
   </div>

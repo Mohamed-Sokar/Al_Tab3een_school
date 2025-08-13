@@ -6,12 +6,10 @@ import { type Payment } from "~/types";
 import { usePaymentsStore } from "@/stores/paymnets";
 
 const paymentsStore = usePaymentsStore();
-let targetedPayment;
-const { toastError, toastSuccess } = useAppToast();
-const { getDate } = useDateUtils();
+
+const { toastError } = useAppToast();
 const schema = object({
   type_id: number().required("نوع الدفعة مطلوب"),
-  month_id: number().required("الشهر مطلوب"),
   description: string().required("وصف الدفعة مطلوب"),
   created_at: date().required("تاريخ الدفعة مطلوب"),
   amount: number().required("القيمة مطلوبة"),
@@ -73,9 +71,9 @@ const fetchReport = async () => {
 };
 
 const onSubmit = async () => {
-  console.log(state);
+  state.month_id = (state?.created_at?.getMonth() ?? 0) + 1;
   await paymentsStore.updatePayment(+route.params.id, state);
-  // navigateTo({ name: "financial-payments" });
+  navigateTo({ name: "financial-payments" });
 };
 
 const date_string = computed({
@@ -106,7 +104,6 @@ const date_string = computed({
 onMounted(async () => {
   await fetchReport();
   Object.assign(state, targetedReport.value);
-  console.log(state);
 });
 </script>
 
@@ -121,7 +118,7 @@ onMounted(async () => {
       class="grid grid-cols-2 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="الشهر" name="month_id" size="md">
+      <!-- <UFormField label="الشهر" name="month_id" size="md">
         <USelect
           class="w-full"
           v-model="state.month_id"
@@ -135,7 +132,7 @@ onMounted(async () => {
           placeholder="اختر الشهر"
           icon="i-heroicons-calendar"
         />
-      </UFormField>
+      </UFormField> -->
       <UFormField label="نوع الدفعات" name="type_id" size="md">
         <USelect
           class="w-full"

@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { number, object, string } from "yup";
-import type { MonthlyPlan } from "~/types";
+import { number, object } from "yup";
 import { usePlansStore } from "@/stores/plans";
 import { months } from "~/constants";
 
 const plansStore = usePlansStore();
 
 const schema = object({
-  month: string().required("الشهر مطلوب"),
+  month_id: number().required("الشهر مطلوب"),
   pages: number().required("عدد الصفحات مطلوبة"),
 });
 
 const state = reactive({
-  month: months[new Date().getMonth() + 1], // Default to current month
+  month_id: undefined,
   pages: undefined as number | undefined,
 });
+
 const route = useRoute();
 const generalPlanId = +route.params.id;
 
@@ -35,13 +35,18 @@ const onSubmit = async () => {
       class="grid grid-cols-1 md:grid-cols-2 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="الشهر" name="month">
+      <UFormField label="اختر الشهر" name="month_id">
         <USelect
-          :items="months"
-          v-model="state.month"
-          placeholder="الشهر"
-          label="الشهر"
           class="w-full"
+          v-model="state.month_id"
+          :items="[
+            { label: 'اختر الشهر', value: undefined },
+            ...months.map((s) => ({
+              label: `${s.label} - ${s.value}`,
+              value: s.value,
+            })),
+          ]"
+          placeholder="اختر الشهر"
         />
       </UFormField>
       <UFormField label="عدد الصفحات" name="pages">
@@ -66,7 +71,9 @@ const onSubmit = async () => {
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'plans' })"
+          @click="
+            navigateTo({ name: 'plans', query: { planId: generalPlanId } })
+          "
           label="إلغاء"
         />
       </div>

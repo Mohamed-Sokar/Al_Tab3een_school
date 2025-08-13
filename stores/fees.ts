@@ -50,7 +50,7 @@ export const useFeesStore = defineStore("fees", () => {
   ): Promise<void> => {
     const start = (pageNum - 1) * pageSize; // بداية النطاق
     const end = start + pageSize - 1; // نهاية النطاق
-    console.log(filters);
+
     // Check if any filter is applied
     // const isFilterApplied =
     //   filters.academicClassFilter || filters.monthlyPlanFilter;
@@ -79,9 +79,9 @@ export const useFeesStore = defineStore("fees", () => {
           `id, student_id, fees, amount, status, notes, created_at,updated_at,
           student:students(id, first_name, second_name, third_name, last_name, identity_number, academic_class_id, academic_class:academic_classes(id, title, group)),
           month:months(id, name)
-          `
+          `,
+          { count: "exact" }
         )
-        .range(start, end)
         .order("id", { ascending: false });
 
       // Apply filtering based on academic_class_id
@@ -114,11 +114,21 @@ export const useFeesStore = defineStore("fees", () => {
       if (filters.semesterFilter) {
         query = query.eq("semester_id", filters.semesterFilter);
       }
+      if (filters.dateFilter) {
+        const startOfDay = `${filters.dateFilter}T00:00:00.000Z`;
+        const endOfDay = `${filters.dateFilter}T23:59:59.999Z`;
+        query = query.gte("created_at", startOfDay).lte("created_at", endOfDay);
+      }
 
+      const { count, error: countError } = await query;
+      // Apply Pagination
+      query = query.range(start, end);
       const { data, error } = await query;
       if (error) {
         throw new Error(error.message);
       }
+
+      reportsCount.value = count || 0;
 
       if (forceRefresh) {
         reports.value = data as FeesReport[];
@@ -141,52 +151,52 @@ export const useFeesStore = defineStore("fees", () => {
       loading.value = false;
     }
   };
-  const getReportsCount = async (filters: Filters): Promise<void> => {
-    try {
-      loading.value = true;
-      let query = client
-        .from("student_monthly_fees")
-        .select("*", { count: "exact", head: true });
+  // const getReportsCount = async (filters: Filters): Promise<void> => {
+  //   try {
+  //     loading.value = true;
+  //     let query = client
+  //       .from("student_monthly_fees")
+  //       .select("*", { count: "exact", head: true });
 
-      // Apply filtering based on academic_class_id
-      if (filters.academicClassFilter) {
-        const { data: studentIds, error: studentError } = await client
-          .from("students")
-          .select("id")
-          .eq("academic_class_id", filters.academicClassFilter);
+  //     // Apply filtering based on academic_class_id
+  //     if (filters.academicClassFilter) {
+  //       const { data: studentIds, error: studentError } = await client
+  //         .from("students")
+  //         .select("id")
+  //         .eq("academic_class_id", filters.academicClassFilter);
 
-        if (studentError) {
-          throw new Error(studentError.message);
-        }
+  //       if (studentError) {
+  //         throw new Error(studentError.message);
+  //       }
 
-        const validStudentIds = studentIds.map(
-          (student: Student) => student.id
-        );
-        if (validStudentIds.length > 0) {
-          query = query.in("student_id", validStudentIds);
-        } else {
-          reports.value = [];
-          loading.value = false;
-          return;
-        }
-      }
+  //       const validStudentIds = studentIds.map(
+  //         (student: Student) => student.id
+  //       );
+  //       if (validStudentIds.length > 0) {
+  //         query = query.in("student_id", validStudentIds);
+  //       } else {
+  //         reports.value = [];
+  //         loading.value = false;
+  //         return;
+  //       }
+  //     }
 
-      // Apply filtering based on month_id
-      if (filters.monthFilter) {
-        query = query.eq("month_id", filters.monthFilter);
-      }
-      const { count, error } = await query;
+  //     // Apply filtering based on month_id
+  //     if (filters.monthFilter) {
+  //       query = query.eq("month_id", filters.monthFilter);
+  //     }
+  //     const { count, error } = await query;
 
-      if (error) {
-        throw createError({ statusCode: 500, message: error.message });
-      }
-      reportsCount.value = count || 0;
-    } catch (err) {
-      toastError({ title: "خطأ في جلب عدد التقارير" });
-    } finally {
-      loading.value = false;
-    }
-  };
+  //     if (error) {
+  //       throw createError({ statusCode: 500, message: error.message });
+  //     }
+  //     reportsCount.value = count || 0;
+  //   } catch (err) {
+  //     toastError({ title: "خطأ في جلب عدد التقارير" });
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
   const fetchStudentsByAcademicClassIdAndMonthId = async (
     academicClassId: number,
     monthId?: number
@@ -355,7 +365,7 @@ export const useFeesStore = defineStore("fees", () => {
     // reports operations
     fetchReports,
     fetchStudentsByAcademicClassIdAndMonthId,
-    getReportsCount,
+    // getReportsCount,
 
     saveFeesReports,
     updateFeesReport,

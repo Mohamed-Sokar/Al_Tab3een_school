@@ -41,23 +41,23 @@ export const useStudentStore = defineStore("students", () => {
   const fetchStudents = async (
     pageNum: number = 1,
     pageSize: number = 10,
-    filters: Filters,
+    filters?: Filters,
     forceRefresh: boolean = false
   ): Promise<void> => {
     const start = (pageNum - 1) * pageSize; // بداية النطاق
     const end = start + pageSize - 1; // نهاية النطاق
     // Check if any filter is applied
     const isFilterApplied =
-      filters.academicClassFilter ||
-      filters.quranClassFilter ||
-      filters.planFilter ||
-      filters.levelFilter ||
-      filters.memorizationStatusFilter ||
-      filters.firstNameFilter ||
-      filters.secondNameFilter ||
-      filters.thirdNameFilter ||
-      filters.lastNameFilter ||
-      filters.identityNumberFilter;
+      filters?.academicClassFilter ||
+      filters?.quranClassFilter ||
+      filters?.planFilter ||
+      filters?.levelFilter ||
+      filters?.memorizationStatusFilter ||
+      filters?.firstNameFilter ||
+      filters?.secondNameFilter ||
+      filters?.thirdNameFilter ||
+      filters?.lastNameFilter ||
+      filters?.identityNumberFilter;
 
     // Force refresh if filters are applied or forceRefresh is explicitly true
     const shouldForceRefresh = forceRefresh || isFilterApplied;
@@ -86,7 +86,7 @@ export const useStudentStore = defineStore("students", () => {
       academic_class:academic_classes(id,title,group,floor,wing),
       quran_class:quran_classes(id,title,group,floor,wing),
       driver:drivers(name, car_type, car_color, phone_no),
-      plan:plans(id,year,semester,stage,total_pages, months_plans(id,month, pages, plan_id)),
+      
       quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id,achieved_pages,status),
       level:levels(title)`
         )
@@ -94,42 +94,44 @@ export const useStudentStore = defineStore("students", () => {
         .order("first_name", { ascending: true });
 
       // تطبيق الفلاتر إذا وجدت
-      if (filters.academicClassFilter) {
-        query = query.eq("academic_class_id", filters.academicClassFilter);
+      if (filters?.academicClassFilter) {
+        query = query.eq("academic_class_id", filters?.academicClassFilter);
       }
-      if (filters.quranClassFilter) {
-        query = query.eq("quran_class_id", filters.quranClassFilter);
+      if (filters?.quranClassFilter) {
+        query = query.eq("quran_class_id", filters?.quranClassFilter);
       }
-      if (filters.planFilter) {
-        query = query.eq("plan_id", filters.planFilter);
+      if (filters?.planFilter) {
+        query = query.eq("plan_id", filters?.planFilter);
       }
-      if (filters.levelFilter) {
-        query = query.eq("level_id", filters.levelFilter);
+      if (filters?.levelFilter) {
+        query = query.eq("level_id", filters?.levelFilter);
       }
-      if (filters.memorizationStatusFilter) {
+      if (filters?.memorizationStatusFilter) {
         query = query.eq(
           "memorization_status",
-          filters.memorizationStatusFilter
+          filters?.memorizationStatusFilter
         );
       }
-      if (filters.firstNameFilter) {
-        query = query.eq("first_name", filters.firstNameFilter);
+      if (filters?.firstNameFilter) {
+        query = query.eq("first_name", filters?.firstNameFilter);
       }
-      if (filters.secondNameFilter) {
-        query = query.eq("second_name", filters.secondNameFilter);
+      if (filters?.secondNameFilter) {
+        query = query.eq("second_name", filters?.secondNameFilter);
       }
-      if (filters.thirdNameFilter) {
-        query = query.eq("third_name", filters.thirdNameFilter);
+      if (filters?.thirdNameFilter) {
+        query = query.eq("third_name", filters?.thirdNameFilter);
       }
-      if (filters.lastNameFilter) {
-        query = query.eq("last_name", filters.lastNameFilter);
+      if (filters?.lastNameFilter) {
+        query = query.eq("last_name", filters?.lastNameFilter);
       }
-      if (filters.identityNumberFilter) {
-        query = query.eq("identity_number", filters.identityNumberFilter);
+      if (filters?.identityNumberFilter) {
+        query = query.eq("identity_number", filters?.identityNumberFilter);
       }
 
       const { data, error } = await query;
-
+      if (error) {
+        throw error;
+      }
       if (forceRefresh) {
         studentsData.value = data as Student[];
         console.log("students data inside force", studentsData.value);
@@ -156,7 +158,7 @@ export const useStudentStore = defineStore("students", () => {
       loading.value = false;
     }
   };
-  const getStudentsCount = async (filters: Filters): Promise<void> => {
+  const getStudentsCount = async (filters: Filters): Promise<number> => {
     let query = client
       .from("students")
       .select("*", { count: "exact", head: true });
@@ -198,6 +200,7 @@ export const useStudentStore = defineStore("students", () => {
       throw createError({ statusCode: 500, message: error.message });
     }
     studentsCount.value = count || 0;
+    return Number(count);
   };
   const addStudent = async (student: Student) => {
     loading.value = true;

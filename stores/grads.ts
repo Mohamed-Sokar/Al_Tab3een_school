@@ -1,6 +1,7 @@
 import type {
   AvgScoreResult,
   ExamType,
+  Filters,
   GradesReport,
   Semester,
   Subject,
@@ -483,6 +484,7 @@ export const useGradsStore = defineStore("grads", () => {
     avgScoresByClassData,
     // Actions
     fetchGradsReport,
+
     addReport,
     updateReport,
     deleteGradesReport,

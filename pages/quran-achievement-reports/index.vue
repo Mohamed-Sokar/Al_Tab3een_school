@@ -6,8 +6,6 @@ import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import { usePlansStore } from "@/stores/plans";
 import type {
   QuranAchievementReport,
-  SelectOption,
-  Student,
   StudentQuranAcheivementReportFilters,
 } from "~/types";
 
@@ -23,19 +21,25 @@ const client = useSupabaseClient();
 const { exportToExcel } = useExportToExcel();
 const { toastError, toastSuccess } = useAppToast();
 
+// state
 const filters = reactive<StudentQuranAcheivementReportFilters>({
   academicClassFilter: undefined,
   monthlyPlanFilter: undefined,
 });
-
-// const reports = ref<QuranAchievementReport[]>([]);
 const isLoading = ref(false);
 const pageCountOptions = [1, 2, 5, 10, 20, 50];
 const table = ref();
-const pageNum = ref(1); // الصفحة الحالية
-const pageSize = ref(5); // عدد الصفوف لكل صفحة
+const pageNum = ref(1);
+const pageSize = ref(5);
 const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
+const rowSelection = ref({});
+const sorting = ref([
+  {
+    id: "id",
+    desc: false,
+  },
+]);
 const columns: TableColumn<QuranAchievementReport>[] = [
   {
     accessorKey: "rowNumber",
@@ -124,7 +128,7 @@ const columns: TableColumn<QuranAchievementReport>[] = [
   },
 ];
 
-// fetch reports
+// Actions
 const fetchReports = async (forceRefresh: boolean = false) => {
   isLoading.value = true;
   await quranAchievementReportsStore.getReportsCount(filters);
@@ -136,7 +140,6 @@ const fetchReports = async (forceRefresh: boolean = false) => {
   );
   isLoading.value = false;
 };
-
 const deleteReport = async (reportId: number) => {
   if (!confirm("هل أنت متأكد من حذف هذا التقرير؟")) return;
 
@@ -162,83 +165,6 @@ const deleteReport = async (reportId: number) => {
     isLoading.value = false;
   }
 };
-
-onMounted(async () => {
-  await Promise.all([
-    academicClassesStore.fetchClasses(),
-    plansStore.fetchMonthsPlans(),
-    // quranAchievementReportsStore.fetchReports(
-    //   pageNum.value,
-    //   pageSize.value,
-    //   filters
-    // ),
-  ]);
-});
-
-// إعادة جلب التقارير عند تغيير التصفية
-const applyFilters = async () => {
-  await quranAchievementReportsStore.getReportsCount(filters);
-  await fetchReports(true);
-  pageNum.value = 1;
-};
-const updateRows = async () => {
-  await quranAchievementReportsStore.fetchReports(
-    pageNum.value,
-    pageSize.value,
-    filters
-  );
-};
-
-const rowSelection = ref({});
-const sorting = ref([
-  {
-    id: "id",
-    desc: false,
-  },
-]);
-const numberedReports = computed(() =>
-  quranAchievementReportsStore.reportsData.map((report, index) => {
-    return {
-      ...report,
-      rowNumber: index + 1,
-    };
-  })
-);
-
-// pagination rows
-const rows = computed(() => {
-  const start = (pageNum.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return numberedReports.value.slice(start, end);
-});
-const totalPages = computed(() => {
-  return Math.ceil(
-    quranAchievementReportsStore.reportsCountData > 0
-      ? Math.ceil(
-          quranAchievementReportsStore.reportsCountData / pageSize.value
-        )
-      : 1
-  );
-});
-function getDropdownActions(
-  report: QuranAchievementReport
-): DropdownMenuItem[] {
-  return [
-    {
-      label: "تعديل",
-      icon: "i-lucide-edit",
-      onSelect: () => {
-        navigateTo(`/quran-achievement-reports/${report.id}/edit`);
-      },
-    },
-    {
-      label: "حذف",
-      icon: "i-lucide-trash",
-      color: "error",
-      onSelect: () => deleteReport(report.id ?? 0),
-    },
-  ];
-}
 const exportReports = () => {
   exportToExcel({
     data: selectedReports.value.map((report, i) => ({
@@ -268,6 +194,62 @@ const exportReports = () => {
     sheetName: "التقارير القرآنية",
   });
 };
+const applyFilters = async () => {
+  await quranAchievementReportsStore.getReportsCount(filters);
+  await fetchReports(true);
+  pageNum.value = 1;
+};
+const updateRows = async () => {
+  await quranAchievementReportsStore.fetchReports(
+    pageNum.value,
+    pageSize.value,
+    filters
+  );
+};
+function getDropdownActions(
+  report: QuranAchievementReport
+): DropdownMenuItem[] {
+  return [
+    {
+      label: "تعديل",
+      icon: "i-lucide-edit",
+      onSelect: () => {
+        navigateTo(`/quran-achievement-reports/${report.id}/edit`);
+      },
+    },
+    {
+      label: "حذف",
+      icon: "i-lucide-trash",
+      color: "error",
+      onSelect: () => deleteReport(report.id ?? 0),
+    },
+  ];
+}
+
+// computed
+const numberedReports = computed(() =>
+  quranAchievementReportsStore.reportsData.map((report, index) => {
+    return {
+      ...report,
+      rowNumber: index + 1,
+    };
+  })
+);
+// pagination rows
+const rows = computed(() => {
+  const start = (pageNum.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return numberedReports.value.slice(start, end);
+});
+const totalPages = computed(() => {
+  return Math.ceil(
+    quranAchievementReportsStore.reportsCountData > 0
+      ? Math.ceil(
+          quranAchievementReportsStore.reportsCountData / pageSize.value
+        )
+      : 1
+  );
+});
 const selectedReports = computed(() => {
   // calculate offset
   const offset = (pageNum.value - 1) * pageSize.value;
@@ -281,13 +263,26 @@ const selectedReports = computed(() => {
     .filter((report) => report !== undefined); // تصفية أي قيم غير موجودة
 });
 
+onMounted(async () => {
+  await Promise.all([
+    academicClassesStore.fetchClasses(),
+    plansStore.fetchMonthsPlans(),
+    // quranAchievementReportsStore.fetchReports(
+    //   pageNum.value,
+    //   pageSize.value,
+    //   filters
+    // ),
+  ]);
+});
+
+// watches
 watch(pageSize, () => {
   pageNum.value = 1;
 });
 // reset rowSelection when pageNum is changed
 watch(pageNum, async () => {
   updateRows();
-  rowSelection.value = {}; // إعادة تعيين الاختيارات عند تغيير الصفحة
+  rowSelection.value = {}; // reset selection when update pageNum
 });
 </script>
 
@@ -311,12 +306,12 @@ watch(pageNum, async () => {
     </BaseHeader>
 
     <div class="mt-5">
-      <!-- نموذج التصفية -->
+      <!-- filters -->
       <div class="mb-5">
         <UForm
           :state="filters"
           @submit="applyFilters"
-          class="flex gap-2 flex-col lg:flex-row justify-between items-end"
+          class="flex gap-2 flex-col justify-between"
         >
           <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-2">
             <UFormField
@@ -359,7 +354,7 @@ watch(pageNum, async () => {
             color="secondary"
             type="submit"
             label="تصفية"
-            class="hover:cursor-pointer rounded-sm mt-2 lg:mt-0"
+            class="hover:cursor-pointer rounded-sm mt-2 lg:mt-0 w-fit"
             :loading="isLoading"
           />
         </UForm>
@@ -440,7 +435,6 @@ watch(pageNum, async () => {
           />
         </div>
       </div>
-      <!-- جدول التقارير -->
     </div>
   </div>
 </template>

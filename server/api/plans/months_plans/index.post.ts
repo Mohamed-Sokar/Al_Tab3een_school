@@ -7,8 +7,8 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await client
     .from("months_plans")
-    .insert(body)
-    .select();
+    .upsert(body, { onConflict: "id" })
+    .select("*, month:months(id, name)");
 
   if (error) {
     throw createError({ statusCode: 500, message: error.message });

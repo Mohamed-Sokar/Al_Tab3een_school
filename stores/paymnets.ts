@@ -52,9 +52,9 @@ export const usePaymentsStore = defineStore("payments", () => {
           `id, invoice_number, amount,type_id, description , created_at,
           month:months(id, name),
           type:type_id(id, type)
-          `
+          `,
+          { count: "exact" }
         )
-        .range(start, end)
         .order("id", { ascending: false });
 
       // Apply filtering based on month_id and invoiceType
@@ -64,14 +64,28 @@ export const usePaymentsStore = defineStore("payments", () => {
       if (filters?.invoiceTypeFilter) {
         query = query.eq("type_id", filters.invoiceTypeFilter);
       }
+      if (filters?.dateFilter) {
+        const startOfDay = `${filters?.dateFilter}T00:00:00.000Z`;
+        const endOfDay = `${filters?.dateFilter}T23:59:59.999Z`;
+        query = query.gte("created_at", startOfDay).lte("created_at", endOfDay);
+      }
 
+      const { count, error: countError } = await query;
+
+      // Applay Pagenation
+      query = query.range(start, end);
       const { data, error } = await query;
+
+      // check if error exsit
+      if (countError) {
+        throw new Error(countError.message);
+      }
       if (error) {
         throw new Error(error.message);
       }
 
-      console.log("paymnets: ", data);
-
+      // set count reports
+      reportsCount.value = count || 0;
       if (forceRefresh) {
         reports.value = data as Payment[];
       } else {
@@ -95,38 +109,11 @@ export const usePaymentsStore = defineStore("payments", () => {
       loading.value = false;
     }
   };
-  const getReportsCount = async (filters: Filters): Promise<void> => {
-    try {
-      loading.value = true;
-      let query = client
-        .from("payments")
-        .select("*", { count: "exact", head: true });
-
-      // Apply filtering based on month_id and invoiceType
-      if (filters.monthFilter) {
-        query = query.eq("month_id", filters.monthFilter);
-      }
-      if (filters.invoiceTypeFilter) {
-        query = query.eq("type_id", filters.invoiceTypeFilter);
-      }
-
-      const { count, error } = await query;
-
-      if (error) {
-        throw createError({ statusCode: 500, message: error.message });
-      }
-      reportsCount.value = count || 0;
-    } catch (err) {
-      toastError({ title: "خطأ في جلب عدد التقارير" });
-    } finally {
-      loading.value = false;
-    }
-  };
   const fetchPaymentSums = async (filters: Filters = {}): Promise<void> => {
     try {
       loading.value = true;
       let query = client.from("payments").select(
-        `type_id, month_id,
+        `id, type_id, month_id,
           type:invoiceTypes(type),
           month:months(name),
           amount`
@@ -142,29 +129,8 @@ export const usePaymentsStore = defineStore("payments", () => {
       const { data, error } = await query;
       if (error) throw new Error(error.message);
 
-      const sums = data
-        .reduce((acc: PaymentSum[], row: any) => {
-          const existing = acc.find(
-            (item) =>
-              item.type_id === row.type_id && item.month_id === row.month_id
-          );
-          if (existing) {
-            existing.total_amount += row.amount;
-          } else {
-            acc.push({
-              type_id: row.type_id,
-              type_name: row.type.type,
-              month_id: row.month_id,
-              month_name: row.month.name,
-              total_amount: row.amount,
-            });
-          }
-          return acc;
-        }, [])
-        .sort((a, b) => a.month_id - b.month_id || a.type_id - b.type_id);
+      paymentSums.value = data;
 
-      paymentSums.value = sums;
-      console.log("sums: ", sums);
       toastSuccess({ title: "تم جلب إجمالي المدفوعات بنجاح" });
     } catch (err) {
       toastError({
@@ -176,18 +142,21 @@ export const usePaymentsStore = defineStore("payments", () => {
       loading.value = false;
     }
   };
-
   const addPayment = async (payment: Payment) => {
     loading.value = true;
 
     try {
       const { data } = await api.post("/payments", payment);
+      console.log("new Payment", data);
       toastSuccess({
         title: `:تم إضافة التقرير بنجاح`,
       });
       // add report locally
       (reports.value || []).unshift({
-        ...payment,
+        ...data[0],
+      });
+      paymentSums.value.unshift({
+        ...data[0],
       });
     } catch (err) {
       toastError({
@@ -283,20 +252,21 @@ export const usePaymentsStore = defineStore("payments", () => {
   const reportsData = computed(() => reports.value);
   const reportsCountData = computed(() => reportsCount.value);
   const sortedReports = computed(() => {
-    return [...(reports.value ?? [])].sort(
-      (a, b) => (a.amount ?? 0) - (b.amount ?? 0)
-    );
+    return [...(reports.value ?? [])].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
   });
   const totalIncome = computed(() => {
-    return (paymentSums.value || []).reduce((sum: any, report: PaymentSum) => {
-      if (report.type_name === "وارد") {
-        return (sum += report.total_amount);
-      }
-      return (sum += 0);
-    }, 0);
+    return (paymentSumsData.value || []).reduce(
+      (sum: any, report: PaymentSum) => {
+        if (report.type_name === "وارد") {
+          return (sum += report.total_amount);
+        }
+        return (sum += 0);
+      },
+      0
+    );
   });
   const totalExpense = computed(() => {
-    const reduce = (paymentSums.value || []).reduce(
+    const reduce = (paymentSumsData.value || []).reduce(
       (sum: any, payment: PaymentSum) => {
         if (payment?.type_name === "صادر") {
           return (sum += payment.total_amount);
@@ -310,7 +280,29 @@ export const usePaymentsStore = defineStore("payments", () => {
   const netDifference = computed(() => {
     return totalIncome.value - totalExpense.value;
   });
-  const paymentSumsData = computed(() => paymentSums.value);
+  const paymentSumsData = computed(() => {
+    const sums = paymentSums.value
+      .reduce((acc: PaymentSum[], row: any) => {
+        const existing = acc.find(
+          (item) =>
+            item.type_id === row.type_id && item.month_id === row.month_id
+        );
+        if (existing) {
+          existing.total_amount += row.amount;
+        } else {
+          acc.push({
+            type_id: row.type_id,
+            type_name: row.type.type,
+            month_id: row.month_id,
+            month_name: row.month.name,
+            total_amount: row.amount,
+          });
+        }
+        return acc;
+      }, [])
+      .sort((a, b) => a.month_id - b.month_id || a.type_id - b.type_id);
+    return sums;
+  });
 
   return {
     // data
@@ -320,7 +312,7 @@ export const usePaymentsStore = defineStore("payments", () => {
     // Actions
     fetchReports,
     fetchPaymentSums,
-    getReportsCount,
+    // getReportsCount,
     addPayment,
     deletePayment,
     updatePayment,

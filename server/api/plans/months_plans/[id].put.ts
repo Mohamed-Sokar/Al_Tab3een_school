@@ -11,11 +11,10 @@ export default defineEventHandler(async (event) => {
     .from("months_plans")
     .update(updates)
     .eq("id", Number(id)) // 👈 تأكد أنها رقم
-    .select();
+    .select("*, month:months(id,name)");
 
   if (error) {
     console.error("Error updating plan:", error.message);
-    s;
     throw createError({ statusCode: 500, message: error.message });
   }
 

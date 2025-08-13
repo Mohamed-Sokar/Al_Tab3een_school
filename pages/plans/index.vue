@@ -1,21 +1,10 @@
 <script setup lang="ts">
-// definePageMeta({
-// middleware: ["check-setup"],
-// });
-onMounted(() => {
-  watch(
-    route,
-    () => {
-      if (route.query.alert) {
-        useAppToast().toastError({
-          title: decodeURIComponent(route.query.alert as string),
-        });
-      }
-    },
-    { immediate: true }
-  );
-});
+import { h, resolveComponent } from "vue";
+import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
+import type { Filters, Level, MonthlyPlan, Plan, Semester } from "~/types";
+import { object, number, string } from "yup";
 
+// SEO
 useHead({ title: "الخطط الدراسية" });
 useSeoMeta({
   title: "الخطط الدراسية",
@@ -25,36 +14,23 @@ useSeoMeta({
   ogImage: "/seo/plans.png",
   twitterCard: "summary",
 });
-import { h, resolveComponent } from "vue";
-import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import type { Plan } from "~/types";
 
+// init
 const UButton = resolveComponent("UButton");
 const plansStore = usePlansStore();
-const expanded = ref<Record<number, boolean>>({ 1: true });
 const route = useRoute();
+const gradsReportsStore = useGradsStore();
+
+// data
+const schema = object({
+  semesterFilter: number().nullable(),
+  levelFilter: number().nullable(),
+  studentsTypeFilter: string().nullable(),
+});
 const queryPlanId =
   route.query.planId !== null && route.query.planId !== undefined
     ? +route.query.planId
     : -1;
-
-const numberedPlans = computed(() =>
-  plansStore.plansData.map((plan, index) => {
-    return {
-      ...plan,
-      rowNumber: index + 1,
-    };
-  })
-);
-
-watch(
-  route,
-  () => {
-    expandRow(queryPlanId);
-  },
-  { immediate: true }
-);
-
 const columns: TableColumn<Plan>[] = [
   {
     id: "expand",
@@ -80,16 +56,15 @@ const columns: TableColumn<Plan>[] = [
     cell: ({ row }) => row.original.rowNumber,
   },
   {
-    accessorKey: "year",
-    header: "السنة",
-  },
-  {
     accessorKey: "semester",
     header: "الفصل الدراسي",
+    cell: ({ row }) =>
+      row.original?.semester?.name + " - " + row.original?.semester?.year,
   },
   {
-    accessorKey: "stage",
+    accessorKey: "level",
     header: "المرحلة",
+    cell: ({ row }) => row?.original?.level?.title,
   },
   {
     accessorKey: "students_type",
@@ -109,6 +84,15 @@ const columns: TableColumn<Plan>[] = [
   },
 ];
 
+// state
+const filters = reactive<Filters>({
+  semesterFilter: undefined,
+  studentsTypeFilter: undefined,
+  levelFilter: undefined,
+});
+const expanded = ref<Record<number, boolean>>({ 0: true });
+
+// Actions
 function getDropdownActions(plan: Plan): DropdownMenuItem[][] {
   return [
     [
@@ -117,7 +101,10 @@ function getDropdownActions(plan: Plan): DropdownMenuItem[][] {
         color: "info",
         icon: "i-heroicons-plus-solid",
         onSelect: () => {
-          navigateTo(`/plans/${plan.id}/add_monthly_plan`);
+          navigateTo({
+            name: "plans-id-add_monthly_plan",
+            params: { id: plan.id },
+          });
         },
       },
     ],
@@ -126,7 +113,7 @@ function getDropdownActions(plan: Plan): DropdownMenuItem[][] {
         label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
-          navigateTo(`/plans/${plan.id}/edit`);
+          navigateTo({ name: "plans-id-edit", query: { id: plan.id } });
         },
       },
       {
@@ -140,7 +127,6 @@ function getDropdownActions(plan: Plan): DropdownMenuItem[][] {
     ],
   ];
 }
-
 const deleteMonthlyPlan = async (
   monthlyPlanId: number,
   generalPlanId: number
@@ -157,9 +143,67 @@ const editMonthlyPlan = (monthlyPlanId: number, generalPlanId: number) => {
   console.log("generalPlanId: ", generalPlanId);
   console.log("monthlyPlanId: ", monthlyPlanId);
 };
-function expandRow(planId: number) {
-  expanded.value = { [planId - 1]: true };
+function expandRow(planId: number = -1) {
+  if (planId === -1) {
+    expanded.value = {};
+    return;
+  }
+
+  // البحث عن الصف الذي يحتوي على planId
+  const rowIndex = numberedPlans.value.findIndex((plan) => plan.id === planId);
+  if (rowIndex !== -1) {
+    expanded.value = { [rowIndex]: true };
+  } else {
+    expanded.value = {};
+  }
 }
+const search = async () => {
+  await plansStore.fetchPlans(filters, true);
+  expandRow(-1);
+};
+
+// Computed
+const numberedPlans = computed(() =>
+  plansStore.plansData.map((plan, index) => {
+    return {
+      ...plan,
+      rowNumber: index + 1,
+    };
+  })
+);
+
+// watch
+watch(
+  route,
+  async () => {
+    if (queryPlanId !== -1) {
+      // التأكد من تحميل البيانات قبل التوسيع
+      // await plansStore.fetchPlans(filters, true);
+      expandRow(Number(queryPlanId));
+    }
+    expandRow(-1);
+  },
+  { immediate: true }
+);
+
+// onMounted(() => {
+//   watch(
+//     route,
+//     () => {
+//       if (route.query.alert) {
+//         useAppToast().toastError({
+//           title: decodeURIComponent(route.query.alert as string),
+//         });
+//       }
+//     },
+//     { immediate: true }
+//   );
+// });
+const sortedMonthPlans = (monthPlans: MonthlyPlan[]) => {
+  return monthPlans.sort((a, b) => {
+    return (a.month_id ?? 0) - (b.month_id ?? 0);
+  });
+};
 </script>
 
 <template>
@@ -177,6 +221,61 @@ function expandRow(planId: number) {
         >
       </template>
     </BaseHeader>
+
+    <!-- Start filters -->
+    <UForm :schema="schema" :state="filters" class="space-y-4" @submit="search">
+      <div class="w-full grid md:grid-cols-2 xl:grid-cols-3 gap-3 my-5">
+        <UFormField label="الفصل الدراسي" name="semesterFilter" size="md">
+          <USelect
+            class="w-full"
+            v-model="filters.semesterFilter"
+            :items="
+                [{ label: 'اختر الفصل الدراسي', value: undefined },
+                ...gradsReportsStore.semestersData.map((s:Semester) => ({
+                label: `${s.year} - ${s.name}`,
+                value: s.id,
+              }))]
+            "
+            placeholder="اختر الفصل الدراسي"
+          />
+        </UFormField>
+        <UFormField label="المرحلة الدراسية" name="levelFilter" size="md">
+          <USelect
+            class="w-full"
+            v-model="filters.levelFilter"
+            :items="[{ label: 'اختر المرحلة الدراسية', value: null }
+              ,...useLevelsStore().levelsData.map((s:Level) => ({
+                label: s.title,
+                value: s.id,
+              }))]
+            "
+            placeholder="اختر المرحلة الدراسية"
+          />
+        </UFormField>
+        <UFormField label="نوع الطلاب" name="studentsTypeFilter" size="md">
+          <USelect
+            class="w-full"
+            v-model="filters.studentsTypeFilter"
+            :items="[
+              { label: 'اختر نوع الطلاب', value: null },
+              { label: 'طلاب قدامى', value: 'طلاب قدامى' },
+              { label: 'طلاب جدد', value: 'طلاب جدد' },
+            ]"
+            placeholder="اختر نوع الطلاب"
+          />
+        </UFormField>
+      </div>
+      <div class="flex gap-3 items-center">
+        <UButton
+          type="submit"
+          label="بحث"
+          icon="i-lucide-search"
+          color="secondary"
+          :loading="plansStore.loading"
+          class="flex rounded-sm hover:cursor-pointer font-bold"
+        />
+      </div>
+    </UForm>
 
     <UTable
       v-model:expanded="expanded"
@@ -207,13 +306,15 @@ function expandRow(planId: number) {
               </li>
               <ul class="px-4">
                 <li
-                  v-for="(month_plan, index) in row.original.months_plans"
+                  v-for="(month_plan, index) in sortedMonthPlans(
+                    row.original.months_plans
+                  )"
                   :key="month_plan.id"
                   class="grid grid-cols-4 gap-4 place-items-center not-last:border-b not-last:border-dashed border-gray-300 dark:border-gray-700 p-2"
                 >
                   <div>{{ index + 1 }}</div>
                   <div>
-                    {{ month_plan.month }}
+                    {{ month_plan?.month?.name }} - {{ month_plan?.month?.id }}
                   </div>
                   <div>
                     {{ month_plan.pages }}

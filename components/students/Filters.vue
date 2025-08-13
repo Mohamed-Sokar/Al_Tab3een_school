@@ -24,7 +24,7 @@ const emit = defineEmits<{
 <template>
   <div class="mb-5">
     <UForm :state="filters" @submit="emit('submit')">
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         <!-- academic class filter -->
         <UFormField required name="academicClassFilter">
           <USelect

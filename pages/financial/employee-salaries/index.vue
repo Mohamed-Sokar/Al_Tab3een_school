@@ -194,7 +194,11 @@ function getDropdownActions(report: EmployeeSalaryReport): DropdownMenuItem[] {
       label: "تعديل",
       icon: "i-lucide-edit",
       onSelect: () => {
-        navigateTo(`/employee-salaries/${report.id}/edit`);
+        // navigateTo(`/employee-salaries/${report.id}/edit`);
+        navigateTo({
+          name: "financial-employee-salaries-id-edit",
+          params: { id: report.id },
+        });
       },
     },
     {
@@ -217,13 +221,20 @@ const exportReports = () => {
       ]
         .filter(Boolean)
         .join(" "),
-      "رقم الهوية": report.employee?.identity_number,
+      "هوية الموظف": report.employee?.identity_number,
       الشهر: report.month?.name,
-      "قيمة الراتب": report.amount,
+      "الراتب المستحق": report.employee?.salary,
+      "الراتب المدفوع": report.amount,
+      المتبقي: Number(report.employee?.salary) - Number(report.amount),
+      الحالة: report.status,
       notes: report.notes,
     })),
-    fileName: "التقارير القرآنية الشهرية",
-    sheetName: "التقارير القرآنية",
+    sheetName: `شهر (${
+      months.find((m) => filters.monthFilter === m.value)?.label || "كل الأشهر"
+    })`,
+    fileName: `تقرير رواتب شهر (${
+      months.find((m) => filters.monthFilter === m.value)?.label || "كل الأشهر"
+    })`,
   });
 };
 // refetch reports when filtering

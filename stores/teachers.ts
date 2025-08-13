@@ -60,7 +60,6 @@ export const useTeachersStore = defineStore("teachers", () => {
     filters?: Filters,
     forceRefresh: boolean = false
   ) => {
-    console.log(filters);
     if (!forceRefresh) {
       if (teachersData.value.length) return; // تجنب الجلب أكثر من مرة
     }

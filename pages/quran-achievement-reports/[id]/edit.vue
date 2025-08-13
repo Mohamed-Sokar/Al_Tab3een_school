@@ -11,7 +11,6 @@ const quranAchievementReportsStore = useQuranAcheivementReport();
 const { toastError } = useAppToast();
 const route = useRoute();
 const client = useSupabaseClient();
-
 const schema = object({
   achieved_pages: number()
     .required("الصفحات المنجزة مطلوبة")
@@ -173,13 +172,24 @@ onMounted(async () => {
     >
       <UCard>
         <template #header>
-          <div class="flex justify-start items-center gap-2">
-            <h1>تعديل تقرير إنجاز القرآن</h1>
-            <UIcon
-              name="i-heroicons-book-open"
-              size="xl"
-              class="text-secondary text-2xl"
-            />
+          <div class="flex justify-between">
+            <div class="flex justify-start items-center gap-2">
+              <h1>تعديل تقرير إنجاز القرآن</h1>
+              <UIcon
+                name="i-heroicons-book-open"
+                size="xl"
+                class="text-secondary text-2xl"
+              />
+            </div>
+            <div>
+              <UButton
+                icon="i-heroicons-arrow-left"
+                color="secondary"
+                size="sm"
+                class="w-10 flex justify-center items-center hover:cursor-pointer"
+                @click="navigateTo({ name: 'quran-achievement-reports' })"
+              />
+            </div>
           </div>
         </template>
         <template #default>
@@ -209,7 +219,6 @@ onMounted(async () => {
                 <UInput :value="state.academic_class" disabled class="w-full" />
               </UFormField>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
 
             <!-- الصفحات المطلوبة والحالة -->
             <div class="flex flex-wrap gap-2 mb-5">
@@ -230,7 +239,7 @@ onMounted(async () => {
               />
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
               <UFormField
                 label="الصفحات المنجزة"
                 required
@@ -242,26 +251,6 @@ onMounted(async () => {
                   class="w-full"
                   type="number"
                   color="secondary"
-                />
-              </UFormField>
-              <UFormField
-                label="الشهر"
-                required
-                name="monthly_plan_id"
-                size="md"
-              >
-                <USelect
-                  class="w-full"
-                  v-model="state.report.monthly_plan_id"
-                  :items="[
-                    { label: 'اختر الشهر', value: undefined },
-                    ...usePlansStore().monthsPlansData.map((mp:MonthlyPlan) => ({
-                      label: `(${mp?.month} - ${mp?.plan.year}) - ( ${mp?.plan.stage} - ${mp?.plan.students_type} - ${mp?.plan.semester} )`,
-                      value: mp.id,
-                    })),
-                  ]"
-                  placeholder="اختر الشهر"
-                  icon="i-heroicons-calendar"
                 />
               </UFormField>
               <UFormField
@@ -280,6 +269,27 @@ onMounted(async () => {
                   }))]
             "
                   placeholder="اختر الفصل الدراسي"
+                />
+              </UFormField>
+              <UFormField
+                label="الخطة الشهرية"
+                required
+                name="monthly_plan_id"
+                size="md"
+                class="lg:col-span-2"
+              >
+                <USelect
+                  class="w-full"
+                  v-model="state.report.monthly_plan_id"
+                  :items="[
+                    { label: 'اختر الخطة الشهرية', value: undefined },
+                    ...usePlansStore().monthsPlansData.map((mp:MonthlyPlan) => ({
+                      label: `(${mp?.month} - ${mp?.plan.year}) - ( ${mp?.plan.stage} - ${mp?.plan.students_type} - ${mp?.plan.semester} )`,
+                      value: mp.id,
+                    })),
+                  ]"
+                  placeholder="اختر الخطة الشهرية"
+                  icon="i-heroicons-calendar"
                 />
               </UFormField>
             </div>
