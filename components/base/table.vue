@@ -16,7 +16,7 @@ const props = defineProps({
   },
   key: {
     type: [String, Number],
-    required: true,
+    required: false,
   },
   loading: {
     type: Boolean,

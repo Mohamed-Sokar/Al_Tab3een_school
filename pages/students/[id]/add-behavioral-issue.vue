@@ -42,6 +42,7 @@ import { object, string } from "yup";
 import { useStudentStore } from "@/stores/students";
 
 const studentsStore = useStudentStore();
+const studentBehavioralIssuesStore = useStudentBehavioralIssues();
 
 const route = useRoute();
 const form = ref();
@@ -53,14 +54,16 @@ const schema = object({
 const state = reactive({
   description: undefined,
 });
+
 const studentId = typeof route.params.id === "string" ? route.params.id : "";
 // get student based on his id
 const onSubmit = async () => {
+  const newReport = {
+    student_id: studentId,
+    description: state.description + "",
+  };
   // add issue to database
-  await studentsStore.addStudentBehavioralIssue(
-    studentId,
-    state.description + ""
-  );
+  await studentBehavioralIssuesStore.saveBehavioralIssue(newReport);
   navigateTo({ name: "students-view-behavioral_issues" });
 };
 </script>

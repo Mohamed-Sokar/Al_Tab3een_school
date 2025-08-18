@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import { number, object, string } from "yup";
-import type { QuranAchievementReport, Student } from "~/types";
-import { useStudentStore } from "@/stores/students";
-import { months } from "~/constants";
+import { number, object } from "yup";
+import type { Plan, QuranAchievementReport } from "~/types";
 
 const route = useRoute();
 const plansStore = usePlansStore();
 const studentsStore = useStudentStore();
+
+const plan = ref<Plan | undefined>();
 const studentIdParam = route.params.id;
 
 const studentId = Array.isArray(studentIdParam)
   ? studentIdParam[0]
   : studentIdParam;
 
-const targetedStudent = ref<Student | undefined>(
-  studentsStore.getSpesificStudent(studentId)
-);
 const generalPlanIdParam = route.query.general_plan_id;
 
 const generalPlanId = Array.isArray(generalPlanIdParam)
@@ -23,39 +20,37 @@ const generalPlanId = Array.isArray(generalPlanIdParam)
   : Number(generalPlanIdParam);
 
 const schema = object({
-  month: string().required("الشهر مطلوب"),
+  monthly_plan_id: number().required("الشهر مطلوب"),
   achieved_pages: number().required("عدد الصفحات مطلوبة"),
 });
 
 const state = reactive({
-  month: months[new Date().getMonth() + 1],
+  student_id: studentIdParam,
+  monthly_plan_id: undefined,
   achieved_pages: undefined as number | undefined,
-});
-
-watchEffect(() => {
-  if (studentsStore.studentsData.length > 0) {
-    targetedStudent.value = studentsStore.getSpesificStudent(studentId);
-  }
+  status: undefined as string | undefined,
 });
 
 const onSubmit = async () => {
-  const monthlyPlanId = targetedStudent.value?.plan?.months_plans?.find(
-    (plan) => plan.month === state.month && plan?.plan_id === +generalPlanId
-  )?.id;
+  const requiredPages = plan.value?.months_plans?.find(
+    (mp) => mp.id === state.monthly_plan_id
+  )?.pages;
 
-  const newReport = {
-    ...state,
-    student_id: studentId,
-    monthly_plan_id: monthlyPlanId,
-  };
+  state.status =
+    Number(state.achieved_pages) >= Number(requiredPages)
+      ? "مكتمل"
+      : "غير مكتمل";
 
   await studentsStore.addQuranQuranAchievementReport(
     generalPlanId,
     newReport as QuranAchievementReport
   );
-
   // navigateTo({ name: "students-view" }); //=> I do that in the store action
 };
+
+onMounted(async () => {
+  plan.value = await plansStore.getPlanById(generalPlanId);
+});
 </script>
 
 <template>
@@ -67,13 +62,19 @@ const onSubmit = async () => {
       class="grid grid-cols-1 md:grid-cols-2 gap-4"
       @submit="onSubmit"
     >
-      <UFormField label="الشهر" name="month">
+      <UFormField label="الشهر" name="monthly_plan_id" size="md">
         <USelect
-          :items="months"
-          v-model="state.month"
-          placeholder="الشهر"
-          label="الشهر"
           class="w-full"
+          v-model="state.monthly_plan_id"
+          :items="[
+            { label: 'اختر الشهر', value: undefined },
+            ...(plan?.months_plans ?? []).map((mp) => ({
+              label: `${mp.month?.name} - ${mp.month?.id}   (${mp.pages} صفحة)`,
+              value: mp.id,
+            })),
+          ]"
+          placeholder="اختر الشهر"
+          icon="i-heroicons-calendar"
         />
       </UFormField>
       <UFormField label="عدد الصفحات" name="pages">

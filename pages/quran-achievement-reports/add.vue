@@ -43,7 +43,7 @@ const isLoading = ref(false);
 const students = ref<Student[]>([]);
 const studentsCount = ref(0);
 const allStudentCount = ref(0);
-const areNotExsitReportStudentsCount = ref(0);
+const studentsHaveReportCount = ref(0);
 const reports = ref<QuranAchievementReport[]>([]);
 const pageErrors = ref<string[]>([]);
 
@@ -96,7 +96,7 @@ const search = async () => {
         Number(state.monthly_plan_id)
       )) ?? [];
 
-    areNotExsitReportStudentsCount.value = students.value.length;
+    studentsHaveReportCount.value = students.value.length;
     // get required pages
     getRequiredPages();
 
@@ -173,6 +173,15 @@ const saveReports = async () => {
     isLoading.value = false;
   }
 };
+// get status color
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "مكتمل":
+      return "success";
+    case "غير مكتمل":
+      return "error";
+  }
+};
 
 onMounted(async () => {
   await Promise.all([
@@ -236,7 +245,22 @@ onMounted(async () => {
                 icon="i-heroicons-presentation-chart-bar"
               />
             </UFormField>
-            <UFormField label="الشهر" required name="monthly_plan_id" size="md">
+            <UFormField label="الخطة الشهرية" name="monthly_plan_id" size="md">
+              <USelect
+                v-model="state.monthly_plan_id"
+                :items="[
+                  { label: 'اختر الخطة الشهرية', value: undefined },
+                  ...plansStore.monthsPlansData.map((mp) => ({
+                    label: `${mp.month?.name} - ${mp.month?.id}  (${mp.plan?.students_type} - ${mp.plan?.level?.title})`,
+                    value: mp.id,
+                  })),
+                ]"
+                placeholder="اختر الخطة الشهرية"
+                icon="i-heroicons-calendar"
+                class="w-full"
+              />
+            </UFormField>
+            <!-- <UFormField label="الشهر" required name="monthly_plan_id" size="md">
               <USelect
                 class="w-full"
                 v-model="state.monthly_plan_id"
@@ -250,7 +274,7 @@ onMounted(async () => {
                 placeholder="اختر الشهر"
                 icon="i-heroicons-calendar"
               />
-            </UFormField>
+            </UFormField> -->
             <UFormField
               label="الفصل الدراسي"
               required
@@ -302,7 +326,7 @@ onMounted(async () => {
           >
             <span class="font-bold">عدد الطلاب الذين ليس لديهم تقارير</span>
             <UBadge color="info" size="lg">
-              {{ areNotExsitReportStudentsCount }} / {{ studentsCount }}
+              {{ studentsHaveReportCount }} / {{ studentsCount }}
             </UBadge>
           </div>
         </div>
@@ -313,7 +337,7 @@ onMounted(async () => {
               class="grid grid-cols-4 font-bold bg-secondary text-white place-items-center border-t border-b border-accented"
             >
               <th class="border-x border-accented p-2 w-full">هوية الطالب</th>
-              <th class="border-x border-accented p-2 w-full">الاسم رباعي</th>
+              <th class="border-x border-accented p-2 w-full">الاسم</th>
               <th class="border-x border-accented p-2 w-full">
                 الصفحات المنجزة
               </th>
@@ -336,12 +360,7 @@ onMounted(async () => {
                 class="w-full h-full p-2 text-center border-x border-b border-accented flex justify-center items-center"
               >
                 {{
-                  [
-                    student.first_name,
-                    student.second_name,
-                    student.third_name,
-                    student.last_name,
-                  ]
+                  [student.first_name, student.second_name, student.last_name]
                     .filter(Boolean)
                     .join(" ")
                 }}
@@ -364,7 +383,13 @@ onMounted(async () => {
               <td
                 class="w-full h-full p-2 text-center border-x border-b border-accented flex justify-center items-center"
               >
-                {{ reports[index].status }}
+                <UBadge
+                  v-if="reports[index].status"
+                  :color="getStatusColor(reports[index].status)"
+                  size="lg"
+                >
+                  {{ reports[index].status }}
+                </UBadge>
               </td>
             </tr>
             <tr

@@ -1,46 +1,36 @@
 <script setup lang="ts">
 import { object, string } from "yup";
-import { useStudentStore } from "@/stores/students";
 import type { BehavioralIssue } from "~/types";
 
-const studentsStore = useStudentStore();
+const behavioralIssuesStore = useStudentBehavioralIssues();
 
 const route = useRoute();
-const issueId = +route.params.id;
-const isLoading = ref(false);
+const reportId = +route.params.id;
 const form = ref();
 
-const targetedIssue = ref<BehavioralIssue | undefined>(
-  studentsStore.getSpesificStudentBehavioralIssue(issueId)
-);
 const schema = object({
   description: string().required("وصف المخالفة السلوكية مطلوب"),
 });
+
 const state = reactive<{
+  id: number | undefined;
   description: string | undefined;
 }>({
+  id: undefined,
   description: undefined,
-});
-// Assign targeted issue description to description state
-state.description = targetedIssue.value?.description;
-
-watchEffect(() => {
-  if (studentsStore.behavioralIssuesStudentData.length > 0) {
-    targetedIssue.value =
-      studentsStore.getSpesificStudentBehavioralIssue(issueId);
-    // Assign targeted issue description to description state
-    state.description = targetedIssue.value?.description;
-  }
 });
 
 const updateIssue = async () => {
   // add issue to database
-  await studentsStore.editStudentBehavioralIssue(
-    issueId,
-    state.description + ""
-  );
+  await behavioralIssuesStore.saveBehavioralIssue(state);
   navigateTo({ name: "students-view-behavioral_issues" });
 };
+
+onMounted(async () => {
+  const report = await behavioralIssuesStore.getReportById(reportId);
+  state.id = report?.id;
+  state.description = (report as BehavioralIssue).description;
+});
 </script>
 
 <template>
@@ -54,6 +44,7 @@ const updateIssue = async () => {
     >
       <UFormField label="وصف المخالفة السلوكية" name="description">
         <UTextarea
+          :loading="behavioralIssuesStore.loading"
           v-model="state.description"
           placeholder="أدخل وصف المخالفة السلوكية..."
           label="وصف المخالفة السلوكية"
@@ -68,7 +59,7 @@ const updateIssue = async () => {
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="isLoading"
+          :loading="behavioralIssuesStore.loading"
         />
         <UButton
           variant="soft"

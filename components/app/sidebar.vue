@@ -55,7 +55,7 @@ const signOut = async () => {
   }
 };
 const links = [
-  { label: "الرئيسية", icon: "i-lucide-home", to: "/" },
+  { label: "الرئيسية", icon: "i-lucide-home", to: "/home" },
   { label: "المستويات", icon: "i-lucide-book-open", to: "/levels" },
   {
     label: "الصفوف",

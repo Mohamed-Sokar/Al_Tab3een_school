@@ -4,10 +4,7 @@ import { useStudentStore } from "@/stores/students";
 import { useAcademicClassesStore } from "@/stores/academic_classes";
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
 import { usePlansStore } from "@/stores/plans";
-import type {
-  QuranAchievementReport,
-  StudentQuranAcheivementReportFilters,
-} from "~/types";
+import type { QuranAchievementReport, Filters } from "~/types";
 
 // SEO
 useHead({ title: "تقارير إنجاز القرآن" });
@@ -22,7 +19,7 @@ const { exportToExcel } = useExportToExcel();
 const { toastError, toastSuccess } = useAppToast();
 
 // state
-const filters = reactive<StudentQuranAcheivementReportFilters>({
+const filters = reactive<Filters>({
   academicClassFilter: undefined,
   monthlyPlanFilter: undefined,
 });
@@ -90,7 +87,7 @@ const columns: TableColumn<QuranAchievementReport>[] = [
     header: "الخطة الشهرية",
     cell: ({ row }) =>
       row.original.monthly_plan
-        ? `(${row.original.monthly_plan.month} - ${row.original.monthly_plan.plan.year}) - (${row.original.monthly_plan.plan.stage} - ${row.original.monthly_plan.plan.students_type})`
+        ? `${row.original.monthly_plan.month?.name}  (${row.original?.monthly_plan?.plan?.students_type})`
         : "غير متوفر",
   },
   {
@@ -130,15 +127,13 @@ const columns: TableColumn<QuranAchievementReport>[] = [
 
 // Actions
 const fetchReports = async (forceRefresh: boolean = false) => {
-  isLoading.value = true;
-  await quranAchievementReportsStore.getReportsCount(filters);
+  // await quranAchievementReportsStore.getReportsCount(filters);
   await quranAchievementReportsStore.fetchReports(
     pageNum.value,
     pageSize.value,
     filters,
     forceRefresh
   );
-  isLoading.value = false;
 };
 const deleteReport = async (reportId: number) => {
   if (!confirm("هل أنت متأكد من حذف هذا التقرير؟")) return;
@@ -195,7 +190,6 @@ const exportReports = () => {
   });
 };
 const applyFilters = async () => {
-  await quranAchievementReportsStore.getReportsCount(filters);
   await fetchReports(true);
   pageNum.value = 1;
 };
@@ -227,14 +221,14 @@ function getDropdownActions(
 }
 
 // computed
-const numberedReports = computed(() =>
-  quranAchievementReportsStore.reportsData.map((report, index) => {
+const numberedReports = computed(() => {
+  return quranAchievementReportsStore.reportsData.map((report, index) => {
     return {
       ...report,
       rowNumber: index + 1,
     };
-  })
-);
+  });
+});
 // pagination rows
 const rows = computed(() => {
   const start = (pageNum.value - 1) * pageSize.value;
@@ -267,11 +261,11 @@ onMounted(async () => {
   await Promise.all([
     academicClassesStore.fetchClasses(),
     plansStore.fetchMonthsPlans(),
-    // quranAchievementReportsStore.fetchReports(
-    //   pageNum.value,
-    //   pageSize.value,
-    //   filters
-    // ),
+    quranAchievementReportsStore.fetchReports(
+      pageNum.value,
+      pageSize.value,
+      filters
+    ),
   ]);
 });
 
@@ -339,7 +333,7 @@ watch(pageNum, async () => {
                 :items="[
                   { label: 'جميع الخطط', value: undefined },
                   ...plansStore.monthsPlansData.map((mp) => ({
-                    label: `(${mp.month} - ${mp.plan.year}) - (${mp.plan.stage} - ${mp.plan.students_type} - ${mp.plan.semester})`,
+                    label: `${mp.month?.name} - ${mp.month?.id}  (${mp.plan?.students_type} - ${mp.plan?.level?.title})`,
                     value: mp.id,
                   })),
                 ]"

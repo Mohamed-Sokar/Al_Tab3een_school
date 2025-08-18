@@ -240,7 +240,9 @@ export const usePlansStore = defineStore("plans", () => {
     try {
       const { data, error } = await client
         .from("months_plans")
-        .select("*, plan:plan_id(id,stage, semester, year, students_type)");
+        .select(
+          "*, plan:plans(id, semester:semesters(id, year, name), students_type, level:levels(id,title)), month:months(id,name)"
+        );
 
       // set payments data to ref locally
       if (error) throw Error;
@@ -443,7 +445,7 @@ export const usePlansStore = defineStore("plans", () => {
         throw Error("مشكلة في السيرفر");
       }
 
-      return data[0];
+      return data && data.length ? (data[0] as Plan) : undefined;
 
       // toastSuccess({
       //   title: `:تم جلب الخطة بنجاح`,

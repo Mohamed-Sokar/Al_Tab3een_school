@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { object, number } from "yup";
-import type { MonthlyPlan, QuranAchievementReport, Semester } from "~/types";
+import type { QuranAchievementReport, Semester } from "~/types";
 import { ref, reactive, onMounted } from "vue";
 
 // SEO
@@ -8,6 +8,7 @@ useHead({ title: "تعديل تقرير إنجاز القرآن" });
 
 // init
 const quranAchievementReportsStore = useQuranAcheivementReport();
+const plansStore = usePlansStore();
 const { toastError } = useAppToast();
 const route = useRoute();
 const client = useSupabaseClient();
@@ -52,14 +53,13 @@ const fetchReport = async () => {
   try {
     isLoading.value = true;
 
-    // جلب التقرير مع بيانات الطالب والخطة الشهرية
     const { data: report, error: reportError } = await client
       .from("students_quran_achievement_reports")
       .select(
         `id, student_id, achieved_pages, status, monthly_plan_id, manager_id, created_at,
         student:students(id, first_name, second_name, third_name, last_name, identity_number, academic_class_id,
         academic_class:academic_classes(id, title, group)),
-        monthly_plan:months_plans(id, month, pages, plan:plans(id, year, semester, stage, students_type))`
+        monthly_plan:months_plans(id, month:months(id,name), pages, plan:plans(id, semester:semesters(id,year,name), semester_id, students_type))`
       )
       .eq("id", reportId)
       .single();
@@ -71,15 +71,15 @@ const fetchReport = async () => {
     if (!report) {
       throw new Error("التقرير غير موجود");
     }
-    // const targetedReport = report as QuranAchievementReport;
-    const targetedReport = quranAchievementReportsStore.getSpesificReport(
-      reportId
-    ) as QuranAchievementReport;
+
+    console.log("report: ", report);
+
+    const targetedReport = report as QuranAchievementReport;
 
     state.report = {
       id: targetedReport.id,
       student_id: targetedReport.student_id,
-      semester_id: targetedReport.semester_id,
+      semester_id: targetedReport?.monthly_plan?.plan?.semester_id,
       achieved_pages: targetedReport.achieved_pages,
       status: targetedReport.status,
       monthly_plan_id: targetedReport.monthly_plan_id,
@@ -122,11 +122,14 @@ const saveReport = async () => {
   }
 
   isLoading.value = true;
+
+  console.log("state: ", state.report);
+
   try {
     await quranAchievementReportsStore.updateQuranAchievementReport(
       state.report
     );
-    navigateTo({ name: "quran-achievement-reports" });
+    // navigateTo({ name: "quran-achievement-reports" });
   } catch (err) {
     toastError({
       title: "خطأ في تحديث التقرير",
@@ -157,8 +160,11 @@ watch(state, () => {
   assignReportStatus();
 });
 
+console.log("monthsPlansData: ", plansStore.monthsPlansData);
+
 onMounted(async () => {
   await fetchReport();
+  await plansStore.fetchMonthsPlans();
 });
 </script>
 
@@ -199,7 +205,6 @@ onMounted(async () => {
             <USkeleton class="h-8 w-full my-2" />
           </div>
           <div v-else-if="state.report">
-            <!-- معلومات الطالب -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
               <UFormField label="اسم الطالب" name="student_name" size="md">
                 <UInput :value="state.student_name" disabled class="w-full" />
@@ -220,7 +225,6 @@ onMounted(async () => {
               </UFormField>
             </div>
 
-            <!-- الصفحات المطلوبة والحالة -->
             <div class="flex flex-wrap gap-2 mb-5">
               <div class="p-3 bg-secondary/15 rounded-md flex gap-3">
                 <span class="font-bold">الصفحات المطلوبة</span>
@@ -267,29 +271,27 @@ onMounted(async () => {
                     label: `${s.year} - ${s.name}`,
                     value: s.id,
                   }))]
-            "
+                  "
                   placeholder="اختر الفصل الدراسي"
                 />
               </UFormField>
               <UFormField
                 label="الخطة الشهرية"
-                required
                 name="monthly_plan_id"
                 size="md"
-                class="lg:col-span-2"
               >
                 <USelect
-                  class="w-full"
                   v-model="state.report.monthly_plan_id"
                   :items="[
-                    { label: 'اختر الخطة الشهرية', value: undefined },
-                    ...usePlansStore().monthsPlansData.map((mp:MonthlyPlan) => ({
-                      label: `(${mp?.month} - ${mp?.plan.year}) - ( ${mp?.plan.stage} - ${mp?.plan.students_type} - ${mp?.plan.semester} )`,
+                    { label: 'جميع الخطط', value: undefined },
+                    ...usePlansStore().monthsPlansData.map((mp) => ({
+                      label: `${mp.month?.name} - ${mp.month?.id}  (${mp.plan?.students_type} - ${mp.plan?.level?.title})`,
                       value: mp.id,
                     })),
                   ]"
                   placeholder="اختر الخطة الشهرية"
                   icon="i-heroicons-calendar"
+                  class="w-full"
                 />
               </UFormField>
             </div>

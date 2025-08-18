@@ -14,7 +14,6 @@ import type { FormSubmitEvent } from "@nuxt/ui";
 type Schema = InferType<typeof schema>;
 
 const client = useSupabaseClient();
-const user = useSupabaseUser();
 const { toastError, toastSuccess } = useAppToast();
 const show = ref(false);
 function checkStrength(str: string) {
@@ -53,28 +52,15 @@ const schema = object({
     .min(8, "يجب أن تكون 8 أحرف على الأقل")
     .required("كلمة السر مطلوبة"),
 });
-
 const state = reactive({
   email: "",
   password: "",
 });
 const loading = ref(false);
-watch(
-  user,
-  () => {
-    if (user) {
-      navigateTo("/");
-    }
-  },
-  { immediate: true }
-);
-onMounted(async () => {
-  await client.auth.getSession();
-  navigateTo("/");
-});
 
 definePageMeta({
-  layout: "auth",
+  layout: "general",
+  middleware: "guest", // Only allow guests
 });
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
@@ -106,76 +92,83 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <UCard class="max-w-3xl mx-auto hover:shadow-2xl transition-all p-10">
-    <UForm :schema="schema" :state="state" class="space-y-2" @submit="onSubmit">
-      <h1 class="flex justify-center mb-10 font-bold text-3xl">
-        تسجيل الدخول لموقع المدرسة
-      </h1>
-      <UFormField label="الإيميل" name="email" required>
-        <UInput v-model="state.email" class="w-full" />
-      </UFormField>
-
-      <UFormField label="كلمة السر" name="password" required>
-        <UInput
-          v-model="state.password"
-          :type="show ? 'text' : 'password'"
-          class="w-full"
-        >
-          <template #trailing>
-            <UButton
-              color="neutral"
-              variant="link"
-              size="sm"
-              :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-              :aria-label="show ? 'Hide password' : 'Show password'"
-              :aria-pressed="show"
-              aria-controls="password"
-              @click="show = !show"
-            />
-          </template>
-        </UInput>
-      </UFormField>
-
-      <UProgress
-        :color="color"
-        :indicator="text"
-        :model-value="score"
-        :max="4"
-        size="sm"
-      />
-
-      <p id="password-strength" class="text-sm font-medium flex justify-end">
-        {{ text }}
-      </p>
-
-      <ul class="space-y-1" aria-label="Password requirements">
-        <li
-          v-for="(req, index) in strength"
-          :key="index"
-          class="flex items-center gap-0.5 justify-end"
-          :class="req.met ? 'text-success' : 'text-muted'"
-        >
-          <UIcon
-            :name="req.met ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
-            class="size-4 shrink-0"
-          />
-
-          <span class="text-sm font-light">
-            {{ req.text }}
-            <span class="sr-only">
-              {{ req.met ? " - Requirement met" : " - Requirement not met" }}
-            </span>
-          </span>
-        </li>
-      </ul>
-      <UButton
-        type="submit"
-        class="w-full flex justify-center hover:cursor-pointer"
-        color="secondary"
-        :loading="loading"
+  <div class="p-5 flex justify-center items-start pt-10 h-full">
+    <UCard class="w-full md:w-2xl mx-auto hover:shadow-2xl transition-all">
+      <UForm
+        :schema="schema"
+        :state="state"
+        class="space-y-2"
+        @submit="onSubmit"
       >
-        تسجيل الدخول
-      </UButton>
-    </UForm>
-  </UCard>
+        <h1 class="text-center mb-10 font-bold text-2xl md:text-3xl font-serif">
+          تسجيل الدخول لموقع المدرسة
+        </h1>
+        <UFormField label="الإيميل" name="email" required>
+          <UInput v-model="state.email" class="w-full" />
+        </UFormField>
+
+        <UFormField label="كلمة السر" name="password" required>
+          <UInput
+            v-model="state.password"
+            :type="show ? 'text' : 'password'"
+            class="w-full"
+          >
+            <template #trailing>
+              <UButton
+                color="neutral"
+                variant="link"
+                size="sm"
+                :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                :aria-label="show ? 'Hide password' : 'Show password'"
+                :aria-pressed="show"
+                aria-controls="password"
+                @click="show = !show"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <UProgress
+          :color="color"
+          :indicator="text"
+          :model-value="score"
+          :max="4"
+          size="sm"
+        />
+
+        <p id="password-strength" class="text-sm font-medium flex justify-end">
+          {{ text }}
+        </p>
+
+        <ul class="space-y-1 mb-5" aria-label="Password requirements">
+          <li
+            v-for="(req, index) in strength"
+            :key="index"
+            class="flex items-center gap-0.5 justify-end"
+            :class="req.met ? 'text-success' : 'text-muted'"
+          >
+            <UIcon
+              :name="req.met ? 'i-lucide-circle-check' : 'i-lucide-circle-x'"
+              class="size-4 shrink-0"
+            />
+
+            <span class="text-sm font-light">
+              {{ req.text }}
+              <span class="sr-only">
+                {{ req.met ? " - Requirement met" : " - Requirement not met" }}
+              </span>
+            </span>
+          </li>
+        </ul>
+        <UButton
+          type="submit"
+          class="w-full flex justify-center hover:cursor-pointer"
+          color="secondary"
+          :loading="loading"
+        >
+          تسجيل الدخول
+        </UButton>
+      </UForm>
+    </UCard>
+  </div>
 </template>

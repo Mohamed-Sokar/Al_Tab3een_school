@@ -38,15 +38,14 @@ const schema = object({
   daily_recitation: string().required("التسميع اليومي مطلوب"),
   // class_group: string().required("الشعبة مطلوبة"),
 });
-const newStudentState = reactive<Student>({
-  // id: undefined,
-  // full_name: undefined,
+const state = reactive<Student>({
+  id: undefined,
   first_name: undefined,
   second_name: undefined,
   third_name: undefined,
   last_name: undefined,
   guardian_name: undefined,
-  guardian_name_kinship: guardian_name_kinship_options[0],
+  guardian_name_kinship: undefined,
   whatsapp_number: undefined,
   identity_number: undefined,
   father_identity_number: undefined,
@@ -74,15 +73,23 @@ watchEffect(() => {
   if (studentsStore.sortedStudents.length > 0) {
     targetedStudent.value = studentsStore.getSpesificStudent(studentId);
     console.log(targetedStudent.value);
-    Object.assign(newStudentState, targetedStudent.value);
+    Object.assign(state, targetedStudent.value);
   }
 });
 
+const fetchStudent = async () => {
+  targetedStudent.value = await studentsStore.getSpesificStudent(studentId);
+  Object.assign(state, targetedStudent.value);
+};
+
 const updateStudent = async () => {
-  console.log(newStudentState);
-  await studentsStore.editStudent(studentId, newStudentState);
+  console.log(state);
+  await studentsStore.editStudent(studentId, state);
   navigateTo({ name: "students-view-students_table" });
 };
+onMounted(async () => {
+  await fetchStudent();
+});
 </script>
 
 <template>
@@ -90,13 +97,13 @@ const updateStudent = async () => {
     <UForm
       ref="form"
       :schema="schema"
-      :state="newStudentState"
+      :state="state"
       class="grid grid-cols-1 lg:grid-cols-2 gap-4"
       @submit="updateStudent"
     >
       <UFormField label="الاسم الأول" name="first_name">
         <UInput
-          v-model="newStudentState.first_name"
+          v-model="state.first_name"
           placeholder="الاسم الأول"
           label="الاسم الأول"
           class="w-full"
@@ -104,7 +111,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="الاسم الثاني" name="second_name">
         <UInput
-          v-model="newStudentState.second_name"
+          v-model="state.second_name"
           placeholder="الاسم الثاني"
           label="الاسم الثاني"
           class="w-full"
@@ -112,7 +119,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="الاسم الثالث" name="third_name">
         <UInput
-          v-model="newStudentState.third_name"
+          v-model="state.third_name"
           placeholder="الاسم الثالث"
           label="الاسم الثالث"
           class="w-full"
@@ -120,7 +127,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="الاسم الرابع" name="last_name">
         <UInput
-          v-model="newStudentState.last_name"
+          v-model="state.last_name"
           placeholder="الاسم الرابع"
           label="الاسم الرابع"
           class="w-full"
@@ -128,7 +135,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="اسم ولي الأمر" name="guardian_name">
         <UInput
-          v-model="newStudentState.guardian_name"
+          v-model="state.guardian_name"
           placeholder="اسم ولي الأمر"
           label="اسم ولي الأمر"
           class="w-full"
@@ -137,7 +144,7 @@ const updateStudent = async () => {
       <UFormField label="صلة قرابة ولي الأمر" name="guardian_name_kinship">
         <USelect
           :items="guardian_name_kinship_options"
-          v-model="newStudentState.guardian_name_kinship"
+          v-model="state.guardian_name_kinship"
           placeholder="صلة قرابة ولي الأمر"
           label="صلة قرابة ولي الأمر"
           class="w-full"
@@ -145,7 +152,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="رقم الواتس" name="whatsapp_number">
         <UInput
-          v-model="newStudentState.whatsapp_number"
+          v-model="state.whatsapp_number"
           type="number"
           placeholder="97xxxxxxxxxx"
           label="رقم الواتس"
@@ -155,7 +162,7 @@ const updateStudent = async () => {
 
       <UFormField label="رقم الهوية" name="identity_number">
         <UInput
-          v-model="newStudentState.identity_number"
+          v-model="state.identity_number"
           placeholder="رقم الهوية"
           label="رقم الهوية"
           class="w-full"
@@ -163,7 +170,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="رقم هوية الأب" name="father_identity_number">
         <UInput
-          v-model="newStudentState.father_identity_number"
+          v-model="state.father_identity_number"
           placeholder="رقم هوية الأب"
           label="رقم هوية الأب"
           class="w-full"
@@ -171,7 +178,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="تاريخ الميلاد" name="birth_date">
         <UInput
-          v-model="newStudentState.birth_date"
+          v-model="state.birth_date"
           type="date"
           class="w-full"
           placeholder="تاريخ الميلاد"
@@ -180,7 +187,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="رقم الجوال" name="phone_number">
         <UInput
-          v-model="newStudentState.phone_number"
+          v-model="state.phone_number"
           placeholder="05xxxxxxxx"
           label="رقم الجوال"
           class="w-full"
@@ -188,7 +195,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="العنوان" name="address">
         <UInput
-          v-model="newStudentState.address"
+          v-model="state.address"
           placeholder="العنوان"
           label="العنوان"
           class="w-full"
@@ -196,7 +203,7 @@ const updateStudent = async () => {
       </UFormField>
       <UFormField label="المسجد" name="masjed">
         <UInput
-          v-model="newStudentState.masjed"
+          v-model="state.masjed"
           placeholder="المسجد"
           label="المسجد"
           class="w-full"
@@ -205,7 +212,7 @@ const updateStudent = async () => {
 
       <UFormField label="المستوى الدراسي" name="level_id">
         <USelect
-          v-model="newStudentState.level_id"
+          v-model="state.level_id"
           :items="
             useLevelsStore().levelsData.map((level) => ({
               label: level.title,
@@ -220,7 +227,7 @@ const updateStudent = async () => {
 
       <UFormField label="حالة الحفظ" name="memorization_status">
         <USelect
-          v-model="newStudentState.memorization_status"
+          v-model="state.memorization_status"
           :items="memorization_status_options"
           type="text"
           class="w-full"
@@ -235,7 +242,7 @@ const updateStudent = async () => {
               value: i + 1,
             }))
           "
-          v-model="newStudentState.memorized_juz"
+          v-model="state.memorized_juz"
           type="number"
           placeholder="الأجزاء المحفوظة"
           label="الأجزاء المحفوظة"
@@ -245,7 +252,7 @@ const updateStudent = async () => {
       <UFormField label="التسميع اليومي" name="daily_recitation">
         <USelect
           :items="daily_recitation_options"
-          v-model="newStudentState.daily_recitation"
+          v-model="state.daily_recitation"
           placeholder="التسميع اليومي"
           label="التسميع اليومي"
           class="w-full"

@@ -1,20 +1,16 @@
 <script setup lang="ts">
 import type { Filters } from "~/types";
 import { useAcademicClassesStore } from "@/stores/academic_classes";
-import { useQuranClassesStore } from "@/stores/quran_classes";
 import { usePlansStore } from "@/stores/plans";
 import { useLevelsStore } from "@/stores/levels";
 
 // init props
 defineProps<{
   filters: Filters;
-  //   academicClasses: ReturnType<typeof useAcademicClassesStore>["classesData"];
-  //   quranClasses: ReturnType<typeof useQuranClassesStore>["classesData"];
-  //   plans: ReturnType<typeof usePlansStore>["plansData"];
-  //   levels: ReturnType<typeof useLevelsStore>["levelsData"];
+  loading: boolean;
 }>();
 
-// تعريف emits
+// emits
 const emit = defineEmits<{
   (e: "submit"): void;
   (e: "reset"): void;
@@ -31,7 +27,7 @@ onMounted(async () => {
 <template>
   <div class="mb-5">
     <UForm :state="filters" @submit="emit('submit')">
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <!-- academic class filter -->
         <UFormField required name="academicClassFilter">
           <USelect
@@ -46,38 +42,6 @@ onMounted(async () => {
               })),
             ]"
             placeholder="اختر الشعبة الدراسية"
-          />
-        </UFormField>
-        <!-- quran class filter -->
-        <UFormField required name="quranClassFilter">
-          <USelect
-            class="w-full"
-            icon="i-lucide-book-open"
-            v-model="filters.quranClassFilter"
-            :items="[
-              { label: 'الكل', value: undefined },
-              ...useQuranClassesStore().classesData.map((c) => ({
-                label: `${c.title} - شعبة ${c.group}`,
-                value: c.id,
-              })),
-            ]"
-            placeholder="اختر الشعبة القرآنية"
-          />
-        </UFormField>
-        <!-- plan class filter -->
-        <UFormField required name="planClassFilter">
-          <USelect
-            v-model="filters.planFilter"
-            class="w-full"
-            icon="i-lucide-map"
-            :items="[
-              { label: 'الكل', value: undefined },
-              ...usePlansStore().plansData.map((plan) => ({
-                label: `(${plan.semester?.name} ${plan.semester?.year}) - ${plan.students_type} - ${plan.level?.title}`,
-                value: plan.id,
-              })),
-            ]"
-            placeholder="اختر خطة القرآن"
           />
         </UFormField>
         <!-- level class filter -->
@@ -150,6 +114,7 @@ onMounted(async () => {
           icon="i-lucide-search"
           color="secondary"
           class="w-full md:w-fit hover:cursor-pointer"
+          :loading="loading"
         />
         <UButton
           label="إعادة تعيين"

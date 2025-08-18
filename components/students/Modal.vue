@@ -1,19 +1,15 @@
 <script setup lang="ts">
-import type { Student, StudentModalFlag } from "~/types";
-// import { useAcademicClassesStore } from "@/stores/academic_classes";
-// import { useQuranClassesStore } from "@/stores/quran_classes";
-// import { usePlansStore } from "@/stores/plans";
+import type {
+  QuranAchievementReport,
+  Student,
+  StudentModalFlag,
+} from "~/types";
 import { object, number } from "yup";
 
-import {
-  toDate,
-  getMonthAchievedPages,
-  isPlanAchieved,
-  getAchievementColor,
-} from "~/composables/studentUtils";
+import { toDate } from "~/composables/studentUtils";
 
-const { getArabicDayName } = useDateUtils();
-// تعريف schema للنماذج
+const { getArabicDayName, getDate } = useDateUtils();
+
 const schema = object({
   selectedClassId: number().required("الصف مطلوب"),
 });
@@ -45,11 +41,6 @@ const emit = defineEmits<{
   (e: "submit"): void;
 }>();
 
-// المتاجر
-const academicClassesStore = useAcademicClassesStore();
-const quranClassesStore = useQuranClassesStore();
-const plansStore = usePlansStore();
-
 // modal titles
 const modelTitle = computed(() =>
   props.selectedFlag === "studentIssue"
@@ -66,6 +57,8 @@ const modelTitle = computed(() =>
     ? "تفاصيل السائق"
     : props.selectedFlag === "plan"
     ? "تفاصيل خطة الطالب"
+    : props.selectedFlag === "fees"
+    ? "تفاصيل رسوم الطالب"
     : props.selectedFlag === "assign_plan"
     ? "تعيين خطة"
     : ""
@@ -77,10 +70,18 @@ const isOpen = computed({
     emit("update:showModal", value);
   },
 });
+const getRequiredPages = (report: QuranAchievementReport) =>
+  props.selectedStudent?.plan?.months_plans?.find(
+    (mp) => mp.month_id === report.month_plan?.month_id
+  )?.pages;
 </script>
 
 <template>
-  <UModal :title="modelTitle" class="min-w-3xl" v-model:open="isOpen">
+  <UModal
+    :title="modelTitle"
+    class="min-w-xl lg:min-w-3xl overflow-x-scroll"
+    v-model:open="isOpen"
+  >
     <template #body>
       <div v-if="selectedFlag === 'studentIssue'">
         <div v-if="selectedStudent?.behavioral_issues?.length">
@@ -173,60 +174,100 @@ const isOpen = computed({
         </div>
         <p v-else>لم يتم تعيين صف بعد</p>
       </div>
-      <div v-if="selectedFlag === 'plan'">
-        <div v-if="selectedStudent?.plan" class="text-sm">
+      <div v-if="selectedFlag === 'fees'">
+        <div v-if="selectedStudent?.months_fees" class="text-sm">
           <div
-            v-if="selectedStudent.plan.months_plans?.length"
+            v-if="selectedStudent.months_fees?.length"
             class="border border-accented rounded-tr-lg rounded-tl-lg"
           >
             <h3
               class="font-bold text-sm text-center py-2 rounded-tr-md rounded-tl-md bg-accented"
             >
-              تفاصيل إنجاز الطالب
+              تفاصيل رسوم الطالب
+            </h3>
+            <div class="px-2">
+              <ul>
+                <li
+                  class="grid grid-cols-5 justify-between items-center gap-2 border-b py-2 place-items-center"
+                >
+                  <span class="font-bold">يوم الدفع</span>
+                  <span class="font-bold">تاريخ الدفع</span>
+                  <span class="font-bold">تاريخ التحديث</span>
+                  <span class="font-bold">القيمة</span>
+                  <span class="font-bold">الحالة</span>
+                </li>
+                <li
+                  class="grid grid-cols-5 justify-between items-center gap-2 py-2 place-items-center not-last:border-b border-gray-400 not-last:border-dashed"
+                  v-for="fee in selectedStudent.months_fees"
+                  :key="fee.id"
+                >
+                  <span>{{ getArabicDayName(fee.created_at ?? "") }}</span>
+                  <span>{{ getDate(fee.created_at ?? "") }}</span>
+                  <span>{{
+                    fee.updated_at ? getDate(fee.updated_at) : "لم يتم التحديث"
+                  }}</span>
+                  <span>{{ fee.amount }}</span>
+                  <UBadge
+                    :color="
+                      fee.status === 'مسدد'
+                        ? 'success'
+                        : fee.status === 'متأخر'
+                        ? 'warning'
+                        : 'error'
+                    "
+                    :label="fee.status"
+                  >
+                  </UBadge>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p v-else>لم يتم دفع رسوم بعد</p>
+        </div>
+      </div>
+      <div v-if="selectedFlag === 'plan'">
+        <div v-if="selectedStudent?.quran_achievement_reports" class="text-sm">
+          <div
+            v-if="selectedStudent.quran_achievement_reports?.length"
+            class="border border-accented rounded-tr-lg rounded-tl-lg"
+          >
+            <h3
+              class="font-bold text-sm text-center py-2 rounded-tr-md rounded-tl-md bg-accented"
+            >
+              تفاصيل خطة الطالب
             </h3>
             <div class="px-2">
               <ul>
                 <li
                   class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
                 >
-                  <span class="font-bold">الشهر</span>
-                  <span class="font-bold">عدد الصفحات المطلوبة</span>
-                  <span class="font-bold">عدد الصفحات المنجزة</span>
+                  <!-- <span class="font-bold">يوم الدفع</span> -->
+                  <span class="font-bold">التاريخ</span>
+                  <span class="font-bold">الصفحات المطلوبة</span>
+                  <span class="font-bold">الصفحات المنجزة</span>
                   <span class="font-bold">الحالة</span>
                 </li>
                 <li
                   class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center not-last:border-b border-gray-400 not-last:border-dashed"
-                  v-for="plan in selectedStudent.plan.months_plans"
-                  :key="plan.id"
+                  v-for="report in selectedStudent.quran_achievement_reports"
+                  :key="report.id"
                 >
-                  <span>{{ plan.month }}</span>
-                  <span>{{ plan.pages }}</span>
-                  <span>{{
-                    getMonthAchievedPages(plan.month ?? "", selectedStudent)
-                  }}</span>
+                  <span>
+                    {{ report.month_plan?.month?.name }} -
+                    {{ report.month_plan?.month?.id }}
+                  </span>
+                  <span>{{ getRequiredPages(report) }}</span>
+                  <span>{{ report.achieved_pages }}</span>
                   <UBadge
-                    :color="
-                      getAchievementColor(
-                        plan.month ?? '',
-                        plan.pages ?? 0,
-                        selectedStudent
-                      )
-                    "
+                    :color="report.status === 'مكتمل' ? 'success' : 'error'"
+                    :label="report.status"
                   >
-                    {{
-                      isPlanAchieved(
-                        plan.pages ?? 0,
-                        getMonthAchievedPages(plan.month ?? "", selectedStudent)
-                      )
-                        ? "مكتمل"
-                        : "غير مكتمل"
-                    }}
                   </UBadge>
                 </li>
               </ul>
             </div>
           </div>
-          <p v-else>لم يتم تعيين خطة بعد</p>
+          <p v-else>لم يتم إضافة تقرير إنجاز بعد</p>
         </div>
       </div>
       <div v-if="selectedFlag === 'move_academic_class'">

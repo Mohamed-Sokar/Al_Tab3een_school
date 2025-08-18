@@ -1,10 +1,10 @@
 <template>
-  <div :class="wrraperLinksClasses">
+  <div :class="wrapperLinksClasses">
     <NuxtLink
       v-for="link in links"
       :key="link.to"
       :to="link.to"
-      class="flex items-center justify-center gap-2 w-full h-full p-2 rounded-md hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white"
+      class="flex items-center justify-center gap-2 w-full h-full p-2 rounded-xs hover:bg-secondary hover:dark:bg-secondary-600 hover:text-white"
       :class="{
         'bg-secondary dark:bg-secondary-600 text-white font-bold':
           link.to === route.path,
@@ -24,8 +24,8 @@ const props = defineProps<{
   links: LinkItem[];
 }>();
 const route = useRoute();
-const wrraperLinksClasses = computed(() => {
-  return `text-sm grid grid-cols-${props.links.length} gap-1 p-1 bg-secondary-50 border border-secondary-200 dark:bg-secondary-950 dark:border-secondary-500 rounded-sm mt-2 mb-8 `;
+const wrapperLinksClasses = computed(() => {
+  return `text-sm grid grid-cols-${props.links.length} gap-1 p-[2px] bg-secondary-50 border border-secondary-200 dark:bg-secondary-950 dark:border-secondary-500 rounded-sm mt-2 mb-8 `;
 });
 </script>
 

@@ -7,8 +7,17 @@ import {
 import { type Student } from "~/types";
 import { useStudentStore } from "@/stores/students";
 
+// init
 const studentsStore = useStudentStore();
+const { getArabicDayName, getDate } = useDateUtils();
+const route = useRoute();
 
+// data
+const studentId = Array.isArray(route.params.id)
+  ? route.params.id[0]
+  : route.params.id;
+
+// state
 const newStudentState = reactive<Student>({
   first_name: undefined,
   second_name: undefined,
@@ -29,23 +38,16 @@ const newStudentState = reactive<Student>({
   daily_recitation: undefined,
   created_at: undefined,
 });
-
-const route = useRoute();
-const studentId = Array.isArray(route.params.id)
-  ? route.params.id[0]
-  : route.params.id;
-
 const targetedStudent = ref<Student | undefined>(
   studentsStore.getSpesificStudent(studentId)
 );
 
-watchEffect(() => {
-  if (studentsStore.sortedStudents.length > 0) {
-    targetedStudent.value = studentsStore.getSpesificStudent(studentId);
-    Object.assign(newStudentState, targetedStudent.value);
-  }
-});
-const { getArabicDayName, getDate } = useDateUtils();
+// watchEffect(() => {
+//   if (studentsStore.sortedStudents.length > 0) {
+//     targetedStudent.value = studentsStore.getSpesificStudent(studentId);
+//     Object.assign(newStudentState, targetedStudent.value);
+//   }
+// });
 
 const createdAtString = computed({
   get() {
@@ -306,7 +308,7 @@ const birth_date_string = computed({
       </UCard>
     </div>
     <!-- driver info. -->
-    <div class="border-b border-dashed border-accented pb-10">
+    <!-- <div class="border-b border-dashed border-accented pb-10">
       <h2 class="text-xl mb-5 font-bold text-info">معلومات السائق</h2>
       <UCard>
         <div v-if="targetedStudent?.driver">
@@ -337,7 +339,8 @@ const birth_date_string = computed({
         </div>
         <div v-else class="text-sm">لم يتم تعيين سائق...</div>
       </UCard>
-    </div>
+    </div> -->
+
     <!-- academic_class info. -->
     <div class="border-b border-dashed border-accented pb-10">
       <h2 class="text-xl mb-5 font-bold text-info">معلومات الصف الدراسي</h2>
@@ -406,7 +409,7 @@ const birth_date_string = computed({
     </div>
     <!-- student quran achievement reports -->
     <div class="border-b border-dashed border-accented pb-10">
-      <h2 class="text-xl mb-5 font-bold text-info">معلومات الصف القرآني</h2>
+      <h2 class="text-xl mb-5 font-bold text-info">تقارير إنجاز الحفظ</h2>
       <div>
         <div v-if="targetedStudent?.plan" class="text-sm">
           <!-- achievment plan details -->
@@ -435,7 +438,8 @@ const birth_date_string = computed({
                   :key="plan.id"
                 >
                   <span>
-                    {{ plan.month }}
+                    {{ plan.month?.name }} -
+                    {{ plan.month?.id }}
                   </span>
                   <span>
                     {{ plan.pages }}

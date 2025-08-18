@@ -33,7 +33,7 @@ interface Student {
   plan_id?: number | undefined;
   academic_class_id?: number | undefined;
   quran_class_id?: number | undefined;
-  quran_achievement_reports?: StudentMonthlyAchievements[] | undefined;
+  quran_achievement_reports?: QuranAchievementReport[] | undefined;
   months_fees?: FeesReport[] | undefined;
 }
 
@@ -72,6 +72,7 @@ type StudentModalFlag =
   | "driver_info"
   | "plan"
   | "assign_plan"
+  | "fees"
   | "assign_driver";
 
 interface SelectOption {
@@ -82,9 +83,11 @@ interface StudentMonthlyAchievements {
   id?: number | undefined;
   student_id?: string | undefined;
   monthly_plan_id?: number | undefined;
-  month: string | undefined;
+  month_id: number | undefined;
+  month: { id: number; name: string };
   achieved_pages: number | undefined;
   status: "مكتمل" | "غير مكتمل" | undefined;
+  created_at: Date | undefined;
 }
 
 interface Employee {
@@ -216,6 +219,7 @@ interface QuranAchievementReport {
   semester_id: number | undefined;
   achieved_pages: number | undefined;
   monthly_plan_id: number | undefined;
+  month_plan?: MonthlyPlan | undefined;
   status?: "مكتمل" | "غير مكتمل" | undefined;
   student?: Student;
   monthly_plan?: MonthlyPlan;
@@ -233,8 +237,8 @@ interface BehavioralIssue {
   rowNumber?: number | undefined; // For display purposes, not in the database
   id?: number | undefined;
   created_at?: string | undefined | Date;
-  student_id: string | undefined;
-  student?: StudentBehavioralIssue | undefined;
+  student_id?: string | undefined;
+  student?: Student | undefined;
   description: string | undefined;
 }
 
@@ -359,11 +363,6 @@ interface LinkItem {
 }
 export type {
   Student,
-  StudentFilters,
-  StudentQuranAcheivementReportFilters,
-  StudentFeesReportFilters,
-  EmployeeSalaryReportFilters,
-  PaymentReportFilters,
   StudentModalFlag,
   Class,
   Driver,

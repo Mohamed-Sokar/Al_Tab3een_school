@@ -2,11 +2,10 @@ import type {
   Student,
   QuranAchievementReport,
   MonthlyPlan,
-  StudentQuranAcheivementReportFilters,
+  Filters,
 } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
-import { date } from "zod/v4";
 
 export const useQuranAcheivementReport = defineStore(
   "QuranAcheivementReport",
@@ -163,12 +162,11 @@ export const useQuranAcheivementReport = defineStore(
     const fetchReports = async (
       pageNum: number = 1,
       pageSize: number = 10,
-      filters: StudentQuranAcheivementReportFilters,
+      filters?: Filters,
       forceRefresh: boolean = false
     ): Promise<void> => {
       const start = (pageNum - 1) * pageSize; // بداية النطاق
       const end = start + pageSize - 1; // نهاية النطاق
-
       // Check if any filter is applied
       // const isFilterApplied =
       //   filters.academicClassFilter || filters.monthlyPlanFilter;
@@ -191,46 +189,38 @@ export const useQuranAcheivementReport = defineStore(
       }
       try {
         loading.value = true;
-        let query = client
-          .from("students_quran_achievement_reports")
-          .select(
-            `id, student_id, achieved_pages, status, monthly_plan_id, manager_id, created_at,
-        student:students(id, first_name, second_name, third_name, last_name, identity_number, academic_class_id,
+        let query = client.from("students_quran_achievement_reports").select(
+          `id, student_id, achieved_pages, status, monthly_plan_id, manager_id, created_at,
+        student:students!inner(id, first_name, second_name, third_name, last_name, identity_number, academic_class_id,
         academic_class:academic_classes(id, title, group)),
-        monthly_plan:months_plans(id, month, pages, plan:plans(id, year, semester, stage, students_type))`
-          )
-          .range(start, end);
+        monthly_plan:months_plans(id, month:months(id, name), pages, plan:plans(id, semester:semesters(id, name, year), students_type))`,
+          { count: "exact" }
+        );
         // .order("id", { ascending: false });
 
         // Apply filtering based on academic_class_id
-        if (filters.academicClassFilter) {
-          const { data: studentIds, error: studentError } = await client
-            .from("students")
-            .select("id")
-            .eq("academic_class_id", filters.academicClassFilter);
-
-          if (studentError) {
-            throw new Error(studentError.message);
-          }
-
-          const validStudentIds = studentIds.map(
-            (student: Student) => student.id
+        if (filters?.academicClassFilter) {
+          query = query.eq(
+            "student.academic_class_id",
+            filters.academicClassFilter
           );
-          if (validStudentIds.length > 0) {
-            query = query.in("student_id", validStudentIds);
-          } else {
-            reports.value = [];
-            loading.value = false;
-            return;
-          }
         }
 
         // Apply filtering based on monthly_plan_id
-        if (filters.monthlyPlanFilter) {
+        if (filters?.monthlyPlanFilter) {
           query = query.eq("monthly_plan_id", filters.monthlyPlanFilter);
         }
 
+        const { count, error: countError } = await query;
+        if (countError) {
+          throw new Error(countError.message);
+        }
+        reportsCount.value = count || 0;
+
         const { data, error } = await query;
+        console.log("QuranAcheivementReport: ", data);
+        // apply pagination
+        query = query.range(start, end);
         if (error) {
           throw new Error(error.message);
         }
@@ -294,53 +284,51 @@ export const useQuranAcheivementReport = defineStore(
      * @param {Object} filters - الفلاتر المطبقة (اختيارية)
      * @returns {Promise<void>}
      */
-    const getReportsCount = async (
-      filters: StudentQuranAcheivementReportFilters
-    ): Promise<void> => {
-      try {
-        loading.value = true;
-        let query = client
-          .from("students_quran_achievement_reports")
-          .select("*", { count: "exact", head: true });
+    // const getReportsCount = async (filters: Filters): Promise<void> => {
+    //   try {
+    //     loading.value = true;
+    //     let query = client
+    //       .from("students_quran_achievement_reports")
+    //       .select("*", { count: "exact", head: true });
 
-        // Apply filtering based on academic_class_id
-        if (filters.academicClassFilter) {
-          const { data: studentIds, error: studentError } = await client
-            .from("students")
-            .select("id")
-            .eq("academic_class_id", filters.academicClassFilter);
+    //     // Apply filtering based on academic_class_id
+    //     if (filters.academicClassFilter) {
+    //       const { data: studentIds, error: studentError } = await client
+    //         .from("students")
+    //         .select("id")
+    //         .eq("academic_class_id", filters.academicClassFilter);
 
-          if (studentError) {
-            throw new Error(studentError.message);
-          }
+    //       if (studentError) {
+    //         throw new Error(studentError.message);
+    //       }
 
-          const validStudentIds = studentIds.map(
-            (student: Student) => student.id
-          );
-          if (validStudentIds.length > 0) {
-            query = query.in("student_id", validStudentIds);
-          } else {
-            reports.value = [];
-            loading.value = false;
-            return;
-          }
-        }
+    //       const validStudentIds = studentIds.map(
+    //         (student: Student) => student.id
+    //       );
+    //       if (validStudentIds.length > 0) {
+    //         query = query.in("student_id", validStudentIds);
+    //       } else {
+    //         reports.value = [];
+    //         loading.value = false;
+    //         return;
+    //       }
+    //     }
 
-        // Apply filtering based on monthly_plan_id
-        if (filters.monthlyPlanFilter) {
-          query = query.eq("monthly_plan_id", filters.monthlyPlanFilter);
-        }
-        const { count, error } = await query;
-        if (error) {
-          throw createError({ statusCode: 500, message: error.message });
-        }
-        reportsCount.value = count || 0;
-      } catch (err) {
-        toastError({ title: "خطأ في جلب عدد التقارير" });
-      } finally {
-        loading.value = false;
-      }
-    };
+    //     // Apply filtering based on monthly_plan_id
+    //     if (filters.monthlyPlanFilter) {
+    //       query = query.eq("monthly_plan_id", filters.monthlyPlanFilter);
+    //     }
+    //     const { count, error } = await query;
+    //     if (error) {
+    //       throw createError({ statusCode: 500, message: error.message });
+    //     }
+    //     reportsCount.value = count || 0;
+    //   } catch (err) {
+    //     toastError({ title: "خطأ في جلب عدد التقارير" });
+    //   } finally {
+    //     loading.value = false;
+    //   }
+    // };
     // const addStudent = async (student: Student) => {
     //   loading.value = true;
     //   // console.log("student: ", student);
@@ -446,7 +434,7 @@ export const useQuranAcheivementReport = defineStore(
       try {
         const { data, error } = await client
           .from("students_quran_achievement_reports")
-          .upsert(newReports, {
+          .upsert(newReports as any, {
             onConflict: ["student_id", "monthly_plan_id"],
           })
           .select();
@@ -471,24 +459,10 @@ export const useQuranAcheivementReport = defineStore(
       report: QuranAchievementReport
     ) => {
       try {
-        await plansStore.fetchMonthsPlans();
-        const monthPlan = plansStore.monthsPlansData.find(
-          (mp) => mp.id === report.monthly_plan_id
-        );
-
-        const requiredPages = (monthPlan as MonthlyPlan).pages || 0;
-        const updatedReport = {
-          ...report,
-          status:
-            (report.achieved_pages ?? 0) >= requiredPages
-              ? "مكتمل"
-              : "غير مكتمل",
-        };
-
         const { data, error } = await client
           .from("students_quran_achievement_reports")
-          .upsert([updatedReport], {
-            onConflict: ["student_id", "month"],
+          .upsert(report, {
+            onConflict: ["student_id", "monthly_plan_id"],
           })
           .select();
 
@@ -515,6 +489,7 @@ export const useQuranAcheivementReport = defineStore(
           title: "خطأ في تحديث تقرير الإنجاز",
           description: (err as Error).message || "حدث خطأ غير متوقع",
         });
+        console.log(err.message);
         throw err;
       }
     };
@@ -546,16 +521,17 @@ export const useQuranAcheivementReport = defineStore(
     // }
     return {
       // state
-      reportsData,
+      reports,
       loading,
 
       // Getters
       sortedReports,
       reportsCountData,
+      reportsData,
+
       // reports operations
       fetchReports,
       fetchReportsByMonthlyPlanId,
-      getReportsCount,
 
       // addStudent,
       // editStudent,

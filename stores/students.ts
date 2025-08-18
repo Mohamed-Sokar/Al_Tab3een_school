@@ -8,9 +8,12 @@ import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
 export const useStudentStore = defineStore("students", () => {
+  // init
   const plansStore = usePlansStore();
   const client = useSupabaseClient();
   const { toastSuccess, toastError } = useAppToast();
+
+  // state
   const studentsData = ref<Student[]>([]);
   const behavioralIssuesStudentData = ref<BehavioralIssue[]>([]);
   const loading = ref(false);
@@ -30,6 +33,7 @@ export const useStudentStore = defineStore("students", () => {
     );
   });
   const studentsCountData = computed(() => studentsCount.value);
+
   // Actions
   /**
    * جلب الطلاب من Supabase مع دعم التصفح والفلاتر
@@ -86,14 +90,16 @@ export const useStudentStore = defineStore("students", () => {
       academic_class:academic_classes(id,title,group,floor,wing),
       quran_class:quran_classes(id,title,group,floor,wing),
       driver:drivers(name, car_type, car_color, phone_no),
-      
-      quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id,achieved_pages,status),
-      level:levels(title)`
+      plan:plans(semester_id, semester:semesters(id, year, name),total_pages, months_plans(id,month_id, month:months(id, name), pages, plan_id)),
+      quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id, month_plan:months_plans(id, month_id, month:months(id, name)), achieved_pages, status, created_at),
+      level:levels(title),
+      months_fees:student_monthly_fees(id,amount,status,created_at, month:months(id,name))
+      `,
+          { count: "exact" }
         )
-        .range(start, end)
-        .order("first_name", { ascending: true });
+        .order("academic_class_id", { ascending: true });
 
-      // تطبيق الفلاتر إذا وجدت
+      // apply filters if exist
       if (filters?.academicClassFilter) {
         query = query.eq("academic_class_id", filters?.academicClassFilter);
       }
@@ -128,7 +134,17 @@ export const useStudentStore = defineStore("students", () => {
         query = query.eq("identity_number", filters?.identityNumberFilter);
       }
 
+      const { count, error: countError } = await query;
+      if (countError) {
+        throw createError({ statusCode: 500, message: countError.message });
+      }
+      studentsCount.value = count || 0;
+
+      // apply pagination
+      query = query.range(start, end);
+
       const { data, error } = await query;
+      console.log("students", data);
       if (error) {
         throw error;
       }
@@ -157,50 +173,6 @@ export const useStudentStore = defineStore("students", () => {
     } finally {
       loading.value = false;
     }
-  };
-  const getStudentsCount = async (filters: Filters): Promise<number> => {
-    let query = client
-      .from("students")
-      .select("*", { count: "exact", head: true });
-
-    // تطبيق الفلاتر إذا وجدت
-    if (filters.academicClassFilter) {
-      query = query.eq("academic_class_id", filters.academicClassFilter);
-    }
-    if (filters.quranClassFilter) {
-      query = query.eq("quran_class_id", filters.quranClassFilter);
-    }
-    if (filters.planFilter) {
-      query = query.eq("plan_id", filters.planFilter);
-    }
-    if (filters.levelFilter) {
-      query = query.eq("level_id", filters.levelFilter);
-    }
-    if (filters.memorizationStatusFilter) {
-      query = query.eq("memorization_status", filters.memorizationStatusFilter);
-    }
-    if (filters.firstNameFilter) {
-      query = query.eq("first_name", filters.firstNameFilter);
-    }
-    if (filters.secondNameFilter) {
-      query = query.eq("second_name", filters.secondNameFilter);
-    }
-    if (filters.thirdNameFilter) {
-      query = query.eq("third_name", filters.thirdNameFilter);
-    }
-    if (filters.lastNameFilter) {
-      query = query.eq("last_name", filters.lastNameFilter);
-    }
-    if (filters.identityNumberFilter) {
-      query = query.eq("identity_number", filters.identityNumberFilter);
-    }
-
-    const { count, error } = await query;
-    if (error) {
-      throw createError({ statusCode: 500, message: error.message });
-    }
-    studentsCount.value = count || 0;
-    return Number(count);
   };
   const addStudent = async (student: Student) => {
     loading.value = true;
@@ -374,6 +346,7 @@ export const useStudentStore = defineStore("students", () => {
   //     loading.value = false;
   //   }
   // };
+
   const getSpesificStudent = (studentId: string) => {
     return studentsData.value?.find((student) => student.id === studentId);
   };
@@ -384,7 +357,6 @@ export const useStudentStore = defineStore("students", () => {
     studentsData.value = [];
     studentsCount.value = 0;
   };
-
   /**
    * جلب الطلاب بناءً على academic_class_id
    * @param academicClassId - معرف الشعبة الدراسية
@@ -412,7 +384,7 @@ export const useStudentStore = defineStore("students", () => {
             academic_class:academic_classes(id,title,group,floor,wing),
             quran_class:quran_classes(id,title,group,floor,wing),
             driver:drivers(name, car_type, car_color, phone_no),
-            plan:plans(id,year,semester,stage,total_pages, months_plans(id,month,pages,plan_id)),
+            plan:plans(id,semester_id, semester:semesters(id,name,year), total_pages, months_plans(id, month:months(id,name), month_id,pages, plan_id)),
             quran_achievement_reports:students_quran_achievement_reports(id,achieved_pages,created_at,status,monthly_plan_id,manager_id),
             level:levels(title)`
         )
@@ -511,7 +483,6 @@ export const useStudentStore = defineStore("students", () => {
         .select("*", { count: "exact", head: true })
         .eq("academic_class_id", academicClassId);
 
-      // تصفية الطلاب بناءً على plan_id إذا كان monthlyPlanId
       if (planId) {
         query = query.eq("plan_id", planId);
       }
@@ -522,8 +493,6 @@ export const useStudentStore = defineStore("students", () => {
       if (error) {
         throw new Error(error.message);
       }
-      // return data;
-      console.log(count);
 
       studentsCount = Number(count);
 
@@ -583,189 +552,6 @@ export const useStudentStore = defineStore("students", () => {
     } finally {
       loading.value = false;
     }
-  };
-  // behavioral_issues operations
-  const fetchBehavioralIssues = async () => {
-    loading.value = true;
-    try {
-      const { data } = await api.get("/students/behavioral-issues");
-      // console.log("behavioralIssues: ", data);
-      // set behavioral Issues data to ref locally
-      behavioralIssuesStudentData.value = data;
-      // toastSuccess({
-      //   title: "تم تحميل المخالفات بنجاح",
-      // });
-      // tableKey.value = Math.random();
-    } catch (err) {
-      // toastError({
-      //   title: err.message,
-      // });
-      throw Error(err instanceof Error ? err.message : String(err));
-    } finally {
-      loading.value = false;
-    }
-  };
-  const addStudentBehavioralIssue = async (
-    studentId: string,
-    description: string
-  ) => {
-    const targetedStudent = getSpesificStudent(studentId);
-
-    if (!targetedStudent) return;
-
-    const classTitle = targetedStudent.academic_class?.title; // add new behavioral Issue
-    const classGroup = targetedStudent.academic_class?.group; // add new behavioral Issue
-
-    const payload = {
-      student_id: targetedStudent.id,
-      description: description,
-    };
-
-    const newIssue = {
-      ...payload,
-      student: {
-        first_name: targetedStudent.first_name,
-        last_name: targetedStudent.last_name,
-        class: {
-          title: classTitle,
-          group: classGroup,
-        },
-      },
-      // date: new Date().toISOString().split("T")[0],
-    };
-
-    try {
-      loading.value = true;
-      const { data } = await api.post("/students/behavioral-issues", payload);
-
-      toastSuccess({
-        title: "تم إضافة المخالفة السلوكية",
-      });
-      // console.log(data[0]);
-      // const studentIndex = getSpesificStudentIndex(studentId);
-      if (studentsData.value && !!targetedStudent) {
-        // const existingStudent = studentsData.value[studentIndex];
-
-        // ensure exsisting the behavioral issues array
-        if (!targetedStudent.behavioral_issues) {
-          targetedStudent.behavioral_issues = [];
-        }
-
-        targetedStudent.behavioral_issues.push({
-          ...newIssue,
-          ...data[0], // المخالفة التي أرجعها السيرفر
-        });
-      }
-      const newData = {
-        ...newIssue,
-        ...data[0],
-      };
-      // console.log(newData);
-      behavioralIssuesStudentData.value.unshift(newData);
-    } catch (err) {
-      toastError({
-        title: "حدث مشكلة في إضافة المخالفة السلوكية",
-      });
-      // throw Error(err instanceof Error ? err.message : String(err));s
-    } finally {
-      loading.value = false;
-    }
-  };
-  const editStudentBehavioralIssue = async (
-    issueId: number,
-    description: string
-  ) => {
-    try {
-      loading.value = true;
-      const issueIndex = getSpesificStudentBehavioralIssueIndex(issueId);
-      const targetedIssue = getSpesificStudentBehavioralIssue(issueId);
-      // console.log(issueIndex);
-
-      const { data } = await api.put(`/students/behavioral-issues/${issueId}`, {
-        ...(behavioralIssuesStudentData.value || [])[issueIndex],
-        description,
-      });
-
-      (behavioralIssuesStudentData.value || [])[issueIndex] = {
-        ...(behavioralIssuesStudentData.value || [])[issueIndex],
-        description: description,
-      };
-
-      const studentIndex = getSpesificStudentIndex(
-        targetedIssue?.student_id ?? ""
-      );
-
-      // update students behavioral issues array locally
-      if (
-        studentsData.value &&
-        studentsData.value[studentIndex] &&
-        studentsData.value[studentIndex].behavioral_issues
-      ) {
-        // You can safely access students_behavioral_issues[issueIndex] here
-        // For example, update the description:
-        studentsData.value[studentIndex].behavioral_issues[
-          issueIndex
-        ].description = description;
-      }
-
-      tableKey.value = Math.random();
-
-      toastSuccess({
-        title: "تم تعديل المخالفة بنجاح",
-      });
-    } catch (err) {
-      toastError({
-        title: "حدثت مشكلة أثناء تعديل المخالفة",
-      });
-      throw Error(err instanceof Error ? err.message : String(err));
-    } finally {
-      loading.value = false;
-    }
-  };
-  const deleteStudentBehavioralIssue = async (issueId: number) => {
-    // Update the Student's behavioral issues
-    const targetedIssue = getSpesificStudentBehavioralIssue(issueId);
-    const issueIndex = getSpesificStudentBehavioralIssueIndex(issueId);
-    const targetedStudent = getSpesificStudent(targetedIssue?.student_id || "");
-
-    try {
-      // delete issue from DB
-      loading.value = true;
-      const { data } = await api.delete(
-        `students/behavioral-issues/${issueId}`
-      );
-      toastSuccess({
-        title: `:تم حذف المخالفة بنجاح`,
-      });
-
-      // delete issue locally
-      (behavioralIssuesStudentData.value || []).splice(issueIndex, 1);
-
-      // delete issue from the student behavioral issues array
-      if (targetedStudent) {
-        const targetedIssueIndex = targetedStudent.behavioral_issues?.findIndex(
-          (issue) => issue.id === issueId
-        );
-
-        targetedStudent.behavioral_issues?.splice(targetedIssueIndex ?? 0, 1);
-      }
-    } catch (err) {
-      toastError({
-        title: "حدث مشكلة في حذف المخالفة",
-      });
-    } finally {
-      loading.value = false;
-    }
-  };
-  const getSpesificStudentBehavioralIssue = (issueId: number) => {
-    return sortedIssues.value.find(
-      (issue: BehavioralIssue) => issue.id === issueId
-    );
-  };
-  const getSpesificStudentBehavioralIssueIndex = (issueId: number) => {
-    return (behavioralIssuesStudentData.value ?? []).findIndex(
-      (issue) => issue.id !== undefined && +issue.id === +issueId
-    );
   };
   const addQuranQuranAchievementReport = async (
     generalPlanId: number,
@@ -855,13 +641,45 @@ export const useStudentStore = defineStore("students", () => {
       loading.value = false;
     }
   };
+  const fetchStudentById = async (studentId: string) => {
+    try {
+      loading.value = true;
+      const { data, error } = await client
+        .from("students")
+        .select(
+          `*, behavioral_issues:students_behavioral_issues(id, description, created_at),
+      academic_class:academic_classes(id,title,group,floor,wing),
+      quran_class:quran_classes(id,title,group,floor,wing),
+      driver:drivers(name, car_type, car_color, phone_no),
+      plan:plans(semester_id, semester:semesters(id, year, name),total_pages, months_plans(id,month_id, month:months(id, name), pages, plan_id)),
+      quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id, month_plan:months_plans(id, month_id, month:months(id, name)), achieved_pages, status, created_at),
+      level:levels(title),
+      months_fees:student_monthly_fees(id,amount,status,created_at, month:months(id,name))
+      `
+        )
+        .eq("id", studentId)
+        .single();
+
+      if (error) {
+        throw Error("حدثت مشكلة أثناء جلب بيانات الطالب");
+      }
+      return data;
+    } catch (err) {
+      toastError({
+        title: "حدثت مشكلة أثناء جلب بيانات الطالب",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
 
   // helper Methods
-  function cleanObject<T extends object>(obj: T): Partial<T> {
-    return Object.fromEntries(
-      Object.entries(obj).filter(([_, v]) => v !== undefined)
-    ) as Partial<T>;
-  }
+  // function cleanObject<T extends object>(obj: T): Partial<T> {
+  //   return Object.fromEntries(
+  //     Object.entries(obj).filter(([_, v]) => v !== undefined)
+  //   ) as Partial<T>;
+  // }
   function removeInvalidFields(student: Student): Partial<Student> {
     const allowedFields = [
       "id",
@@ -893,14 +711,15 @@ export const useStudentStore = defineStore("students", () => {
     loading,
     behavioralIssuesStudentData,
     tableKey,
+
     // Getters
     sortedStudents,
     sortedIssues,
     studentsCountData,
-    // student operations
+
+    // Student operations
     fetchStudents,
-    getStudentsCount,
-    fetchBehavioralIssues,
+    fetchStudentById,
     addStudent,
     editStudent,
     deleteStudent,
@@ -918,11 +737,5 @@ export const useStudentStore = defineStore("students", () => {
     // updateQuranClassForStudents,
     getSpesificStudent,
     getSpesificStudentIndex,
-    // student behavioral Iissue operations
-    addStudentBehavioralIssue,
-    editStudentBehavioralIssue,
-    deleteStudentBehavioralIssue,
-    getSpesificStudentBehavioralIssue,
-    getSpesificStudentBehavioralIssueIndex,
   };
 });

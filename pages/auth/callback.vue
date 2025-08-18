@@ -1,21 +1,8 @@
 <script setup>
-const route = useRoute();
-const client = useSupabaseClient();
-
-onMounted(async () => {
-  await client.auth.getSession();
-  navigateTo("/");
-});
-
 definePageMeta({
   layout: "auth",
+  middleware: "guest", // Only allow guests
 });
-// const user = useSupabaseUser();
-// watch(user, () => {
-//   if (user.value) {
-//     return navigateTo("/");
-//   }
-// });
 </script>
 
 <template>
