@@ -60,15 +60,14 @@ const levelsStore = useLevelsStore();
       </template>
     </BaseHeader>
     <div>
-      <div class="grid lg:grid-cols-3 gap-4 mt-5">
+      <div class="grid lg:grid-cols-3 gap-4 mt-5" v-if="levelsStore.levelsData">
         <LevelsCard
-          v-if="levelsStore.levelsData"
           v-for="level in levelsStore.levelsData"
           :key="level.id"
           :level="level"
         />
-        <div v-else>لا يوجد مستويات</div>
       </div>
+      <div v-else>لا يوجد مستويات</div>
     </div>
   </div>
 </template>

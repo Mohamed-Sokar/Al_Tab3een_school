@@ -1,4 +1,13 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+  const nuxtApp = useNuxtApp();
+  if (import.meta.server) return;
+  if (
+    import.meta.client &&
+    nuxtApp.isHydrating &&
+    nuxtApp.payload.serverRendered
+  )
+    return;
+
   const user = useSupabaseUser();
   const publicRoutes = ["/", "/login"]; // Add any other public routes
 
