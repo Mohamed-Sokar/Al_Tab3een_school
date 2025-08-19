@@ -58,11 +58,11 @@ export default defineNuxtConfig({
     },
   },
   build: {
-    transpile: ["xlsx", "file-saver"], // Force transpilation
+    transpile: ["xlsx"], // Force transpilation
   },
   vite: {
     optimizeDeps: {
-      include: ["xlsx", "file-saver"],
+      include: ["xlsx"],
     },
   },
 });
