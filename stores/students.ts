@@ -652,7 +652,7 @@ export const useStudentStore = defineStore("students", () => {
       quran_class:quran_classes(id,title,group,floor,wing),
       driver:drivers(name, car_type, car_color, phone_no),
       plan:plans(semester_id, semester:semesters(id, year, name),total_pages, months_plans(id,month_id, month:months(id, name), pages, plan_id)),
-      quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id, month_plan:months_plans(id, month_id, month:months(id, name)), achieved_pages, status, created_at),
+      quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id, month_plan:months_plans(id, month_id, month:months(id, name), pages), achieved_pages, status, created_at),
       level:levels(title),
       months_fees:student_monthly_fees(id,amount,status,created_at, month:months(id,name))
       `

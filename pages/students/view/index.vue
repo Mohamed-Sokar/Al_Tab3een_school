@@ -180,7 +180,6 @@ const columns: TableColumn<Student>[] = [
         (report) => report.month_plan?.month?.id === currentMonth.value
       );
 
-      console.log(achievedReport);
       const status = achievedReport?.status ?? "غير مكتمل";
       // Check if the month plan is existing
       if (requiredPages === 0) {

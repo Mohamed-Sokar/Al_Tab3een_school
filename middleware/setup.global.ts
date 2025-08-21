@@ -7,7 +7,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     nuxtApp.payload.serverRendered
   )
     return;
-
   // const levelsStore = useLevelsStore();
   // const academicClassesStore = useAcademicClassesStore();
   // const quranClassesStore = useQuranClassesStore();

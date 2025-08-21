@@ -1,6 +1,6 @@
 <script setup>
 definePageMeta({
-  layout: "auth",
+  layout: "general",
   middleware: "guest", // Only allow guests
 });
 </script>

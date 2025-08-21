@@ -387,12 +387,7 @@ onMounted(async () => {
       <div class="mb-5">
         <UForm :state="filters" @submit="applyFilters" class="">
           <div class="grid grid-cols-1 lg:grid-cols-4 gap-2 items-end mb-2">
-            <UFormField
-              label="الفصل الدراسي"
-              required
-              name="semester_id"
-              size="md"
-            >
+            <UFormField label="الفصل الدراسي" name="semester_id" size="md">
               <USelect
                 class="w-full"
                 v-model="filters.semesterFilter"
@@ -407,7 +402,6 @@ onMounted(async () => {
             </UFormField>
             <UFormField
               label="الشعبة الدراسية"
-              required
               name="academic_class_id"
               size="md"
             >
@@ -434,7 +428,7 @@ onMounted(async () => {
                 trailing-icon="i-heroicons-calendar"
               />
             </UFormField>
-            <UFormField label="الشهر" required name="month_id" size="md">
+            <UFormField label="الشهر" name="month_id" size="md">
               <USelect
                 class="w-full"
                 v-model="filters.monthFilter"

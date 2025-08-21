@@ -1,12 +1,23 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const nuxtApp = useNuxtApp();
+  // skip middleware on server
   if (import.meta.server) return;
+  // or only skip middleware on initial client load
+  const nuxtApp = useNuxtApp();
   if (
     import.meta.client &&
     nuxtApp.isHydrating &&
     nuxtApp.payload.serverRendered
   )
     return;
+
+  // const nuxtApp = useNuxtApp();
+  // if (import.meta.server) return;
+  // if (
+  //   import.meta.client &&
+  //   nuxtApp.isHydrating &&
+  //   nuxtApp.payload.serverRendered
+  // )
+  //   return;
 
   const user = useSupabaseUser();
 
