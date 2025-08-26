@@ -1,3 +1,61 @@
+<script setup lang="ts">
+import { object, string, number } from "yup";
+import {
+  class_floor_options,
+  class_group_options,
+  class_wing_options,
+  level_options,
+} from "~/constants";
+import type { Class } from "~/types";
+import { useAcademicClassesStore } from "@/stores/academic_classes";
+import { useQuranClassesStore } from "@/stores/quran_classes";
+
+const academicClassesStore = useAcademicClassesStore();
+const quranClassesStore = useQuranClassesStore();
+
+const schema = object({
+  title: string().required("الصف الدراسي مطلوب"),
+  wing: string().required("الجهة مطلوبة"),
+  floor: string().required("الطابق مطلوب"),
+  group: string().required("الطابق مطلوب"),
+  maximum_capacity: number().required("السعة القصوى مطلوبة"),
+});
+
+const state = reactive<Class>({
+  // id: undefined,
+  title: undefined,
+  maximum_capacity: undefined,
+  wing: undefined,
+  floor: undefined,
+  group: undefined,
+});
+const route = useRoute();
+
+const classType = route.query.classType;
+const isAcademic = classType === "academic";
+
+const form = ref();
+const classId =
+  route.params.id instanceof Array ? +route.params.id[0] : +route.params.id;
+
+const onSubmit = async () => {
+  isAcademic
+    ? await academicClassesStore.updateClass(classId, { ...state })
+    : await quranClassesStore.updateClass(classId, { ...state });
+  navigateTo({ name: `classes-view-${classType}_classes` });
+};
+
+onMounted(async () => {
+  let classBuffer;
+  if (isAcademic) {
+    classBuffer = await academicClassesStore.fetchClassById(classId);
+  } else {
+    classBuffer = await quranClassesStore.fetchClassById(classId);
+  }
+  Object.assign(state, classBuffer);
+});
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -58,7 +116,11 @@
           type="submit"
           class="flex w-full md:w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          :loading="academicClassesStore.loading"
+          :loading="
+            isAcademic
+              ? academicClassesStore.loading
+              : quranClassesStore.loading
+          "
           label="تعديل"
         />
         <UButton
@@ -72,58 +134,3 @@
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { object, string, number } from "yup";
-import {
-  class_floor_options,
-  class_group_options,
-  class_wing_options,
-  level_options,
-} from "~/constants";
-import type { Class } from "~/types";
-import { useAcademicClassesStore } from "@/stores/academic_classes";
-import { useQuranClassesStore } from "@/stores/quran_classes";
-
-const academicClassesStore = useAcademicClassesStore();
-const quranClassesStore = useQuranClassesStore();
-
-const schema = object({
-  title: string().required("الصف الدراسي مطلوب"),
-  wing: string().required("الجهة مطلوبة"),
-  floor: string().required("الطابق مطلوب"),
-  group: string().required("الطابق مطلوب"),
-  maximum_capacity: number().required("السعة القصوى مطلوبة"),
-});
-
-const state = reactive<Class>({
-  // id: undefined,
-  title: undefined,
-  maximum_capacity: undefined,
-  wing: undefined,
-  floor: undefined,
-  group: undefined,
-});
-const route = useRoute();
-
-const classType = route.query.classType;
-const isAcademic = classType === "academic";
-
-const form = ref();
-const classId =
-  route.params.id instanceof Array ? +route.params.id[0] : +route.params.id;
-
-const targetedClass = isAcademic
-  ? academicClassesStore.getSpecificClass(classId)
-  : quranClassesStore.getSpecificClass(classId);
-
-Object.assign(state, targetedClass);
-const onSubmit = async () => {
-  isAcademic
-    ? await academicClassesStore.updateClass(classId, { ...state })
-    : await quranClassesStore.updateClass(classId, { ...state });
-  navigateTo({ name: `classes-view-${classType}_classes` });
-};
-</script>
-
-<style scoped></style>

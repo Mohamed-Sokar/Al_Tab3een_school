@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { courses_options } from "~/constants";
 import { type Employee } from "~/types";
-import { useTeachersStore } from "@/stores/teachers";
+// import { useemployeesStore } from "@/stores/teachers";
 
-const teachersStore = useTeachersStore();
+const employeesStore = useEmployeesStore();
 
 const teacherState = reactive<Employee>({
   first_name: undefined,
@@ -29,16 +29,16 @@ const teacherId = Array.isArray(route.params.id)
   : route.params.id;
 
 const targetedTeacher = ref<Employee | undefined>(
-  teachersStore.getSpesificTeacher(teacherId)
+  employeesStore.getSpesificTeacher(teacherId)
 );
 
 watchEffect(() => {
-  // if (teachersStore.sortedTeachers.length > 0) {
-  //   targetedTeacher.value = teachersStore.getSpesificTeacher(teacherId);
+  // if (employeesStore.sortedTeachers.length > 0) {
+  //   targetedTeacher.value = employeesStore.getSpesificTeacher(teacherId);
   //   Object.assign(teacherState, targetedTeacher.value);
   // }
-  if (teachersStore.sortedTeachers.length > 0) {
-    targetedTeacher.value = teachersStore.getSpesificTeacher(teacherId);
+  if (employeesStore.sortedTeachers.length > 0) {
+    targetedTeacher.value = employeesStore.getSpesificTeacher(teacherId);
 
     const teacherData = { ...targetedTeacher.value };
 

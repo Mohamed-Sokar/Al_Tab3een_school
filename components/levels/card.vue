@@ -22,7 +22,7 @@ defineProps<{
       </div>
       <div>
         <UBadge
-          :label="`${level.students[0].count} طالب`"
+          :label="`${Number(level.students?.[0]?.count ?? 0)} طالب`"
           variant="soft"
           color="secondary"
           class="text-secondary-600 font-bold"
@@ -42,7 +42,7 @@ defineProps<{
           <span class="text-xs font-bold">عدد الطلاب</span>
         </div>
         <div class="font-bold text-secondary-600">
-          {{ level.students[0].count }}
+          {{ Number(level?.students?.[0]?.count ?? 0) }}
         </div>
       </div>
       <div
@@ -90,13 +90,18 @@ defineProps<{
         <div
           class="text-sm flex items-center gap-1"
           :class="`text-${
-            (level.maximum_capacity ?? 0) - (level.students[0].count ?? 0) > 0
+            (level.maximum_capacity ?? 0) -
+              Number(level?.students?.[0]?.count ?? 0) >
+            0
               ? 'success'
               : 'error'
           }`"
         >
           <div class="font-bold">
-            {{ (level.maximum_capacity ?? 0) - (level.students[0].count ?? 0) }}
+            {{
+              (level.maximum_capacity ?? 0) -
+              Number(level?.students?.[0]?.count ?? 0)
+            }}
           </div>
           <div class="font-semibold">مقعد</div>
         </div>

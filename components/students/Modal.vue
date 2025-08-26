@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type {
+  GradesReport,
   QuranAchievementReport,
   Student,
   StudentModalFlag,
@@ -74,6 +75,25 @@ const getRequiredPages = (report: QuranAchievementReport) =>
   props.selectedStudent?.plan?.months_plans?.find(
     (mp) => mp.month_id === report.month_plan?.month_id
   )?.pages;
+
+const getStatusLabel = (report: GradesReport) => {
+  const scorePercentage =
+    Number(report.score) / Number(report?.exam?.max_score);
+  if (scorePercentage >= 0.9) return "ممتاز";
+  if (scorePercentage >= 0.8) return "جيد جدا";
+  if (scorePercentage >= 0.7) return "جيد";
+  return "ضعيف";
+};
+const getStatusColor = (report: GradesReport) => {
+  const scorePercentage =
+    Number(report.score) / Number(report?.exam?.max_score);
+
+  return scorePercentage >= 0.9
+    ? "success"
+    : scorePercentage >= 0.8
+    ? "warning"
+    : "error";
+};
 </script>
 
 <template>
@@ -263,6 +283,52 @@ const getRequiredPages = (report: QuranAchievementReport) =>
                     :label="report.status"
                   >
                   </UBadge>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p v-else>لم يتم إضافة تقرير درجات بعد</p>
+        </div>
+      </div>
+      <div v-if="selectedFlag === 'exam_results'">
+        <div v-if="selectedStudent?.exam_results?.length" class="text-sm">
+          <div
+            v-if="selectedStudent.exam_results?.length"
+            class="border border-accented rounded-tr-lg rounded-tl-lg"
+          >
+            <h3
+              class="font-bold text-sm text-center py-2 rounded-tr-md rounded-tl-md bg-accented"
+            >
+              تفاصيل درجات الطالب
+            </h3>
+            <div class="px-2">
+              <ul>
+                <li
+                  class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
+                >
+                  <span class="font-bold">نوع الاختبار</span>
+                  <span class="font-bold">المادة</span>
+                  <span class="font-bold">الدرجة</span>
+                  <span class="font-bold">التقييم</span>
+                </li>
+                <li
+                  class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center not-last:border-b border-gray-400 not-last:border-dashed"
+                  v-for="report in selectedStudent.exam_results"
+                  :key="report.id"
+                >
+                  <span>
+                    {{ report.exam?.type.name }}
+                  </span>
+                  <span>
+                    {{ report.subject?.name }}
+                  </span>
+                  <span>
+                    {{ report.score }} / {{ report.exam?.max_score }}
+                  </span>
+                  <UBadge
+                    :color="getStatusColor(report)"
+                    :label="getStatusLabel(report)"
+                  />
                 </li>
               </ul>
             </div>

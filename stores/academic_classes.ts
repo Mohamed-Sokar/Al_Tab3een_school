@@ -4,8 +4,9 @@ import { useStudentStore } from "@/stores/students";
 
 export const useAcademicClassesStore = defineStore("academic_classes", () => {
   const studentsStore = useStudentStore();
-  const teachersStore = useTeachersStore();
+  const employeesStore = useEmployeesStore();
   const client = useSupabaseClient();
+  const isLoaded = ref(false);
   // helper composables
   const { toastError, toastSuccess } = useAppToast();
   // Data
@@ -32,7 +33,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
     try {
       const { data } = await api.get("academic_classes");
 
-      // console.log(data);
+      console.log(data);
       // set levels data to ref locally
       classes.value = data;
       // toastSuccess({
@@ -49,6 +50,28 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
             ? err
             : JSON.stringify(err),
       });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const fetchClassById = async (classId: number) => {
+    try {
+      loading.value = true;
+      const { data, error } = await client
+        .from("academic_classes")
+        .select()
+        .eq("id", classId)
+        .single();
+
+      if (error) {
+        throw Error("حدثت مشكلة أثناء جلب بيانات الصف");
+      }
+      return data;
+    } catch (err) {
+      toastError({
+        title: "حدثت مشكلة أثناء جلب بيانات الصف",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
     } finally {
       loading.value = false;
     }
@@ -199,7 +222,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
       toastSuccess({ title: "تم تعيين الصفوف الدراسية للمعلم بنجاح" });
 
       // تحديث البيانات محليًا إذا لزم الأمر
-      const targetedTeacher = teachersStore.getSpesificTeacher(teacherId);
+      const targetedTeacher = employeesStore.getSpesificEmployee(teacherId);
 
       for (const classId of academicClassesIds) {
         const classIndex = getSpecificClassIndex(classId);
@@ -255,7 +278,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
 
       toastSuccess({ title: "تم إلغاء تعيين الصفوف الدراسية للمعلم بنجاح" });
       // تحديث البيانات محليًا إذا لزم الأمر
-      const targetedTeacher = teachersStore.getSpesificTeacher(teacherId);
+      const targetedTeacher = employeesStore.getSpesificEmployee(teacherId);
 
       for (const classId of academicClassesIds) {
         const classIndex = getSpecificClassIndex(classId);
@@ -340,6 +363,7 @@ export const useAcademicClassesStore = defineStore("academic_classes", () => {
 
     // Actions
     fetchClasses,
+    fetchClassById,
     addClass,
     updateClass,
     deleteClass,

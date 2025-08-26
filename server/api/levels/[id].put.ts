@@ -9,8 +9,9 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await client
     .from("levels")
-    .update(updates)
-    .eq("id", id ?? "")
+    .upsert(updates as any, {
+      onConflict: "id",
+    })
     .select();
 
   if (error) {

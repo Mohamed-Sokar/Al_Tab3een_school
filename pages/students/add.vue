@@ -9,11 +9,10 @@ import type { Student } from "~/types";
 import { useStudentStore } from "@/stores/students";
 
 const studentsStore = useStudentStore();
-const levelsStore = useLevelsStore();
+const { convertArabicToEnglishNumbers } = useNumberConverter();
 const form = ref();
 
 const schema = object({
-  // full_name: string().required("الاسم مطلوب"),
   first_name: string().required("الاسم الأول مطلوب"),
   second_name: string().required("اسم الوالد مطلوب"),
   third_name: string().required("اسم الجد مطلوب"),
@@ -55,10 +54,9 @@ const schema = object({
   memorization_status: string().required("حالة الحفظ مطلوبة"),
   memorized_juz: number().required("الأجزاء المحفوظة مطلوبة"),
   daily_recitation: string().required("التسميع اليومي مطلوب"),
-  // class_group: string().required("الشعبة مطلوبة"),
 });
 
-const newStudentState = reactive<Student>({
+const state = reactive<Student>({
   // id: undefined,
   // full_name: undefined,
   first_name: undefined,
@@ -82,32 +80,38 @@ const newStudentState = reactive<Student>({
 });
 
 const createStudent = async () => {
-  console.log(newStudentState);
-  await studentsStore.addStudent({ ...newStudentState });
+  state.whatsapp_number = convertArabicToEnglishNumbers(state.whatsapp_number);
+  state.phone_number = convertArabicToEnglishNumbers(state.phone_number);
+  state.identity_number = convertArabicToEnglishNumbers(state.identity_number);
+  state.father_identity_number = convertArabicToEnglishNumbers(
+    state.father_identity_number
+  );
+
+  await studentsStore.addStudent({ ...state });
   navigateTo("/students/view");
 };
 const birth_date_string = computed({
   get() {
-    if (!newStudentState.birth_date) return "";
-    if (typeof newStudentState.birth_date === "string") {
+    if (!state.birth_date) return "";
+    if (typeof state.birth_date === "string") {
       // If already in YYYY-MM-DD format, return as is
-      if (/^\d{4}-\d{2}-\d{2}$/.test(newStudentState.birth_date)) {
-        return newStudentState.birth_date;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.birth_date)) {
+        return state.birth_date;
       }
       // Try to parse and format
-      const d = new Date(newStudentState.birth_date);
+      const d = new Date(state.birth_date);
       if (!isNaN(d.getTime())) {
         return d.toISOString().slice(0, 10);
       }
       return "";
     }
-    if (newStudentState.birth_date instanceof Date) {
-      return newStudentState.birth_date.toISOString().slice(0, 10);
+    if (state.birth_date instanceof Date) {
+      return state.birth_date.toISOString().slice(0, 10);
     }
     return "";
   },
   set(val: Date) {
-    newStudentState.birth_date = val;
+    state.birth_date = val;
   },
 });
 </script>
@@ -117,46 +121,45 @@ const birth_date_string = computed({
     <UForm
       ref="form"
       :schema="schema"
-      :state="newStudentState"
+      :state="state"
       class="grid grid-cols-1 lg:grid-cols-2 gap-4"
       @submit="createStudent"
     >
-      <UFormField label="الاسم الأول" name="first_name">
+      <UFormField required label="الاسم الأول" name="first_name">
         <UInput
-          v-model="newStudentState.first_name"
+          v-model="state.first_name"
           placeholder="الاسم الأول"
           label="الاسم الأول"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="الاسم الثاني" name="second_name">
+      <UFormField required label="الاسم الثاني" name="second_name">
         <UInput
-          v-model="newStudentState.second_name"
+          v-model="state.second_name"
           placeholder="الاسم الثاني"
           label="الاسم الثاني"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="الاسم الثالث" name="third_name">
+      <UFormField required label="الاسم الثالث" name="third_name">
         <UInput
-          v-model="newStudentState.third_name"
+          v-model="state.third_name"
           placeholder="الاسم الثالث"
           label="الاسم الثالث"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="الاسم الرابع" name="last_name">
+      <UFormField required label="الاسم الرابع" name="last_name">
         <UInput
-          v-model="newStudentState.last_name"
+          v-model="state.last_name"
           placeholder="الاسم الرابع"
           label="الاسم الرابع"
           class="w-full"
         />
       </UFormField>
-
-      <UFormField label="المستوى الدراسي" name="level_id">
+      <UFormField required label="المستوى الدراسي" name="level_id">
         <USelect
-          v-model="newStudentState.level_id"
+          v-model="state.level_id"
           :items="
             useLevelsStore().levelsData.map((level) => ({
               label: level.title,
@@ -168,50 +171,52 @@ const birth_date_string = computed({
           placeholder="المستوى الدراسي"
         />
       </UFormField>
-
-      <UFormField label="اسم ولي الأمر" name="guardian_name">
+      <UFormField required label="اسم ولي الأمر" name="guardian_name">
         <UInput
-          v-model="newStudentState.guardian_name"
+          v-model="state.guardian_name"
           placeholder="اسم ولي الأمر"
           label="اسم ولي الأمر"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="صلة قرابة ولي الأمر" name="guardian_name_kinship">
+      <UFormField
+        required
+        label="صلة قرابة ولي الأمر"
+        name="guardian_name_kinship"
+      >
         <USelect
           :items="guardian_name_kinship_options"
-          v-model="newStudentState.guardian_name_kinship"
+          v-model="state.guardian_name_kinship"
           placeholder="صلة قرابة ولي الأمر"
           label="صلة قرابة ولي الأمر"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="رقم الواتس" name="whatsapp_number">
+      <UFormField required label="رقم الواتس" name="whatsapp_number">
         <UInput
-          v-model="newStudentState.whatsapp_number"
+          v-model="state.whatsapp_number"
           placeholder="97xxxxxxxxxx"
           label="رقم الواتس"
           class="w-full"
         />
       </UFormField>
-
-      <UFormField label="رقم الهوية" name="identity_number">
+      <UFormField required label="رقم الهوية" name="identity_number">
         <UInput
-          v-model="newStudentState.identity_number"
+          v-model="state.identity_number"
           placeholder="رقم الهوية"
           label="رقم الهوية"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="رقم هوية الأب" name="father_identity_number">
+      <UFormField required label="رقم هوية الأب" name="father_identity_number">
         <UInput
-          v-model="newStudentState.father_identity_number"
+          v-model="state.father_identity_number"
           placeholder="رقم هوية الأب"
           label="رقم هوية الأب"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="تاريخ الميلاد" name="birth_date">
+      <UFormField required label="تاريخ الميلاد" name="birth_date">
         <UInput
           v-model="birth_date_string"
           type="date"
@@ -220,41 +225,40 @@ const birth_date_string = computed({
           icon="heroicons-calendar-days-solid"
         />
       </UFormField>
-      <UFormField label="رقم الجوال" name="phone_number">
+      <UFormField required label="رقم الجوال" name="phone_number">
         <UInput
-          v-model="newStudentState.phone_number"
+          v-model="state.phone_number"
           placeholder="05xxxxxxxx"
           label="رقم الجوال"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="العنوان" name="address">
+      <UFormField required label="العنوان" name="address">
         <UInput
-          v-model="newStudentState.address"
+          v-model="state.address"
           placeholder="العنوان"
           label="العنوان"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="المسجد" name="masjed">
+      <UFormField required label="المسجد" name="masjed">
         <UInput
-          v-model="newStudentState.masjed"
+          v-model="state.masjed"
           placeholder="المسجد"
           label="المسجد"
           class="w-full"
         />
       </UFormField>
-
-      <UFormField label="حالة الحفظ" name="memorization_status">
+      <UFormField required label="حالة الحفظ" name="memorization_status">
         <USelect
-          v-model="newStudentState.memorization_status"
+          v-model="state.memorization_status"
           :items="memorization_status_options"
           type="text"
           class="w-full"
           placeholder="حالة الحفظ"
         />
       </UFormField>
-      <UFormField label="الأجزاء المحفوظة" name="memorized_juz">
+      <UFormField required label="الأجزاء المحفوظة" name="memorized_juz">
         <USelect
           :items="
             Array.from({ length: 30 }, (_, i) => ({
@@ -262,34 +266,34 @@ const birth_date_string = computed({
               value: i + 1,
             }))
           "
-          v-model="newStudentState.memorized_juz"
+          v-model="state.memorized_juz"
           type="number"
           placeholder="الأجزاء المحفوظة"
           label="الأجزاء المحفوظة"
           class="w-full"
         />
       </UFormField>
-      <UFormField label="التسميع اليومي" name="daily_recitation">
+      <UFormField required label="التسميع اليومي" name="daily_recitation">
         <USelect
           :items="daily_recitation_options"
-          v-model="newStudentState.daily_recitation"
+          v-model="state.daily_recitation"
           placeholder="التسميع اليومي"
           label="التسميع اليومي"
           class="w-full"
         />
       </UFormField>
-      <!-- <UFormField label="المستوى الأكاديمي العام" name="academic_level">
+      <!-- <UFormField required label="المستوى الأكاديمي العام" name="academic_level">
         <USelect
-          v-model="newStudentState.academic_level"
+          v-model="state.academic_level"
           :items="academic_level_options"
           placeholder="المستوى الأكاديمي العام"
           label="المستوى الأكاديمي العام"
           class="w-full"
         />
       </UFormField> -->
-      <!-- <UFormField label="الشعبة" name="class_group">
+      <!-- <UFormField required label="الشعبة" name="class_group">
         <UInput
-          v-model="newStudentState.class_group"
+          v-model="state.class_group"
           placeholder="الشعبة"
           label="الشعبة"
           class="w-full"

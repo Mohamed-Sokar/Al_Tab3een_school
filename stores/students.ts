@@ -93,7 +93,8 @@ export const useStudentStore = defineStore("students", () => {
       plan:plans(semester_id, semester:semesters(id, year, name),total_pages, months_plans(id,month_id, month:months(id, name), pages, plan_id)),
       quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id, month_plan:months_plans(id, month_id, month:months(id, name)), achieved_pages, status, created_at),
       level:levels(title),
-      months_fees:student_monthly_fees(id,amount,status,created_at, month:months(id,name))
+      months_fees:student_monthly_fees(id,amount,status,created_at, month:months(id,name)),
+      exam_results:student_exam_results(notes, score, exam:subject_exams(max_score, min_score, type:exam_types(name)), semester:semesters(id, year, name), subject:subjects(id, name))
       `,
           { count: "exact" }
         )
@@ -194,18 +195,17 @@ export const useStudentStore = defineStore("students", () => {
       loading.value = false;
     }
   };
-  const editStudent = async (studentId: string, newStudent: Student) => {
+  const editStudent = async (newStudent: Student) => {
     try {
       loading.value = true;
       const cleaned = removeInvalidFields(newStudent); // 🧹 remove unfound columns in DB
-
-      const { data } = await api.put(`students/${studentId}`, cleaned);
+      const { data } = await api.put(`students/${newStudent.id}`, cleaned);
 
       toastSuccess({
         title: `:تم تحديث بيانات الطالب ${data[0].first_name} ${data[0].last_name} بنجاح`,
       });
       // update student locally
-      const studentIndex = getSpesificStudentIndex(studentId);
+      const studentIndex = getSpesificStudentIndex(String(newStudent.id));
 
       // Keep existing behavioral_issues from old data
       if (studentsData.value && studentIndex !== -1) {
@@ -654,7 +654,8 @@ export const useStudentStore = defineStore("students", () => {
       plan:plans(semester_id, semester:semesters(id, year, name),total_pages, months_plans(id,month_id, month:months(id, name), pages, plan_id)),
       quran_achievement_reports:students_quran_achievement_reports(monthly_plan_id, month_plan:months_plans(id, month_id, month:months(id, name), pages), achieved_pages, status, created_at),
       level:levels(title),
-      months_fees:student_monthly_fees(id,amount,status,created_at, month:months(id,name))
+      months_fees:student_monthly_fees(id,amount,status,created_at, month:months(id,name)),
+      exam_results:student_exam_results(notes, score, exam:subject_exams(max_score, min_score, type:exam_types(name)), semester:semesters(id, year, name), subject:subjects(id, name))
       `
         )
         .eq("id", studentId)
@@ -683,6 +684,7 @@ export const useStudentStore = defineStore("students", () => {
   function removeInvalidFields(student: Student): Partial<Student> {
     const allowedFields = [
       "id",
+      "manager_id",
       "first_name",
       "second_name",
       "third_name",
@@ -691,14 +693,20 @@ export const useStudentStore = defineStore("students", () => {
       "father_identity_number",
       "phone_number",
       "birth_date",
-      "level_id",
       "masjed",
       "address",
       "memorization_status",
       "memorized_juz",
       "daily_recitation",
-      "class_group",
       "created_at",
+      "guardian_name",
+      "guardian_name_kinship",
+      "whatsapp_number",
+      "level_id",
+      "quran_class_id",
+      "academic_class_id",
+      "driver_id",
+      "plan_id",
     ];
 
     return Object.fromEntries(

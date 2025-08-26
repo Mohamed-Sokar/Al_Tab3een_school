@@ -1,34 +1,14 @@
 <script setup lang="ts">
-import type { EmployeeLoan, Payment } from "~/types";
+// import type { EmployeeLoan } from "~/types";
 import { useStudentStore } from "@/stores/students";
-import { useTeachersStore } from "@/stores/teachers";
-import { usePaymentsStore } from "@/stores/paymnets";
-import { useLevelsStore } from "@/stores/levels";
 const studentsStore = useStudentStore();
-const {
-  teachersData,
-  behavioralIssuesTeachersData,
-  // teachersUpsentReportsData,
-  teachersLoansData,
-} = useTeachersStore();
+const employeesStore = useEmployeesStore();
 
-const paymentsStore = usePaymentsStore();
-const { levelsData } = useLevelsStore();
-const totalPayments = computed(() =>
-  paymentsStore.totalExpense.reduce((sum: any, payment: Payment) => {
-    if (payment.type_id === 2) {
-      return (sum += payment.amount);
-    } else {
-      return (sum -= payment.amount ?? 0);
-    }
-  }, 0)
-);
-const totalEmployeeLoans = computed(() =>
-  teachersLoansData.reduce((sum: any, loan: EmployeeLoan) => {
-    return (sum += +loan.amount);
-  }, 0)
-);
-const studentsGradeAvarage = computed(() => "91.5%");
+// const totalEmployeeLoans = computed(() =>
+//   employeesStore.loansData.reduce((sum: any, loan: EmployeeLoan) => {
+//     return (sum += Number(loan.amount));
+//   }, 0)
+// );
 </script>
 
 <template>
@@ -77,7 +57,7 @@ const studentsGradeAvarage = computed(() => "91.5%");
       <HomeCard
         to="/teachers/view/loans"
         title="مجموع سلف المدرسين"
-        :value="totalEmployeeLoans"
+        :value="1000"
         color="warning"
         icon-name="i-heroicons-currency-dollar"
         :loading="studentsStore.loading"
@@ -93,7 +73,7 @@ const studentsGradeAvarage = computed(() => "91.5%");
       <HomeCard
         to="/teachers/view/behavioral_issues"
         title="مجموع المخالفات الإدارية للمعلمين"
-        :value="behavioralIssuesTeachersData.length"
+        :value="employeesStore.sortedIssues.length"
         color="error"
         icon-name="i-heroicons-exclamation-triangle"
         :loading="studentsStore.loading"

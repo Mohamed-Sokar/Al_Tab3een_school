@@ -4,7 +4,7 @@ import {
   guardian_name_kinship_options,
   daily_recitation_options,
 } from "~/constants";
-import type { Student } from "~/types";
+import type { GradesReport, Student } from "~/types";
 import { useStudentStore } from "@/stores/students";
 
 // init
@@ -42,7 +42,28 @@ const state = reactive<Student>({
   behavioral_issues: undefined,
   months_fees: undefined,
   quran_achievement_reports: undefined,
+  exam_results: undefined,
 });
+
+// Actions
+const getStatusLabel = (report: GradesReport) => {
+  const scorePercentage =
+    Number(report.score) / Number(report?.exam?.max_score);
+  if (scorePercentage >= 0.9) return "ممتاز";
+  if (scorePercentage >= 0.8) return "جيد جدا";
+  if (scorePercentage >= 0.7) return "جيد";
+  return "ضعيف";
+};
+const getStatusColor = (report: GradesReport) => {
+  const scorePercentage =
+    Number(report.score) / Number(report?.exam?.max_score);
+
+  return scorePercentage >= 0.9
+    ? "success"
+    : scorePercentage >= 0.8
+    ? "warning"
+    : "error";
+};
 
 // studentsStore.getSpesificStudent(studentId)
 const createdAtString = computed({
@@ -69,7 +90,6 @@ const createdAtString = computed({
     state.created_at = val;
   },
 });
-
 const birth_date_string = computed({
   get() {
     if (!state.birth_date) return "";
@@ -186,7 +206,6 @@ onMounted(async () => {
                 class="w-full"
               />
             </UFormField>
-
             <UFormField label="رقم الهوية" name="identity_number">
               <UInput
                 disabled
@@ -252,7 +271,6 @@ onMounted(async () => {
                 class="w-full"
               />
             </UFormField>
-
             <UFormField label="المستوى الدراسي" name="level_id">
               <USelect
                 disabled
@@ -268,7 +286,38 @@ onMounted(async () => {
                 placeholder="المستوى الدراسي"
               />
             </UFormField>
-
+            <UFormField label="الشعبة الدراسية" name="academic_class_id">
+              <USelect
+                disabled
+                class="w-full"
+                icon="i-heroicons-presentation-chart-bar"
+                v-model="state.academic_class_id"
+                :items="[
+                  { label: 'الكل', value: undefined },
+                  ...useAcademicClassesStore().classesData.map((c) => ({
+                    label: `${c.title} - شعبة ${c.group}`,
+                    value: c.id,
+                  })),
+                ]"
+                placeholder="اختر الشعبة الدراسية"
+              />
+            </UFormField>
+            <UFormField label="الشعبة القرآنية" name="quran_class_id">
+              <USelect
+                disabled
+                class="w-full"
+                icon="i-lucide-book-open"
+                v-model="state.quran_class_id"
+                :items="[
+                  { label: 'الكل', value: undefined },
+                  ...useQuranClassesStore().classesData.map((c) => ({
+                    label: `${c.title} - شعبة ${c.group}`,
+                    value: c.id,
+                  })),
+                ]"
+                placeholder="اختر الشعبة القرآنية"
+              />
+            </UFormField>
             <UFormField label="حالة الحفظ" name="memorization_status">
               <USelect
                 disabled
@@ -351,7 +400,7 @@ onMounted(async () => {
               <h3
                 class="font-bold text-sm text-center py-2 rounded-tr-md rounded-tl-md bg-accented"
               >
-                تفاصيل الصف القرآني
+                تفاصيل الصف الدراسي
               </h3>
               <div class="px-2">
                 <ul>
@@ -488,6 +537,64 @@ onMounted(async () => {
             </div>
           </div>
           <p v-else>لم يتم إضافة تقارير إنجاز قرآني بعد</p>
+        </UCard>
+      </div>
+      <!-- student exams grades reports -->
+      <div class="border-b border-dashed border-accented pb-10">
+        <h2 class="text-xl mb-5 font-bold text-info">تقارير درجات الطالب</h2>
+        <UCard>
+          <div v-if="state?.exam_results?.length" class="text-sm">
+            <div class="border border-accented rounded-tr-lg rounded-tl-lg">
+              <h3
+                class="font-bold text-sm text-center py-2 rounded-tr-md rounded-tl-md bg-accented"
+              >
+                تفاصيل درجات الطالب
+              </h3>
+              <div class="px-2">
+                <ul>
+                  <li
+                    class="grid grid-cols-4 justify-between items-center gap-2 border-b py-2 place-items-center"
+                  >
+                    <span class="font-bold">نوع الاختبار</span>
+                    <span class="font-bold">المادة</span>
+                    <span class="font-bold">الدرجة</span>
+                    <span class="font-bold">التقييم</span>
+                  </li>
+                  <li
+                    class="grid grid-cols-4 justify-between items-center gap-2 py-2 place-items-center not-last:border-b border-gray-400 not-last:border-dashed"
+                    v-for="report in state.exam_results"
+                    :key="report.id"
+                  >
+                    <span>
+                      {{ report.exam?.type.name }}
+                    </span>
+                    <span>
+                      {{ report.subject?.name }}
+                    </span>
+                    <span>
+                      {{ report.score }} / {{ report.exam?.max_score }}
+                    </span>
+                    <UBadge
+                      :color="getStatusColor(report)"
+                      :label="getStatusLabel(report)"
+                    />
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="mt-5">
+              <span class="font-bold text-md">عدد التقارير: </span>
+              <UBadge
+                color="neutral"
+                variant="subtle"
+                label=""
+                class="font-bold"
+              >
+                {{ state?.exam_results?.length }}
+              </UBadge>
+            </div>
+          </div>
+          <p v-else>لم يتم إضافة تقارير درجات بعد</p>
         </UCard>
       </div>
       <!-- student Fees reports -->

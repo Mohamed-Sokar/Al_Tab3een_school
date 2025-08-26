@@ -1,32 +1,22 @@
-import type { StudentBehavioralIssue, EmployeeLoan, Filters } from "~/types";
+import type { EmployeeAbsenceReport, Filters } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
-export const useStudentBehavioralIssues = defineStore(
-  "studentBehavioralIssues",
+export const useEmployeeAbsenceReport = defineStore(
+  "employeeAbsenceReport",
   () => {
     // init
     const client = useSupabaseClient();
     const { toastSuccess, toastError } = useAppToast();
 
     // state
-    const reports = ref<StudentBehavioralIssue[]>([]);
+    const reports = ref<EmployeeAbsenceReport[]>([]);
     const reportsCount = ref(0);
     const loading = ref(false);
 
     // Getters
     const reportsData = computed(() => reports.value);
     const reportsCountData = computed(() => reportsCount.value);
-    const sortedReports = computed(() => {
-      return reportsData.value
-        .slice()
-        .sort((a: BehavioralIssue, b: BehavioralIssue) => {
-          // Convert created_at strings to Date objects, default to a very old date if null/undefined
-          const dateA = a.created_at ? new Date(a.created_at) : new Date(0); // Epoch if null
-          const dateB = b.created_at ? new Date(b.created_at) : new Date(0); // Epoch if null
-          return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
-        });
-    });
 
     // Actions
     /**
@@ -66,42 +56,30 @@ export const useStudentBehavioralIssues = defineStore(
         loading.value = true;
         // !inner => so important -> only returns records that match both tables filters
         let query = client
-          .from("students_behavioral_issues")
+          .from("employees_absence")
           .select(
-            `id, student_id, created_at, description,
-          student:students!inner(id, first_name, second_name, third_name, last_name, identity_number, academic_class_id, academic_class:academic_classes(id, title, group), level_id, level:levels(id,title))
+            `id, employee_id, created_at, date, reason, excuse_status,
+          employee:employees!inner(id, first_name, second_name, third_name, last_name, job_title)
           `,
             { count: "exact" }
           )
-          .order("id", { ascending: false });
+          .order("created_at", { ascending: false });
 
-        // Apply academic_class_id filter using a subquery
-        if (filters?.academicClassFilter) {
-          query = query.eq(
-            "student.academic_class_id",
-            filters?.academicClassFilter
-          );
-        }
-        if (filters?.levelFilter) {
-          query = query.eq("student.level_id", filters?.levelFilter);
-        }
+        // Apply firstName
         if (filters?.firstNameFilter) {
-          query = query.eq("student.first_name", filters?.firstNameFilter);
+          query = query.eq("employee.first_name", filters?.firstNameFilter);
         }
         if (filters?.secondNameFilter) {
-          query = query.eq("student.second_name", filters?.secondNameFilter);
+          query = query.eq("employee.second_name", filters?.secondNameFilter);
         }
         if (filters?.thirdNameFilter) {
-          query = query.eq("student.third_name", filters?.thirdNameFilter);
+          query = query.eq("employee.third_name", filters?.thirdNameFilter);
         }
         if (filters?.lastNameFilter) {
-          query = query.eq("student.last_name", filters?.lastNameFilter);
+          query = query.eq("employee.last_name", filters?.lastNameFilter);
         }
-        if (filters?.identityNumberFilter) {
-          query = query.eq(
-            "student.identity_number",
-            filters?.identityNumberFilter
-          );
+        if (filters?.jobTitleFilter) {
+          query = query.eq("employee.job_title", filters?.jobTitleFilter);
         }
 
         const { count, error: countError } = await query;
@@ -120,11 +98,11 @@ export const useStudentBehavioralIssues = defineStore(
         }
 
         if (forceRefresh) {
-          reports.value = data as BehavioralIssue[];
+          reports.value = data as EmployeeAbsenceReport[];
         } else {
           // دمج البيانات الجديدة مع القديمة (تجنب التكرار باستخدام id)
           const existingIds = new Set(reports.value.map((report) => report.id));
-          const newData = (data as BehavioralIssue[]).filter(
+          const newData = (data as EmployeeAbsenceReport[]).filter(
             (report) => !existingIds.has(report.id)
           );
           // set reports data
@@ -146,7 +124,7 @@ export const useStudentBehavioralIssues = defineStore(
         // const { data, status } = await api.get(`students/behavioral-issues/${reportId}`);
 
         let { data, error } = await client
-          .from("students_behavioral_issues")
+          .from("employees_absence")
           .select("id, description")
           .eq("id", Number(reportId));
 
@@ -157,7 +135,9 @@ export const useStudentBehavioralIssues = defineStore(
           throw Error("مشكلة في السيرفر");
         }
 
-        return data && data.length > 0 ? (data[0] as BehavioralIssue) : null;
+        return data && data.length > 0
+          ? (data[0] as EmployeeAbsenceReport)
+          : null;
 
         // toastSuccess({
         //   title: `:تم جلب الخطة بنجاح`,
@@ -176,12 +156,12 @@ export const useStudentBehavioralIssues = defineStore(
     const getSpesificReportIndex = (reportId: number) => {
       return reports.value?.findIndex((report) => report.id === reportId);
     };
-    const saveBehavioralIssue = async (report: StudentBehavioralIssue) => {
+    const saveEmployeeAbsenceReport = async (report: EmployeeAbsenceReport) => {
       try {
         loading.value = true;
 
         const { data, error } = await client
-          .from("students_behavioral_issues")
+          .from("employees_absence")
           .upsert(report as any, { onConflict: "id" })
           .select();
 
@@ -189,12 +169,12 @@ export const useStudentBehavioralIssues = defineStore(
           throw new Error(error.message);
         }
 
-        // update loan locally
+        // update report locally
         const reportIdx = getSpesificReportIndex(Number(report.id));
         if (reportIdx !== -1) {
           reports.value[reportIdx] = {
             ...reports.value[reportIdx],
-            ...(data[0] as EmployeeLoan),
+            ...(data[0] as EmployeeAbsenceReport),
           };
         }
 
@@ -208,40 +188,13 @@ export const useStudentBehavioralIssues = defineStore(
         loading.value = false;
       }
     };
-    // const updateBehavioralIssue = async (report: BehavioralIssue) => {
-    //   try {
-    //     const { data, error } = await client
-    //       .from("students_behavioral_issues")
-    //       .upsert(report as any)
-    //       .select();
 
-    //     if (error) {
-    //       throw new Error(error.message);
-    //     }
-
-    //     // update report locally
-    //     const targetedReportIndex = getSpesificReportIndex(report.id ?? 0);
-
-    //     reports.value[targetedReportIndex] = {
-    //       ...reports.value[targetedReportIndex],
-    //       ...(data[0] as BehavioralIssue),
-    //     };
-
-    //     toastSuccess({ title: "تم تحديث التقرير بنجاح" });
-    //   } catch (err) {
-    //     toastError({
-    //       title: "خطأ في تحديث التقرير",
-    //       description: (err as Error).message || "حدث خطأ غير متوقع",
-    //     });
-    //     throw err;
-    //   }
-    // };
     const deleteReport = async (reportId: number) => {
       try {
         loading.value = true;
 
         const { error } = await client
-          .from("students_behavioral_issues")
+          .from("employees_absence")
           .delete()
           .eq("id", reportId);
 
@@ -269,16 +222,13 @@ export const useStudentBehavioralIssues = defineStore(
 
       // Getters
       reportsData,
-      sortedReports,
       reportsCountData,
 
       // reports operations
       fetchReports,
       getReportById,
-      // getReportsCount,
 
-      saveBehavioralIssue,
-      // updateBehavioralIssue,
+      saveEmployeeAbsenceReport,
       deleteReport,
 
       getSpesificReport,

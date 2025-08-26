@@ -28,12 +28,13 @@ interface Student {
   academic_class?: Class | undefined;
   quran_class?: Class | undefined;
   driver?: Driver | undefined;
-  behavioral_issues?: Array<BehavioralIssue> | undefined;
+  behavioral_issues?: Array<StudentBehavioralIssue> | undefined;
   plan?: Plan | undefined;
   plan_id?: number | undefined;
   academic_class_id?: number | undefined;
   quran_class_id?: number | undefined;
   quran_achievement_reports?: QuranAchievementReport[] | undefined;
+  exam_results?: GradesReport[] | undefined; // Added for student exam results
   months_fees?: FeesReport[] | undefined;
 }
 
@@ -54,6 +55,7 @@ export interface Filters {
   secondNameFilter?: string | undefined;
   thirdNameFilter?: string | undefined;
   lastNameFilter?: string | undefined;
+  jobTitleFilter?: string | undefined;
 
   statusFilter?: string | undefined;
 
@@ -73,6 +75,7 @@ type StudentModalFlag =
   | "plan"
   | "assign_plan"
   | "fees"
+  | "exam_results"
   | "assign_driver";
 
 interface SelectOption {
@@ -93,7 +96,6 @@ interface StudentMonthlyAchievements {
 interface Employee {
   id?: string | undefined;
   manager_id?: string | undefined | null;
-  // full_name?: string | undefined;
   first_name: string | undefined;
   second_name: string | undefined;
   third_name: string | undefined;
@@ -104,25 +106,20 @@ interface Employee {
   masjed: string | undefined;
   job_title: string | undefined;
   whatsapp_number: string | undefined;
+  salary: string | undefined;
   enrollment_date: Date | undefined;
   children_count?: string | undefined;
   marital_status: "متزوج" | "أعزب" | "مطلق" | "أرمل" | undefined;
   birth_date: Date | undefined;
   subject: string[] | undefined;
-  level_id: number | undefined;
   created_at?: string | undefined | Date;
-  salary: number | undefined;
 
-  behavioral_issues?: Array<BehavioralIssueEmployee> | undefined;
-  supervisory_visits?: Array<SupervisoryVisitTeacher> | undefined;
+  administrative_issues?: Array<AdministrativeIssueEmployee> | undefined;
+  supervisory_visits?: Array<EmployeeSupervisoryVisit> | undefined;
   loans?: Array<EmployeeLoan> | undefined;
   absence?: Array<EmployeeAbsenceReport> | undefined;
   academic_classes?: Class[] | undefined;
   salaries?: EmployeeSalaryReport[] | undefined;
-
-  // behavioral_issues_count?: number | undefined;
-  // loans_count?: number | undefined;
-  // loans_amount?: number | undefined;
 }
 
 interface Payment {
@@ -225,15 +222,7 @@ interface QuranAchievementReport {
   monthly_plan?: MonthlyPlan;
   created_at?: Date;
 }
-type StudentBehavioralIssue = {
-  first_name: string | undefined;
-  last_name: string | undefined;
-  class: {
-    title: string | undefined;
-    group: string | undefined;
-  };
-};
-interface BehavioralIssue {
+interface StudentBehavioralIssue {
   rowNumber?: number | undefined; // For display purposes, not in the database
   id?: number | undefined;
   created_at?: string | undefined | Date;
@@ -242,23 +231,17 @@ interface BehavioralIssue {
   description: string | undefined;
 }
 
-interface BehavioralIssueEmployee {
+interface AdministrativeIssueEmployee {
   id: number | undefined;
-  teacher_id: string | undefined;
-  employee?: {
-    first_name: string | undefined;
-    last_name: string | undefined;
-  };
-  description: string | undefined;
+  employee_id: string | undefined;
+  employee?: Employee;
+  description?: string | undefined;
   created_at?: string | undefined | Date;
 }
-interface SupervisoryVisitTeacher {
+interface EmployeeSupervisoryVisit {
   id?: number | undefined;
-  teacher_id?: string | undefined;
-  teacher?: {
-    first_name: string | undefined;
-    last_name: string | undefined;
-  };
+  employee_id?: string | undefined;
+  employee?: Employee;
   notes: string | undefined;
   supervisor: string | undefined;
   date: Date | undefined;
@@ -288,11 +271,8 @@ interface EmployeeLoan {
 
 interface EmployeeAbsenceReport {
   id?: number | undefined;
-  teacher_id?: string | undefined;
-  employee?: {
-    first_name: string | undefined;
-    last_name: string | undefined;
-  };
+  employee_id?: string | undefined;
+  employee?: Employee;
   date?: Date | undefined;
   created_at?: Date | undefined;
   reason: string | undefined;
@@ -311,14 +291,23 @@ interface Subject {
   id?: number | undefined;
   name: string | undefined;
 }
-
+interface Exam {
+  max_score: number;
+  min_score: number;
+  type: ExamType;
+}
 interface GradesReport {
   id?: number | undefined;
   student_id: string | undefined;
-  semester_id: number | undefined;
-  academic_class_id: number | undefined;
-  subject_exam_id: number | undefined;
-  subject_id: number | undefined;
+  exam: Exam | undefined;
+  notes: string | undefined;
+  semester: Semester | undefined;
+  semester_id?: number | undefined;
+  academic_class_id?: number | undefined;
+  academic_class?: Class | undefined;
+  subject_exam_id?: number | undefined;
+  subject_id?: number | undefined;
+  subject?: Subject | undefined;
   score: number | undefined;
 }
 
@@ -352,7 +341,7 @@ interface Grade {
 interface Level {
   id?: number | undefined;
   title: string | undefined;
-  students: [{ count: number }];
+  students?: [{ count: number }];
   fees: number | undefined;
   maximum_capacity: number | undefined;
 }
@@ -370,9 +359,9 @@ export type {
   Plan,
   MonthlyPlan,
   SelectOption,
-  BehavioralIssue,
-  BehavioralIssueEmployee,
-  SupervisoryVisitTeacher,
+  StudentBehavioralIssue,
+  AdministrativeIssueEmployee,
+  EmployeeSupervisoryVisit,
   GradesReport,
   Payment,
   Employee,

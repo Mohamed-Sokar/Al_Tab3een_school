@@ -23,7 +23,7 @@
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="teachersStore.loading"
+          :loading="employeesStore.loading"
         />
         <UButton
           variant="soft"
@@ -39,16 +39,16 @@
 
 <script setup lang="ts">
 import { number, object } from "yup";
-import { useTeachersStore } from "@/stores/teachers";
+// import { useemployeesStore } from "@/stores/teachers";
 
-const teachersStore = useTeachersStore();
+const employeesStore = useEmployeesStore();
 
 const form = ref();
 const route = useRoute();
 const loanId =
   route.params.id instanceof Array ? route.params.id[0] : route.params.id ?? 0;
 
-const targetedLoan = teachersStore.getSpesificTeacherLoan(+loanId);
+const targetedLoan = employeesStore.getSpesificLoan(+loanId);
 
 const schema = object({
   amount: number().required("قيمة السلفة مطلوبة"),
@@ -59,10 +59,8 @@ const state = reactive({
 });
 
 const onSubmit = () => {
-  // add issue to database
-  teachersStore.editTeacherLoan(+loanId, state.amount || 0);
-
-  navigateTo({ name: "teachers-view-loans" });
+  employeesStore.editLoan(+loanId, state.amount || 0);
+  navigateTo({ name: "employees-view-loans" });
 };
 </script>
 

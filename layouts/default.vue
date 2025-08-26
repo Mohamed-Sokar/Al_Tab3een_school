@@ -59,7 +59,7 @@ useHead({
 
 const studentsStore = useStudentStore();
 const paymentsStore = usePaymentsStore();
-const teachersStore = useTeachersStore();
+const employeesStore = useEmployeesStore();
 const levelsStore = useLevelsStore();
 const academicClassesStore = useAcademicClassesStore();
 const quranClassesStore = useQuranClassesStore();
@@ -73,18 +73,18 @@ onMounted(async () => {
   await gradesReportStore.fetchSubjects();
   // await supabase.auth.updateUser({ password: "Aboomar2939036!" });
   // await studentsStore.fetchBehavioralIssues();
-  await studentsStore.fetchStudents();
+  // await studentsStore.fetchStudents();
   await levelsStore.fetchLevels();
   await academicClassesStore.fetchClasses();
   // await plansStore.fetchPlans();
   await quranClassesStore.fetchClasses();
   // await driversStore.fetchDrivers();
   // await paymentsStore.fetchReports();
-  await teachersStore.fetchTeachers();
-  await teachersStore.fetchAbsenceReports();
-  await teachersStore.fetchTeachersLoans();
-  await teachersStore.fetchTeachersBehavioralIssues();
-  await teachersStore.fetchSupervisoryVisits();
+  // await employeesStore.fetchEmployees();
+  // await employeesStore.fetchAbsenceReports();
+  // await employeesStore.fetchLoans();
+  // await employeesStore.fetchAdministrativeIssues();
+  // await employeesStore.fetchSupervisoryVisits();
 });
 
 // import { useStudentStore } from "@/stores/students";

@@ -166,12 +166,20 @@ const columns: TableColumn<Student>[] = [
         return "لم يتم تعيين خطة عامة بعد";
       }
 
+      const currentMonthAchvReport = student.quran_achievement_reports?.find(
+        (report) => {
+          return report.month_plan?.month?.id === currentMonth.value;
+        }
+      );
       const currentMonthPlan = student.plan?.months_plans?.find((plan) => {
         return plan.month_id === currentMonth.value;
       });
 
       if (!currentMonthPlan) {
         return "لم يتم تعيين خطة لهذا الشهر";
+      }
+      if (!currentMonthAchvReport) {
+        return "لم يتم إضافة تقرير إنجاز قرآني لهذا الشهر";
       }
 
       const requiredPages = currentMonthPlan?.pages;
@@ -206,6 +214,28 @@ const columns: TableColumn<Student>[] = [
           },
         },
         () => status
+      );
+    },
+  },
+  {
+    accessorKey: "exam_results",
+    header: "نتائج الامتحانات",
+    cell: ({ row }) => {
+      const exam_results = row.original.exam_results || [];
+      return h(
+        UBadge,
+        {
+          class: `capitalize hover:cursor-pointer hover:outline ${
+            exam_results.length > 0 ? "font-bold" : "font-normal"
+          } `,
+          variant: `${exam_results.length > 0 ? "subtle" : "soft"}`,
+          color: `neutral`,
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation();
+            showBasedModal("exam_results", row.original);
+          },
+        },
+        () => `${exam_results.length} درجة`
       );
     },
   },
@@ -638,7 +668,6 @@ watch(
     >
       <!-- Students table -->
       <BaseTable
-        v-model:global-filter="globalFilter"
         v-model:row-selection="rowSelection"
         v-model:sorting="sorting"
         :loading="studentsStore.loading"

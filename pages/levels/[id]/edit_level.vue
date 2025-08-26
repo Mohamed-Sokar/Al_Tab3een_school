@@ -1,3 +1,38 @@
+<script setup lang="ts">
+import { object, string, number } from "yup";
+import { level_options } from "~/constants";
+import type { Level } from "~/types";
+import { useLevelsStore } from "@/stores/levels";
+
+const levelsStore = useLevelsStore();
+
+const schema = object({
+  title: string().required("الصف الدراسي مطلوب"),
+  maximum_capacity: number().required("السعة القصوى مطلوبة"),
+  fees: number().required("الرسوم مطلوبة"),
+});
+
+const state = reactive<Level>({
+  title: undefined,
+  maximum_capacity: undefined,
+  fees: undefined,
+});
+
+const route = useRoute();
+const form = ref();
+const levelId =
+  route.params.id instanceof Array ? +route.params.id[0] : +route.params.id;
+
+const updateLevel = async () => {
+  await levelsStore.updateLevel(levelId, state);
+  navigateTo({ name: "levels" });
+};
+onMounted(async () => {
+  const level = await levelsStore.fetchLevelById(levelId);
+  Object.assign(state, level);
+});
+</script>
+
 <template>
   <UCard class="max-w-3xl mx-auto mt-15">
     <UForm
@@ -35,7 +70,7 @@
         />
       </UFormField>
 
-      <div class="col-span-2 flex gap-2 mt-5">
+      <div class="lg:col-span-2 flex gap-2 mt-5">
         <UButton
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
@@ -54,42 +89,3 @@
     </UForm>
   </UCard>
 </template>
-
-<script setup lang="ts">
-import { object, string, number } from "yup";
-import { level_options } from "~/constants";
-import type { Level } from "~/types";
-import { useLevelsStore } from "@/stores/levels";
-
-const levelsStore = useLevelsStore();
-
-const schema = object({
-  title: string().required("الصف الدراسي مطلوب"),
-  maximum_capacity: number().required("السعة القصوى مطلوبة"),
-  fees: number().required("الرسوم مطلوبة"),
-});
-
-const state = reactive<Level>({
-  // id: undefined,
-  title: undefined,
-  maximum_capacity: undefined,
-  fees: undefined,
-  // studentsCount: undefined,
-});
-
-const route = useRoute();
-const form = ref();
-const levelId =
-  route.params.id instanceof Array ? +route.params.id[0] : +route.params.id;
-
-const targetedLevel = levelsStore.getSpecificLevel(levelId);
-
-Object.assign(state, targetedLevel);
-
-const updateLevel = async () => {
-  await levelsStore.updateLevel(levelId, state);
-  navigateTo({ name: "levels" });
-};
-</script>
-
-<style scoped></style>

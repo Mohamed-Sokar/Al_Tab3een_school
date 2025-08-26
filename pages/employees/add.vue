@@ -6,8 +6,9 @@ import {
   marital_status_options,
 } from "~/constants";
 import type { Employee } from "~/types";
-import { useTeachersStore } from "@/stores/teachers";
-const teachersStore = useTeachersStore();
+
+const employeesStore = useEmployeesStore();
+const { convertArabicToEnglishNumbers } = useNumberConverter();
 
 const form = ref();
 
@@ -28,6 +29,12 @@ const schema = object({
     .matches(
       /^[0-9٠-٩]{12}$/,
       "يجب إدخال 12 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
+  salary: string()
+    .required("الراتب مطلوب")
+    .matches(
+      /^[0-9٠-٩]+$/,
+      "يجب إدخال أرقام صحيحة فقط بالأرقام العربية أو الإنجليزية"
     ),
   phone_number: string()
     .required("رقم الجوال مطلوب")
@@ -63,10 +70,18 @@ const state = reactive<Employee>({
   children_count: undefined,
   marital_status: undefined,
   address: undefined,
+  salary: undefined,
 });
 
 const createTeacher = async () => {
-  await teachersStore.addTeacher(state);
+  state.whatsapp_number = convertArabicToEnglishNumbers(state.whatsapp_number);
+  state.phone_number = convertArabicToEnglishNumbers(state.phone_number);
+  state.identity_number = convertArabicToEnglishNumbers(state.identity_number);
+  state.children_count = convertArabicToEnglishNumbers(state.children_count);
+  state.salary = convertArabicToEnglishNumbers(state.salary);
+
+  console.log(state);
+  await employeesStore.addEmployee(state);
   navigateTo({ name: "employees-view" });
 };
 
@@ -257,13 +272,16 @@ const enrollment_date_string = computed({
           placeholder="المواد التي يتم تدريسها"
         />
       </UFormField>
+      <UFormField label="الراتب" name="salary">
+        <UInput v-model="state.salary" class="w-full" placeholder="الراتب" />
+      </UFormField>
 
       <div class="lg:col-span-2 flex gap-2 mt-5">
         <UButton
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          :loading="teachersStore.loading"
+          :loading="employeesStore.loading"
           label="إضافة"
         />
         <UButton

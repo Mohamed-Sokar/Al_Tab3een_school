@@ -15,7 +15,7 @@ const pageCountOptions = [1, 5, 10, 20, 50];
 
 // state
 const pageNum = ref(1);
-const pageSize = ref(5);
+const pageSize = ref(10);
 
 // watches
 watch(pageSize, () => {

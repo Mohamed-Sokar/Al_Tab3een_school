@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { object, string } from "yup";
-import { useTeachersStore } from "@/stores/teachers";
+// import { useemployeesStore } from "@/stores/teachers";
 
-const teachersStore = useTeachersStore();
+const employeesStore = useEmployeesStore();
 
 const route = useRoute();
 const form = ref();
-const teacherId = Array.isArray(route.params.id)
+const employeeId = Array.isArray(route.params.id)
   ? route.params.id[0]
   : route.params.id ?? "";
 
@@ -20,11 +20,11 @@ const state = reactive({
 
 const onSubmit = async () => {
   // add issue to database
-  await teachersStore.addTeacherBehavioralIssue(
-    teacherId,
+  await employeesStore.addAdministrativeIssue(
+    employeeId,
     state.description + ""
   );
-  navigateTo({ name: "teachers-view-behavioral_issues" });
+  // navigateTo({ name: "employees-view-behavioral-issues" });
 };
 </script>
 
@@ -53,13 +53,13 @@ const onSubmit = async () => {
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
-          :loading="teachersStore.loading"
+          :loading="employeesStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'teachers-view-teachers_table' })"
+          @click="navigateTo({ name: 'employees-view' })"
           label="إلغاء"
         />
       </div>

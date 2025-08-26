@@ -1,11 +1,13 @@
 import type { Level } from "~/types";
 import { defineStore } from "pinia";
 import { useStudentStore } from "@/stores/students";
+import { config } from "zod/v4";
 
 export const useLevelsStore = defineStore("levels", () => {
   const studentsStore = useStudentStore();
   // helper composables
   const { toastError, toastSuccess } = useAppToast();
+  const client = useSupabaseClient();
   // Data
   const levels = ref<Level[]>([]);
   const loading = ref(false);
@@ -33,6 +35,7 @@ export const useLevelsStore = defineStore("levels", () => {
       // console.log("levels: ", data);
       // set levels data to ref locally
       levels.value = data;
+      console.log(data);
       // toastSuccess({
       //   title: "تم تحميل المستويات بنجاح",
       // });
@@ -94,13 +97,13 @@ export const useLevelsStore = defineStore("levels", () => {
   const updateLevel = async (levelId: number, newLevel: Level) => {
     try {
       loading.value = true;
+      const {} = newLevel;
+      console.log(newLevel);
       const { data } = await api.put(`levels/${levelId}`, newLevel);
 
       toastSuccess({
         title: `:تم تحديث بيانات المستوى بنجاح`,
       });
-
-      // console.log(data);
 
       // update level locally
       const levelIndex = getSpecificLevelIndex(levelId);
@@ -116,6 +119,28 @@ export const useLevelsStore = defineStore("levels", () => {
         title: "حدث مشكلة في تعديل بيانات المستوى",
         description: (err as Error).message,
       });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const fetchLevelById = async (levelId: number) => {
+    try {
+      loading.value = true;
+      const { data, error } = await client
+        .from("levels")
+        .select()
+        .eq("id", levelId)
+        .single();
+
+      if (error) {
+        throw Error("حدثت مشكلة أثناء جلب بيانات المستوى");
+      }
+      return data;
+    } catch (err) {
+      toastError({
+        title: "حدثت مشكلة أثناء جلب بيانات المستوى",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
     } finally {
       loading.value = false;
     }
@@ -136,6 +161,7 @@ export const useLevelsStore = defineStore("levels", () => {
 
     // Actions
     fetchLevels,
+    fetchLevelById,
     addLevel,
     updateLevel,
     deleteLevel,

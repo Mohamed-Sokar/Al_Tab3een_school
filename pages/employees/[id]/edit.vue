@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { array, date, object, string } from "yup";
 import { courses_options, marital_status_options } from "~/constants";
-import { type Teacher } from "~/types";
-import { useTeachersStore } from "@/stores/teachers";
+import { type Employee } from "~/types";
 
-const teachersStore = useTeachersStore();
+const employeesStore = useEmployeesStore();
 
 const schema = object({
   first_name: string().required("الاسم الأول مطلوب"),
@@ -38,7 +37,7 @@ const schema = object({
   marital_status: string().required("الحالة الاجتماعية مطلوبة"),
 });
 
-const state = reactive<Teacher>({
+const state = reactive<Employee>({
   first_name: undefined,
   second_name: undefined,
   third_name: undefined,
@@ -62,13 +61,13 @@ const teacherId = Array.isArray(route.params.id)
   ? route.params.id[0]
   : route.params.id ?? "";
 
-const targetedTeacher = ref<Teacher | undefined>(
-  teachersStore.getSpesificTeacher(teacherId)
+const targetedTeacher = ref<Employee | undefined>(
+  employeesStore.getSpesificEmployee(teacherId)
 );
 
 watchEffect(() => {
-  if (teachersStore.sortedTeachers.length > 0) {
-    targetedTeacher.value = teachersStore.getSpesificTeacher(teacherId);
+  if (employeesStore.sortedEmployees.length > 0) {
+    targetedTeacher.value = employeesStore.getSpesificEmployee(teacherId);
 
     const teacherData = { ...targetedTeacher.value };
     console.log(teacherData);
@@ -87,8 +86,8 @@ watchEffect(() => {
 
 const updateTeacher = async () => {
   console.log(state);
-  await teachersStore.updateTeacher(teacherId, state);
-  navigateTo({ name: "teachers-view-teachers_table" });
+  await employeesStore.updateEmployee(teacherId, state);
+  navigateTo({ name: "employees-view" });
 };
 
 const birth_date_string = computed({
@@ -265,14 +264,14 @@ const enrollment_date_string = computed({
           type="submit"
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          :loading="teachersStore.loading"
+          :loading="employeesStore.loading"
           label="تعديل"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'teachers-view-teachers_table' })"
+          @click="navigateTo({ name: 'employees-view' })"
           label="إلغاء"
         />
       </div>

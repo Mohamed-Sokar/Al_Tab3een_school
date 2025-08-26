@@ -5,7 +5,7 @@ import {
   type Semester,
   type Employee,
   type EmployeeSalaryReport,
-  type EmployeeSalaryReportFilters,
+  type Filters,
 } from "~/types";
 import { months } from "@/constants";
 
@@ -13,7 +13,7 @@ import { months } from "@/constants";
 useHead({ title: "إضافة راتب موظف" });
 
 // init
-const employeesStore = useTeachersStore();
+const employeesStore = useEmployeesStore();
 const gradesStore = useGradsStore();
 const salariesStore = useSalariesStore();
 const { toastError, toastSuccess } = useAppToast();
@@ -22,7 +22,7 @@ const schema = object({
   semesterFilter: number().required("الفصل الدراسي مطلوب"),
 });
 
-const filters = reactive<EmployeeSalaryReportFilters>({
+const filters = reactive<Filters>({
   monthFilter: undefined,
   semesterFilter: undefined,
 });
@@ -54,8 +54,8 @@ const search = async () => {
     employeesCount.value = Number(await employeesStore.getEmployeesCount());
 
     // Bring employees
-    await employeesStore.fetchTeachers(filters, true);
-    employees.value = employeesStore.teachersData;
+    await employeesStore.fetchEmployees(filters, true);
+    employees.value = employeesStore.employeesData;
 
     // prepare reports array
     reports.value = employees.value.map((employee: Employee) => {

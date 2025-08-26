@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { object, string, date } from "yup";
-import { useTeachersStore } from "@/stores/teachers";
+// import { useemployeesStore } from "@/stores/teachers";
 import type { SupervisoryVisitTeacher } from "~/types";
 
-const teachersStore = useTeachersStore();
+const employeesStore = useEmployeesStore();
 // const { getDate } = useDateUtils();
 const route = useRoute();
 const form = ref();
@@ -26,8 +26,8 @@ const state = reactive<SupervisoryVisitTeacher>({
 });
 
 const onSubmit = async () => {
-  await teachersStore.addSupervisoryVisit(teacherId, state);
-  navigateTo({ name: "teachers-view-supervisory_visits" });
+  await employeesStore.addSupervisoryVisit(teacherId, state);
+  // navigateTo({ name: "employees-view-supervisory_visits" });
 };
 
 const date_string = computed({
@@ -71,8 +71,8 @@ const date_string = computed({
       <UFormField label="المشرف الزائر" name="supervisor">
         <UInput
           v-model="state.supervisor"
-          placeholder="أدخل وصف المشرف الزائر..."
-          label="وصف المشرف الزائر"
+          placeholder="أدخل المشرف الزائر..."
+          label="المشرف الزائر"
           class="w-full mt-2"
         />
       </UFormField>
@@ -100,13 +100,13 @@ const date_string = computed({
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
-          :loading="teachersStore.loading"
+          :loading="employeesStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'teachers-view-teachers_table' })"
+          @click="navigateTo({ name: 'employees-view' })"
           label="إلغاء"
         />
       </div>

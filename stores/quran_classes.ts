@@ -4,6 +4,7 @@ import { useStudentStore } from "@/stores/students";
 
 export const useQuranClassesStore = defineStore("quran_classes", () => {
   const studentsStore = useStudentStore();
+  const client = useSupabaseClient();
   // helper composables
   const { toastError, toastSuccess } = useAppToast();
   // Data
@@ -48,6 +49,28 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
             ? err
             : JSON.stringify(err),
       });
+    } finally {
+      loading.value = false;
+    }
+  };
+  const fetchClassById = async (classId: number) => {
+    try {
+      loading.value = true;
+      const { data, error } = await client
+        .from("quran_classes")
+        .select()
+        .eq("id", classId)
+        .single();
+
+      if (error) {
+        throw Error("حدثت مشكلة أثناء جلب بيانات الصف");
+      }
+      return data;
+    } catch (err) {
+      toastError({
+        title: "حدثت مشكلة أثناء جلب بيانات الصف",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
     } finally {
       loading.value = false;
     }
@@ -191,6 +214,7 @@ export const useQuranClassesStore = defineStore("quran_classes", () => {
 
     // Actions
     fetchClasses,
+    fetchClassById,
     addClass,
     updateClass,
     deleteClass,

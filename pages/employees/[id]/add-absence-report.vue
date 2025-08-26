@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { object, string, date, bool } from "yup";
-import { useTeachersStore } from "@/stores/teachers";
-import type { TeacherAbsenceReport } from "~/types";
+import type { EmployeeAbsenceReport } from "~/types";
 
-const teachersStore = useTeachersStore();
+const employeeStore = useEmployeesStore();
 
 const route = useRoute();
 const form = ref();
@@ -19,15 +18,15 @@ const schema = object({
   excuse_status: string().required("حالة العذر مطلوبة"),
 });
 
-const state = reactive<TeacherAbsenceReport>({
+const state = reactive<EmployeeAbsenceReport>({
   reason: undefined,
-  date: undefined,
+  date: new Date(),
   excuse_status: excuse_status_options[0],
 });
 
 const onSubmit = async () => {
-  await teachersStore.addTeacherAbsenceReport(teacherId, state);
-  navigateTo({ name: "teachers-view-absence" });
+  await employeeStore.addAbsenceReport(teacherId, state);
+  // navigateTo({ name: "employees-view-absence" });
 };
 
 const date_string = computed({
@@ -99,13 +98,13 @@ const date_string = computed({
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
-          :loading="teachersStore.loading"
+          :loading="employeeStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'teachers-view-teachers_table' })"
+          @click="navigateTo({ name: 'employees-view' })"
           label="إلغاء"
         />
       </div>

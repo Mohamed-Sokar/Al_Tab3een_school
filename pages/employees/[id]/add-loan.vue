@@ -26,7 +26,7 @@ const state = reactive<EmployeeLoan>({
 
 const onSubmit = async () => {
   await loansStore.saveLoanReport(state);
-  navigateTo({ name: "financial-employee-loans" });
+  // navigateTo({ name: "financial-employee-loans" });
 };
 
 const date_string = computed({
@@ -133,7 +133,7 @@ const date_string = computed({
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'financial-employee-loans' })"
+          @click="navigateTo({ name: 'employees-view' })"
           label="إلغاء"
         />
       </div>

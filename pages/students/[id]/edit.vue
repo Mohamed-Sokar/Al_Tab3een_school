@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { object, string, number } from "yup";
+import { object, string, number, date } from "yup";
 import {
   memorization_status_options,
   guardian_name_kinship_options,
@@ -9,8 +9,9 @@ import { type Student } from "~/types";
 import { useStudentStore } from "@/stores/students";
 
 const studentsStore = useStudentStore();
+const { convertArabicToEnglishNumbers } = useNumberConverter();
+
 const schema = object({
-  // full_name: string().required("الاسم مطلوب"),
   first_name: string().required("الاسم الأول مطلوب"),
   second_name: string().required("اسم الوالد مطلوب"),
   third_name: string().required("اسم الجد مطلوب"),
@@ -19,24 +20,28 @@ const schema = object({
   guardian_name_kinship: string().required("صلة قرابة ولي الأمر مطلوبة"),
   whatsapp_number: string()
     .required("رقم الواتس مطلوب")
-    .matches(/^\d{12}$/, "رقم الواتس يجب أن يتكون من 12 أرقام"),
+    .matches(/^[0-9٠-٩]{12}$/, "رقم الواتس يجب أن يتكون من 12 أرقام"),
   identity_number: string()
     .required("رقم الهوية مطلوب")
-    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+    .matches(
+      /^[0-9٠-٩]{9}$/,
+      "يجب إدخال 9 رقمًا فقط بالأرقام العربية أو الإنجليزية"
+    ),
   father_identity_number: string()
     .required("رقم هوية الأب مطلوب")
-    .matches(/^\d{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
+    .matches(/^[0-9٠-٩]{9}$/, "رقم الهوية يجب أن يتكون من 9 أرقام"),
   phone_number: string()
     .required("رقم الجوال مطلوب")
-    .matches(/^\d{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
-  birth_date: string().required("تاريخ الميلاد مطلوب"),
+    .matches(/^[0-9٠-٩]{10}$/, "رقم الجوال يجب أن يتكون من 10 أرقام"),
+  birth_date: date().required("تاريخ الميلاد مطلوب"),
   address: string().required("العنوان مطلوب"),
   masjed: string().required("المسجد مطلوب"),
   level_id: number().required("الصف الدراسي مطلوب"),
+  academic_class_id: number().required("الشعبة الدراسية مطلوبة"),
+  quran_class_id: number().required("الشعبة القرآنية مطلوبة"),
   memorization_status: string().required("حالة الحفظ مطلوبة"),
   memorized_juz: number().required("الأجزاء المحفوظة مطلوبة"),
   daily_recitation: string().required("التسميع اليومي مطلوب"),
-  // class_group: string().required("الشعبة مطلوبة"),
 });
 const state = reactive<Student>({
   id: undefined,
@@ -65,30 +70,46 @@ const studentId = Array.isArray(route.params.id)
   ? route.params.id[0]
   : route.params.id;
 
-const targetedStudent = ref<Student | undefined>(
-  studentsStore.getSpesificStudent(studentId)
-);
-
-watchEffect(() => {
-  if (studentsStore.sortedStudents.length > 0) {
-    targetedStudent.value = studentsStore.getSpesificStudent(studentId);
-    console.log(targetedStudent.value);
-    Object.assign(state, targetedStudent.value);
-  }
-});
-
-const fetchStudent = async () => {
-  targetedStudent.value = await studentsStore.getSpesificStudent(studentId);
-  Object.assign(state, targetedStudent.value);
-};
-
 const updateStudent = async () => {
-  console.log(state);
-  await studentsStore.editStudent(studentId, state);
+  state.whatsapp_number = convertArabicToEnglishNumbers(state.whatsapp_number);
+  state.phone_number = convertArabicToEnglishNumbers(state.phone_number);
+  state.identity_number = convertArabicToEnglishNumbers(state.identity_number);
+  state.father_identity_number = convertArabicToEnglishNumbers(
+    state.father_identity_number
+  );
+  await studentsStore.editStudent(state);
   navigateTo({ name: "students-view-students_table" });
 };
+
+const birth_date_string = computed({
+  get() {
+    if (!state.birth_date) return "";
+    if (typeof state.birth_date === "string") {
+      // If already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.birth_date)) {
+        return state.birth_date;
+      }
+      // Try to parse and format
+      const d = new Date(state.birth_date);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
+      return "";
+    }
+    if (state.birth_date instanceof Date) {
+      return state.birth_date.toISOString().slice(0, 10);
+    }
+    return "";
+  },
+  set(val: Date) {
+    state.birth_date = val;
+  },
+});
+
 onMounted(async () => {
-  await fetchStudent();
+  const student = await studentsStore.fetchStudentById(studentId);
+  Object.assign(state, student);
+  // console.log("Fetched student:", state);
 });
 </script>
 
@@ -101,7 +122,7 @@ onMounted(async () => {
       class="grid grid-cols-1 lg:grid-cols-2 gap-4"
       @submit="updateStudent"
     >
-      <UFormField label="الاسم الأول" name="first_name">
+      <UFormField required label="الاسم الأول" name="first_name">
         <UInput
           v-model="state.first_name"
           placeholder="الاسم الأول"
@@ -109,7 +130,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="الاسم الثاني" name="second_name">
+      <UFormField required label="الاسم الثاني" name="second_name">
         <UInput
           v-model="state.second_name"
           placeholder="الاسم الثاني"
@@ -117,7 +138,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="الاسم الثالث" name="third_name">
+      <UFormField required label="الاسم الثالث" name="third_name">
         <UInput
           v-model="state.third_name"
           placeholder="الاسم الثالث"
@@ -125,7 +146,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="الاسم الرابع" name="last_name">
+      <UFormField required label="الاسم الرابع" name="last_name">
         <UInput
           v-model="state.last_name"
           placeholder="الاسم الرابع"
@@ -133,7 +154,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="اسم ولي الأمر" name="guardian_name">
+      <UFormField required label="اسم ولي الأمر" name="guardian_name">
         <UInput
           v-model="state.guardian_name"
           placeholder="اسم ولي الأمر"
@@ -141,7 +162,11 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="صلة قرابة ولي الأمر" name="guardian_name_kinship">
+      <UFormField
+        required
+        label="صلة قرابة ولي الأمر"
+        name="guardian_name_kinship"
+      >
         <USelect
           :items="guardian_name_kinship_options"
           v-model="state.guardian_name_kinship"
@@ -150,7 +175,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="رقم الواتس" name="whatsapp_number">
+      <UFormField required label="رقم الواتس" name="whatsapp_number">
         <UInput
           v-model="state.whatsapp_number"
           type="number"
@@ -159,8 +184,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-
-      <UFormField label="رقم الهوية" name="identity_number">
+      <UFormField required label="رقم الهوية" name="identity_number">
         <UInput
           v-model="state.identity_number"
           placeholder="رقم الهوية"
@@ -168,7 +192,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="رقم هوية الأب" name="father_identity_number">
+      <UFormField required label="رقم هوية الأب" name="father_identity_number">
         <UInput
           v-model="state.father_identity_number"
           placeholder="رقم هوية الأب"
@@ -176,16 +200,16 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="تاريخ الميلاد" name="birth_date">
+      <UFormField required label="تاريخ الميلاد" name="birth_date">
         <UInput
-          v-model="state.birth_date"
+          v-model="birth_date_string"
           type="date"
           class="w-full"
           placeholder="تاريخ الميلاد"
           icon="heroicons-calendar-days-solid"
         />
       </UFormField>
-      <UFormField label="رقم الجوال" name="phone_number">
+      <UFormField required label="رقم الجوال" name="phone_number">
         <UInput
           v-model="state.phone_number"
           placeholder="05xxxxxxxx"
@@ -193,7 +217,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="العنوان" name="address">
+      <UFormField required label="العنوان" name="address">
         <UInput
           v-model="state.address"
           placeholder="العنوان"
@@ -201,7 +225,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="المسجد" name="masjed">
+      <UFormField required label="المسجد" name="masjed">
         <UInput
           v-model="state.masjed"
           placeholder="المسجد"
@@ -209,8 +233,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-
-      <UFormField label="المستوى الدراسي" name="level_id">
+      <UFormField required label="المستوى الدراسي" name="level_id">
         <USelect
           v-model="state.level_id"
           :items="
@@ -224,8 +247,37 @@ onMounted(async () => {
           placeholder="المستوى الدراسي"
         />
       </UFormField>
-
-      <UFormField label="حالة الحفظ" name="memorization_status">
+      <UFormField required label="الشعبة الدراسية" name="academic_class_id">
+        <USelect
+          class="w-full"
+          icon="i-heroicons-presentation-chart-bar"
+          v-model="state.academic_class_id"
+          :items="[
+            { label: 'الكل', value: undefined },
+            ...useAcademicClassesStore().classesData.map((c) => ({
+              label: `${c.title} - شعبة ${c.group}`,
+              value: c.id,
+            })),
+          ]"
+          placeholder="اختر الشعبة الدراسية"
+        />
+      </UFormField>
+      <UFormField required label="الشعبة القرآنية" name="quran_class_id">
+        <USelect
+          class="w-full"
+          icon="i-lucide-book-open"
+          v-model="state.quran_class_id"
+          :items="[
+            { label: 'الكل', value: undefined },
+            ...useQuranClassesStore().classesData.map((c) => ({
+              label: `${c.title} - شعبة ${c.group}`,
+              value: c.id,
+            })),
+          ]"
+          placeholder="اختر الشعبة القرآنية"
+        />
+      </UFormField>
+      <UFormField required label="حالة الحفظ" name="memorization_status">
         <USelect
           v-model="state.memorization_status"
           :items="memorization_status_options"
@@ -234,7 +286,7 @@ onMounted(async () => {
           placeholder="حالة الحفظ"
         />
       </UFormField>
-      <UFormField label="الأجزاء المحفوظة" name="memorized_juz">
+      <UFormField required label="الأجزاء المحفوظة" name="memorized_juz">
         <USelect
           :items="
             Array.from({ length: 30 }, (_, i) => ({
@@ -249,7 +301,7 @@ onMounted(async () => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="التسميع اليومي" name="daily_recitation">
+      <UFormField required label="التسميع اليومي" name="daily_recitation">
         <USelect
           :items="daily_recitation_options"
           v-model="state.daily_recitation"

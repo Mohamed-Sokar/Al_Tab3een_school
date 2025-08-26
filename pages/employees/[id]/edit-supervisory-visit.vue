@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { object, string, date } from "yup";
-import { useTeachersStore } from "@/stores/teachers";
+// import { useemployeesStore } from "@/stores/teachers";
 import type { SupervisoryVisitTeacher } from "~/types";
 
-const teachersStore = useTeachersStore();
+const employeesStore = useEmployeesStore();
 // const { getDate } = useDateUtils();
 const route = useRoute();
 const form = ref();
@@ -27,12 +27,12 @@ const state = reactive<SupervisoryVisitTeacher>({
 });
 
 const targetedVisit = ref<SupervisoryVisitTeacher | undefined>(
-  teachersStore.getSpesificSupervisorVisit(+route.params.id)
+  employeesStore.getSpesificSupervisorVisit(+route.params.id)
 );
 
 watchEffect(() => {
-  if (teachersStore.supervisoryVisitsTeachersData.length > 0) {
-    targetedVisit.value = teachersStore.getSpesificSupervisorVisit(
+  if (employeesStore.supervisoryVisits.length > 0) {
+    targetedVisit.value = employeesStore.getSpesificSupervisorVisit(
       +route.params.id
     );
     console.log(targetedVisit.value);
@@ -41,8 +41,8 @@ watchEffect(() => {
 });
 
 const onSubmit = async () => {
-  await teachersStore.editSupervisorVisits(+visitId, state);
-  navigateTo({ name: "teachers-view-supervisory_visits" });
+  await employeesStore.editSupervisorVisits(+visitId, state);
+  navigateTo({ name: "employees-view-supervisory-visits" });
 };
 
 const date_string = computed({
@@ -115,13 +115,13 @@ const date_string = computed({
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="teachersStore.loading"
+          :loading="employeesStore.loading"
         />
         <UButton
           variant="soft"
           class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
-          @click="navigateTo({ name: 'teachers-view-teachers_table' })"
+          @click="navigateTo({ name: 'employees-view-supervisory-visits' })"
           label="إلغاء"
         />
       </div>
