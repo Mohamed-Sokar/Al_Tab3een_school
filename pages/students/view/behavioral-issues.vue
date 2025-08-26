@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import type { BehavioralIssue, Filters } from "~/types";
-import { months } from "~/constants";
-import { useStudentStore } from "@/stores/students";
+import type { Filters, StudentBehavioralIssue } from "~/types";
 
 // init
 const { getArabicDayName, getDate } = useDateUtils();
-const studentsStore = useStudentStore();
 const behavioralIssuesStore = useStudentBehavioralIssues();
 const { exportToExcel } = useExportToExcel();
 
-// state
+// State
 const pageNum = ref(1); // current page
 const pageSize = ref(5); // rows per page
 const filters = reactive<Filters>({
@@ -24,9 +21,10 @@ const filters = reactive<Filters>({
 });
 const rowSelection = ref({});
 const table = ref();
+const paginationRef = ref();
 
 // Data
-const columns: TableColumn<BehavioralIssue>[] = [
+const columns: TableColumn<StudentBehavioralIssue>[] = [
   {
     accessorKey: "الرقم",
     header: "الرقم",
@@ -105,7 +103,9 @@ const exportIssues = () => {
     sheetName: "المخالفات السلوكية",
   });
 };
-function getDropdownActions(report: BehavioralIssue): DropdownMenuItem[][] {
+function getDropdownActions(
+  report: StudentBehavioralIssue
+): DropdownMenuItem[][] {
   return [
     [
       {
@@ -127,12 +127,14 @@ function getDropdownActions(report: BehavioralIssue): DropdownMenuItem[][] {
   ];
 }
 const onSubmit = async () => {
+  pageNum.value = 1;
   await behavioralIssuesStore.fetchReports(
     pageNum.value,
     pageSize.value,
     filters,
     true
   );
+  paginationRef.value?.resetPage();
 };
 const onReset = async () => {
   filters.academicClassFilter = undefined;
@@ -162,6 +164,7 @@ const totalPages = computed(() => {
       : 1
   );
 });
+
 // pagination rows
 const rows = computed(() => {
   const start = (pageNum.value - 1) * pageSize.value;
@@ -181,6 +184,7 @@ const rows = computed(() => {
     />
 
     <BasePagination
+      ref="paginationRef"
       :total-pages="totalPages"
       @update:page-num="pageNum = $event"
       @update:page-size="pageSize = $event"

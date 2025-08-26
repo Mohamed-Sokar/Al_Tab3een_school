@@ -2,7 +2,7 @@ import type {
   Employee,
   EmployeeAbsenceReport,
   EmployeeLoan,
-  SupervisoryVisitEmployee,
+  EmployeeSupervisoryVisit,
   Filters,
   AdministrativeIssueEmployee,
 } from "~/types";
@@ -16,7 +16,7 @@ export const useEmployeesStore = defineStore("employees", () => {
   const employeesCount = ref(0);
   const loading = ref(false);
   const behavioralIssues = ref<AdministrativeIssueEmployee[]>([]);
-  const supervisoryVisits = ref<SupervisoryVisitEmployee[]>([]);
+  const supervisoryVisits = ref<EmployeeSupervisoryVisit[]>([]);
   // const loans = ref<EmployeeLoan[]>([]);
   const absenceReports = ref<EmployeeAbsenceReport[]>([]);
 
@@ -54,12 +54,15 @@ export const useEmployeesStore = defineStore("employees", () => {
   // Main Actions
   const fetchEmployees = async (
     pageNum: number = 1,
-    pageSize: number = 5,
+    pageSize: number = 10,
     filters?: Filters,
     forceRefresh: boolean = false
   ) => {
     const start = (pageNum - 1) * pageSize; // بداية النطاق
     const end = start + pageSize - 1; // نهاية النطاق
+
+    console.log("start", start);
+    console.log("end", end);
     // Check if any filter is applied
     const isFilterApplied =
       filters?.firstNameFilter ||

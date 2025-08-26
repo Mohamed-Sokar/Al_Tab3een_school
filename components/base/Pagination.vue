@@ -10,19 +10,33 @@ const emits = defineEmits<{
   (e: "update:pageSize", pageSize: number): void;
 }>();
 
-// data
-const pageCountOptions = [1, 5, 10, 20, 50];
+// Data
+const pageCountOptions = [1, 2, 5, 10, 20, 50];
 
-// state
+// State
 const pageNum = ref(1);
 const pageSize = ref(10);
 
-// watches
+// Watches
 watch(pageSize, () => {
   emits("update:pageSize", pageSize.value);
 });
 watch(pageNum, async () => {
   emits("update:pageNum", pageNum.value);
+});
+
+// expose reset method
+defineExpose({
+  resetPage,
+});
+
+// Method to reset page number
+function resetPage() {
+  pageNum.value = 1;
+}
+
+watch(pageSize, () => {
+  pageNum.value = 1;
 });
 </script>
 <template>
@@ -75,5 +89,3 @@ watch(pageNum, async () => {
     </div>
   </div>
 </template>
-
-<style scoped></style>

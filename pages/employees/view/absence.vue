@@ -74,6 +74,7 @@ const filters = reactive<Filters>({
   lastNameFilter: undefined,
   jobTitleFilter: undefined,
 });
+const paginationRef = ref();
 
 // Actions
 const exportReports = () => {
@@ -114,13 +115,14 @@ function getDropdownActions(report: EmployeeAbsenceReport): DropdownMenuItem[] {
   ];
 }
 const applyFilters = async () => {
+  pageNum.value = 1;
   await absenceReportsStore.fetchReports(
     pageNum.value,
     pageSize.value,
     filters,
     true
   );
-  pageNum.value = 1;
+  paginationRef.value?.resetPage();
 };
 const resetFilters = () => {
   Object.assign(filters, {
@@ -189,6 +191,7 @@ watch(pageNum, async () => {
     />
     <!-- End Filters -->
     <BasePagination
+      ref="paginationRef"
       :total-pages="totalPages"
       @update:page-num="pageNum = $event"
       @update:page-size="pageSize = $event"

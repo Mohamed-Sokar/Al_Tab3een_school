@@ -74,6 +74,7 @@ const filters = reactive<Filters>({
   lastNameFilter: undefined,
   jobTitleFilter: undefined,
 });
+const paginationRef = ref();
 
 // Watches
 watch(pageSize, () => {
@@ -127,8 +128,9 @@ function getDropdownActions(
   ];
 }
 const applyFilters = async () => {
-  await issuesStore.fetchReports(pageNum.value, pageSize.value, filters, true);
   pageNum.value = 1;
+  await issuesStore.fetchReports(pageNum.value, pageSize.value, filters, true);
+  paginationRef.value?.resetPage();
 };
 const resetFilters = () => {
   Object.assign(filters, {
@@ -178,6 +180,7 @@ const selectedIssues = computed(() =>
     />
     <!-- End Filters -->
     <BasePagination
+      ref="paginationRef"
       :total-pages="totalPages"
       @update:page-num="pageNum = $event"
       @update:page-size="pageSize = $event"

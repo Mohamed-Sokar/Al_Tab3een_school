@@ -14,52 +14,46 @@ export const usePlansStore = defineStore("plans", () => {
   const loading = ref(false);
   const tableKey = ref(Math.random());
 
-  // const fetchPlans = async () => {
-  //   try {
-  //     if (plansIsLoaded.value) return; // تجنب الجلب أكثر من مرة
-  //     loading.value = true;
-
-  //     const { data } = await api.get("/plans");
-  //     // set payments data to ref locally
-  //     plans.value = data;
-  //     // toastSuccess({
-  //     //   title: "تم تحميل الخطط بنجاح",
-  //     // });
-  //     plansIsLoaded.value = true;
-  //     tableKey.value = Math.random();
-  //   } catch (err) {
-  //     toastError({
-  //       title: "حدث مشكلة أثناء تحميل الخطط",
-  //     });
-  //     throw Error(err instanceof Error ? err.message : String(err));
-  //   } finally {
-  //     loading.value = false;
-  //   }
-  // };
-
   const fetchPlans = async (
-    // pageNum: number = 1,
-    // pageSize: number = 10,
+    pageNum: number = 1,
+    pageSize: number = 10,
     filters?: Filters,
     forceRefresh: boolean = false
   ): Promise<void> => {
-    // const start = (pageNum - 1) * pageSize;
-    // const end = start + pageSize - 1;
+    const start = (pageNum - 1) * pageSize; // بداية النطاق
+    const end = start + pageSize - 1; // نهاية النطاق
+    // Check if any filter is applied
+    // const isFilterApplied =
+    //   filters?.firstNameFilter ||
+    //   filters?.secondNameFilter ||
+    //   filters?.thirdNameFilter ||
+    //   filters?.lastNameFilter ||
+    //   filters?.jobTitleFilter;
 
+    // Force refresh if filters are applied or forceRefresh is explicitly true
+    // const shouldForceRefresh = forceRefresh || isFilterApplied;
     const shouldForceRefresh = forceRefresh;
 
     if (!shouldForceRefresh) {
-      // التحقق مما إذا كانت البيانات موجودة بالفعل
-      const hasEnoughData = plansData.value.length > 0;
-      if (hasEnoughData) return;
+      console.log("force Refresh", forceRefresh);
+      const hasEnoughData = plans.value.length > start;
+      if (hasEnoughData) {
+        const slicedData = plans.value.slice(start, end + 1);
+        if (slicedData.length >= Math.min(pageSize, plansCount.value - start)) {
+          console.log(`Using cached data for page ${pageNum}`);
+          return;
+        }
+      }
     }
+
     try {
       loading.value = true;
 
       let query = client
         .from("plans")
         .select(
-          "*, months_plans(id,month:months(id, name), pages, month_id), semester:semesters(id,name,year), level:levels(title)"
+          "*, months_plans(id,month:months(id, name), pages, month_id), semester:semesters(id,name,year), level:levels(title)",
+          { count: "exact" }
         )
         .order("total_pages", { ascending: false });
 
@@ -74,49 +68,37 @@ export const usePlansStore = defineStore("plans", () => {
         query = query.eq("level_id", filters.levelFilter);
       }
 
+      const { count, error: countError } = await query;
+      if (countError) {
+        throw createError({ statusCode: 500, message: countError.message });
+      }
+      plansCount.value = count || 0;
+
+      // apply pagination
+      query = query.range(start, end);
+
       const { data, error } = await query;
       console.log(data);
       if (error) {
         throw new Error(error.message);
       }
-
-      // set data to plans ref
-      plans.value = data as Plan[];
+      if (forceRefresh) {
+        plans.value = data as Plan[];
+      } else {
+        // دمج البيانات الجديدة مع القديمة (تجنب التكرار باستخدام id)
+        const existingIds = new Set(plans.value.map((plan) => plan.id));
+        const newData = (data as Plan[]).filter(
+          (plan) => !existingIds.has(plan.id)
+        );
+        // set plans data
+        plans.value = [...plans.value, ...newData];
+      }
     } catch (err) {
       toastError({
         title: "خطأ في جلب الخطط",
         description: (err as Error).message || "حدث خطأ غير متوقع",
       });
       plans.value = [];
-    } finally {
-      loading.value = false;
-    }
-  };
-  const getPlansCount = async (filters?: Filters): Promise<void> => {
-    try {
-      loading.value = true;
-      let query = client
-        .from("plans")
-        .select("*", { count: "exact", head: true });
-
-      // Apply filtering based on students_type, academic_class_id and semester_id
-      if (filters?.semesterFilter) {
-        query = query.eq("semester_id", filters.semesterFilter);
-      }
-      if (filters?.studentsTypeFilter) {
-        query = query.eq("students_type", filters.studentsTypeFilter);
-      }
-      if (filters?.levelFilter) {
-        query = query.eq("level_id", filters.levelFilter);
-      }
-      const { count, error } = await query;
-
-      if (error) {
-        throw createError({ statusCode: 500, message: error.message });
-      }
-      plansCount.value = count || 0;
-    } catch (err) {
-      toastError({ title: "خطأ في جلب عدد الخطط" });
     } finally {
       loading.value = false;
     }
@@ -489,33 +471,33 @@ export const usePlansStore = defineStore("plans", () => {
     }
   };
   // helper methods
-  function removeInvalidFields(plan: Plan): Partial<Plan> {
-    const allowedFields = [
-      "id",
-      "stage",
-      "total_pages",
-      "semester",
-      "students_type",
-      "year",
-      "created_at",
-    ];
+  // function removeInvalidFields(plan: Plan): Partial<Plan> {
+  //   const allowedFields = [
+  //     "id",
+  //     "stage",
+  //     "total_pages",
+  //     "semester",
+  //     "students_type",
+  //     "year",
+  //     "created_at",
+  //   ];
 
-    return Object.fromEntries(
-      Object.entries(plan).filter(([key]) => allowedFields.includes(key))
-    );
-  }
+  //   return Object.fromEntries(
+  //     Object.entries(plan).filter(([key]) => allowedFields.includes(key))
+  //   );
+  // }
   // Getters
   const plansData = computed(() => plans.value);
   const monthsPlansData = computed(() => monthsPlans.value);
-
+  const plansCountData = computed(() => plansCount.value);
   return {
     // data
     plans,
+    plansCountData,
     loading,
     tableKey,
     // Actions
     fetchPlans,
-    getPlansCount,
     fetchMonthsPlans,
     addPlan,
     addMonthlyPlan,

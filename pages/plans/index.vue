@@ -91,6 +91,8 @@ const filters = reactive<Filters>({
   levelFilter: undefined,
 });
 const expanded = ref<Record<number, boolean>>({ 0: true });
+// ref to pagination component
+const paginationRef = ref();
 
 // Actions
 function getDropdownActions(plan: Plan): DropdownMenuItem[][] {
@@ -157,9 +159,11 @@ function expandRow(planId: number = -1) {
     expanded.value = {};
   }
 }
-const search = async () => {
-  await plansStore.fetchPlans(filters, true);
+const applyFilters = async () => {
+  pageNum.value = 1;
+  await plansStore.fetchPlans(pageNum.value, pageSize.value, filters, true);
   expandRow(-1);
+  paginationRef.value?.resetPage();
 };
 
 // Computed
@@ -199,11 +203,42 @@ watch(
 //     { immediate: true }
 //   );
 // });
+
 const sortedMonthPlans = (monthPlans: MonthlyPlan[]) => {
   return monthPlans.sort((a, b) => {
     return (a.month_id ?? 0) - (b.month_id ?? 0);
   });
 };
+
+const updateRows = async () => {
+  await plansStore.fetchPlans(pageNum.value, pageSize.value, filters);
+};
+
+const pageNum = ref(1); // current page
+const pageSize = ref(10); // rows per page
+
+const totalPages = computed(() => {
+  return Math.ceil(
+    plansStore.plansCountData > 0
+      ? Math.ceil(plansStore.plansCountData / pageSize.value)
+      : 1
+  );
+});
+
+const rows = computed(() => {
+  const start = (pageNum.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return numberedPlans.value.slice(start, end);
+});
+
+// Watches
+watch(pageSize, () => {
+  pageNum.value = 1;
+});
+// reset rowSelection when pageNum is changed
+watch(pageNum, async () => {
+  updateRows();
+});
 </script>
 
 <template>
@@ -223,7 +258,12 @@ const sortedMonthPlans = (monthPlans: MonthlyPlan[]) => {
     </BaseHeader>
 
     <!-- Start filters -->
-    <UForm :schema="schema" :state="filters" class="space-y-4" @submit="search">
+    <UForm
+      :schema="schema"
+      :state="filters"
+      class="space-y-4"
+      @submit="applyFilters"
+    >
       <div class="w-full grid md:grid-cols-2 xl:grid-cols-3 gap-3 my-5">
         <UFormField label="الفصل الدراسي" name="semesterFilter" size="md">
           <USelect
@@ -277,97 +317,105 @@ const sortedMonthPlans = (monthPlans: MonthlyPlan[]) => {
       </div>
     </UForm>
 
-    <UTable
-      v-model:expanded="expanded"
-      :data="numberedPlans"
-      :columns="columns"
-      :loading="plansStore.loading"
-      :ui="{ tr: 'data-[expanded=true]:bg-elevated/50' }"
-      class="flex-1 border mt-10 border-gray-300 dark:border-gray-700 rounded-tr-md rounded-tl-md"
+    <BasePagination
+      ref="paginationRef"
+      :total-pages="totalPages"
+      @update:page-num="pageNum = $event"
+      @update:page-size="pageSize = $event"
     >
-      <template #expanded="{ row }">
-        <div
-          class="flex items-center justify-center"
-          v-if="row.original.months_plans?.length"
-        >
+      <UTable
+        v-model:expanded="expanded"
+        :data="rows"
+        :columns="columns"
+        :loading="plansStore.loading"
+        :ui="{ tr: 'data-[expanded=true]:bg-elevated/50' }"
+        class="flex-1 border mt-10 border-gray-300 dark:border-gray-700 rounded-tr-md rounded-tl-md"
+      >
+        <template #expanded="{ row }">
           <div
-            class="flex flex-col items-center justify-center gap-3 max-w-3xl"
+            class="flex items-center justify-center"
+            v-if="row.original.months_plans?.length"
           >
             <div
-              class="border border-gray-300 dark:border-gray-700 rounded-tr-lg rounded-tl-lg max-w-3xl md:min-w-2xl lg:min-w-3xl"
+              class="flex flex-col items-center justify-center gap-3 max-w-3xl"
             >
-              <li
-                class="grid grid-cols-4 gap-4 font-bold place-items-center border-b border-gray-300 dark:border-gray-700 p-2"
+              <div
+                class="border border-gray-300 dark:border-gray-700 rounded-tr-lg rounded-tl-lg max-w-3xl md:min-w-2xl lg:min-w-3xl"
               >
-                <div>الرقم</div>
-                <div>الشهر</div>
-                <div>عدد الصفحات</div>
-                <div>العمليات</div>
-              </li>
-              <ul class="px-4">
                 <li
-                  v-for="(month_plan, index) in sortedMonthPlans(
-                    row.original.months_plans
-                  )"
-                  :key="month_plan.id"
-                  class="grid grid-cols-4 gap-4 place-items-center not-last:border-b not-last:border-dashed border-gray-300 dark:border-gray-700 p-2"
+                  class="grid grid-cols-4 gap-4 font-bold place-items-center border-b border-gray-300 dark:border-gray-700 p-2"
                 >
-                  <div>{{ index + 1 }}</div>
-                  <div>
-                    {{ month_plan?.month?.name }} - {{ month_plan?.month?.id }}
-                  </div>
-                  <div>
-                    {{ month_plan.pages }}
-                  </div>
-                  <div class="flex gap-2 items-center">
-                    <UButton
-                      icon="i-lucide-trash"
-                      color="error"
-                      variant="soft"
-                      size="xs"
-                      class="hover:cursor-pointer"
-                      @click="
-                        deleteMonthlyPlan(
-                          month_plan.id ?? 0,
-                          row.original.id ?? 0
-                        )
-                      "
-                      :loading="plansStore.loading"
-                    />
-                    <UButton
-                      icon="i-lucide-edit"
-                      color="neutral"
-                      variant="soft"
-                      size="xs"
-                      class="hover:cursor-pointer"
-                      @click="
-                        editMonthlyPlan(
-                          month_plan.id ?? 0,
-                          row.original.id ?? 0
-                        )
-                      "
-                    />
-                  </div>
+                  <div>الرقم</div>
+                  <div>الشهر</div>
+                  <div>عدد الصفحات</div>
+                  <div>العمليات</div>
                 </li>
-              </ul>
+                <ul class="px-4">
+                  <li
+                    v-for="(month_plan, index) in sortedMonthPlans(
+                      row.original.months_plans
+                    )"
+                    :key="month_plan.id"
+                    class="grid grid-cols-4 gap-4 place-items-center not-last:border-b not-last:border-dashed border-gray-300 dark:border-gray-700 p-2"
+                  >
+                    <div>{{ index + 1 }}</div>
+                    <div>
+                      {{ month_plan?.month?.name }} -
+                      {{ month_plan?.month?.id }}
+                    </div>
+                    <div>
+                      {{ month_plan.pages }}
+                    </div>
+                    <div class="flex gap-2 items-center">
+                      <UButton
+                        icon="i-lucide-trash"
+                        color="error"
+                        variant="soft"
+                        size="xs"
+                        class="hover:cursor-pointer"
+                        @click="
+                          deleteMonthlyPlan(
+                            month_plan.id ?? 0,
+                            row.original.id ?? 0
+                          )
+                        "
+                        :loading="plansStore.loading"
+                      />
+                      <UButton
+                        icon="i-lucide-edit"
+                        color="neutral"
+                        variant="soft"
+                        size="xs"
+                        class="hover:cursor-pointer"
+                        @click="
+                          editMonthlyPlan(
+                            month_plan.id ?? 0,
+                            row.original.id ?? 0
+                          )
+                        "
+                      />
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-        <div v-else class="flex justify-center items-center">
-          لا يوجد خطط شهرية مضافة
-        </div>
-      </template>
-      <template #action-cell="{ row }">
-        <UDropdownMenu :items="getDropdownActions(row.original)">
-          <UButton
-            icon="i-lucide-ellipsis-vertical"
-            color="neutral"
-            variant="soft"
-            aria-label="Actions"
-            class="p-2"
-          />
-        </UDropdownMenu>
-      </template>
-    </UTable>
+          <div v-else class="flex justify-center items-center">
+            لا يوجد خطط شهرية مضافة
+          </div>
+        </template>
+        <template #action-cell="{ row }">
+          <UDropdownMenu :items="getDropdownActions(row.original)">
+            <UButton
+              icon="i-lucide-ellipsis-vertical"
+              color="neutral"
+              variant="soft"
+              aria-label="Actions"
+              class="p-2"
+            />
+          </UDropdownMenu>
+        </template>
+      </UTable>
+    </BasePagination>
   </div>
 </template>

@@ -6,11 +6,11 @@ import { useExportToExcel } from "~/composables/useExportToExcel";
 
 useHead({ title: "الموظفون" });
 
+// init
 const employeesStore = useEmployeesStore();
 const academicClassesStore = useAcademicClassesStore();
 const { getArabicDayName, getDate } = useDateUtils();
 const { exportToExcel } = useExportToExcel();
-
 type Flag =
   | "behavioral_issues"
   | "loans"
@@ -20,30 +20,7 @@ type Flag =
   | "supervisory_visits"
   | "assign_academic_class";
 
-const sorting = ref([
-  {
-    id: "id",
-    desc: false,
-  },
-]);
-const rowSelection = ref({});
-const tableKey = ref(Math.random());
-const UBadge = resolveComponent("UBadge");
-const UButton = resolveComponent("UButton");
-const selectedTeacher = ref<Employee>();
-const selectedArrayFlag = ref<Flag>();
-const showModal = ref(false);
-const selectedAcademicClassesIds = ref<number[]>([]);
-const prevAcademicClassesIds = ref<number[]>([]);
-const table = ref();
-
-const filters = reactive<Filters>({
-  firstNameFilter: undefined,
-  secondNameFilter: undefined,
-  thirdNameFilter: undefined,
-  lastNameFilter: undefined,
-  jobTitleFilter: undefined,
-});
+// Data
 const schema = object({
   selectedAcademicClassesIds: array().required("الصف مطلوب"),
 });
@@ -114,7 +91,7 @@ const columns: TableColumn<Employee>[] = [
     accessorKey: "teachers_behavioral_issues",
     header: "المخالفات الإدارية",
     cell: ({ row }) => {
-      const issues = row.original.behavioral_issues || [];
+      const issues = row.original.administrative_issues || [];
       return h(
         UBadge,
         {
@@ -235,6 +212,36 @@ const columns: TableColumn<Employee>[] = [
     id: "action",
   },
 ];
+
+// State
+const sorting = ref([
+  {
+    id: "id",
+    desc: false,
+  },
+]);
+const rowSelection = ref({});
+const tableKey = ref(Math.random());
+const UBadge = resolveComponent("UBadge");
+const UButton = resolveComponent("UButton");
+const selectedTeacher = ref<Employee>();
+const selectedArrayFlag = ref<Flag>();
+const showModal = ref(false);
+const selectedAcademicClassesIds = ref<number[]>([]);
+const prevAcademicClassesIds = ref<number[]>([]);
+const table = ref();
+const paginationRef = ref();
+const pageNum = ref(1); // current page
+const pageSize = ref(10); // rows per page
+const filters = reactive<Filters>({
+  firstNameFilter: undefined,
+  secondNameFilter: undefined,
+  thirdNameFilter: undefined,
+  lastNameFilter: undefined,
+  jobTitleFilter: undefined,
+});
+
+// Actions
 function getDropdownActions(teacher: Employee): DropdownMenuItem[][] {
   return [
     [
@@ -306,7 +313,6 @@ function getDropdownActions(teacher: Employee): DropdownMenuItem[][] {
     ],
   ];
 }
-// Actions
 function showIssuesModal(teacher: Employee, flag: Flag) {
   selectedArrayFlag.value = flag;
   selectedTeacher.value = teacher;
@@ -391,19 +397,31 @@ const updateRows = async () => {
   await employeesStore.fetchEmployees(pageNum.value, pageSize.value, filters);
 };
 const applyFilters = async () => {
-  console.log(filters);
+  pageNum.value = 1;
   await employeesStore.fetchEmployees(
     pageNum.value,
     pageSize.value,
     filters,
     true
   );
-  pageNum.value = 1;
+  paginationRef.value?.resetPage();
 };
 const deleteEmployee = async (employeeId: string) => {
   if (!confirm("هل أنت متأكد من حذف الموظف")) return;
   employeesStore.deleteEmployee(employeeId || "");
 };
+const resetFilters = () => {
+  Object.assign(filters, {
+    firstNameFilter: undefined,
+    secondNameFilter: undefined,
+    thirdNameFilter: undefined,
+    lastNameFilter: undefined,
+    jobTitleFilter: undefined,
+  });
+  // Optionally, trigger a fetch to refresh the table with no filters
+  // onSubmitFilter();
+};
+
 // Getters
 const numberedEmployees = computed(() => {
   return employeesStore.employeesData.map(
@@ -418,10 +436,6 @@ const selectedEmployees = computed(() =>
     (index) => numberedEmployees.value[+index]
   )
 );
-
-const pageNum = ref(1); // current page
-const pageSize = ref(10); // rows per page
-
 const totalPages = computed(() => {
   return Math.ceil(
     employeesStore.employeesCountData > 0
@@ -429,7 +443,6 @@ const totalPages = computed(() => {
       : 1
   );
 });
-
 const rows = computed(() => {
   const start = (pageNum.value - 1) * pageSize.value;
   const end = start + pageSize.value;
@@ -445,17 +458,6 @@ watch(pageNum, async () => {
   updateRows();
   rowSelection.value = {};
 });
-const resetFilters = () => {
-  Object.assign(filters, {
-    firstNameFilter: undefined,
-    secondNameFilter: undefined,
-    thirdNameFilter: undefined,
-    lastNameFilter: undefined,
-    jobTitleFilter: undefined,
-  });
-  // Optionally, trigger a fetch to refresh the table with no filters
-  // onSubmitFilter();
-};
 </script>
 
 <template>
@@ -703,6 +705,7 @@ const resetFilters = () => {
     <!-- End Filters -->
 
     <BasePagination
+      ref="paginationRef"
       :total-pages="totalPages"
       @update:page-num="pageNum = $event"
       @update:page-size="pageSize = $event"

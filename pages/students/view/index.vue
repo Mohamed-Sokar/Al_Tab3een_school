@@ -22,36 +22,9 @@ const sorting = ref([
   },
 ]);
 
-// data
-const globalFilter = ref<string>();
+// Data
 const table = ref();
 const tableKey = ref(Math.random());
-// state
-const filters = reactive<StudentFilters>({
-  academicClassFilter: undefined,
-  quranClassFilter: undefined,
-  planFilter: undefined,
-  levelFilter: undefined,
-  memorizationStatusFilter: undefined,
-  firstNameFilter: undefined,
-  secondNameFilter: undefined,
-  thirdNameFilter: undefined,
-  lastNameFilter: undefined,
-  identityNumberFilter: undefined,
-});
-// Pagination settings
-const pageNum = ref(1); // current page
-const pageSize = ref(10); // rows per page
-const rowSelection = ref({});
-const selectedStudent = ref<Student>();
-const showModal = ref(false);
-const isLoading = ref(false);
-const selectedFlag = ref<StudentModalFlag>();
-const selectedClassId = ref<number | undefined>(undefined);
-// const selectedDriverId = ref<number | undefined>(undefined);
-const selectedPlan = ref<
-  { label: string; value: number | undefined } | undefined
->(undefined);
 const columns: TableColumn<Student>[] = [
   {
     accessorKey: "rowNumber",
@@ -319,6 +292,33 @@ const columns: TableColumn<Student>[] = [
     id: "action",
   },
 ];
+
+// State
+const filters = reactive<StudentFilters>({
+  academicClassFilter: undefined,
+  quranClassFilter: undefined,
+  planFilter: undefined,
+  levelFilter: undefined,
+  memorizationStatusFilter: undefined,
+  firstNameFilter: undefined,
+  secondNameFilter: undefined,
+  thirdNameFilter: undefined,
+  lastNameFilter: undefined,
+  identityNumberFilter: undefined,
+});
+const pageNum = ref(1); // current page
+const pageSize = ref(10); // rows per page
+const rowSelection = ref({});
+const selectedStudent = ref<Student>();
+const showModal = ref(false);
+const isLoading = ref(false);
+const selectedFlag = ref<StudentModalFlag>();
+const selectedClassId = ref<number | undefined>(undefined);
+// const selectedDriverId = ref<number | undefined>(undefined);
+const selectedPlan = ref<
+  { label: string; value: number | undefined } | undefined
+>(undefined);
+const paginationRef = ref();
 
 // functions
 function showBasedModal(flag: StudentModalFlag, student?: Student) {
@@ -594,18 +594,19 @@ const rows = computed(() => {
   return numberedStudents.value.slice(start, end);
 });
 
-//Actions
+// Actions
 const updateRows = async () => {
   await studentsStore.fetchStudents(pageNum.value, pageSize.value, filters);
 };
 const onSubmitFilter = async () => {
+  pageNum.value = 1;
   await studentsStore.fetchStudents(
     pageNum.value,
     pageSize.value,
     filters,
     true
   );
-  pageNum.value = 1;
+  paginationRef.value?.resetPage();
 };
 
 // Watches
@@ -662,6 +663,7 @@ watch(
       @reset="resetFilters"
     />
     <BasePagination
+      ref="paginationRef"
       :total-pages="totalPages"
       @update:page-num="pageNum = $event"
       @update:page-size="pageSize = $event"

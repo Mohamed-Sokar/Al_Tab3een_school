@@ -71,6 +71,7 @@ const filters = reactive<Filters>({
 const pageNum = ref(1); // current page
 const pageSize = ref(10); // rows per page
 const rowSelection = ref({});
+const paginationRef = ref();
 
 // Actions
 const exportIssues = () => {
@@ -89,8 +90,9 @@ const exportIssues = () => {
   });
 };
 const applyFilters = async () => {
-  await visitsStore.fetchReports(pageNum.value, pageSize.value, filters, true);
   pageNum.value = 1;
+  await visitsStore.fetchReports(pageNum.value, pageSize.value, filters, true);
+  paginationRef.value?.resetPage();
 };
 const resetFilters = () => {
   Object.assign(filters, {
@@ -176,6 +178,7 @@ watch(pageNum, async () => {
     />
     <!-- End Filters -->
     <BasePagination
+      ref="paginationRef"
       :total-pages="totalPages"
       @update:page-num="pageNum = $event"
       @update:page-size="pageSize = $event"
