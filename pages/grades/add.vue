@@ -230,7 +230,7 @@ const getBadgeColor = (status: string) => {
           </div>
           <div>
             <UButton
-              icon="i-heroicons-arrow-left"
+              icon="heroicons-arrow-left-16-solid"
               color="secondary"
               size="sm"
               class="w-10 flex justify-center items-center hover:cursor-pointer"

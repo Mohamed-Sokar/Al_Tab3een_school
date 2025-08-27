@@ -17,14 +17,21 @@ const columns: TableColumn<EmployeeSupervisoryVisit>[] = [
     header: "الرقم",
   },
   {
-    accessorKey: "اسم المعلم",
-    header: "اسم المعلم",
+    accessorKey: "اسم الموظف",
+    header: "اسم الموظف",
     cell: ({ row }) => {
       return (
         row.original?.employee?.first_name +
         " " +
         row.original?.employee?.last_name
       );
+    },
+  },
+  {
+    accessorKey: "المسمى الوظيفي",
+    header: "المسمى الوظيفي",
+    cell: ({ row }) => {
+      return row.original?.employee?.job_title;
     },
   },
   {

@@ -252,13 +252,7 @@ interface EmployeeSupervisoryVisit {
 interface EmployeeLoan {
   id?: number | undefined;
   employee_id: string | undefined;
-  employee?: {
-    first_name: string | undefined;
-    second_name: string | undefined;
-    third_name: string | undefined;
-    last_name: string | undefined;
-    identity_number: string | undefined;
-  };
+  employee?: Employee;
   amount: number | undefined;
   month?: { id: number; name: string };
   month_id: number | undefined;
@@ -266,6 +260,7 @@ interface EmployeeLoan {
   notes: string | undefined;
   status?: string | undefined;
   created_at?: Date | undefined;
+  date?: Date | undefined;
   updated_at?: Date | undefined;
 }
 

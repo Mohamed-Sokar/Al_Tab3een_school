@@ -6,51 +6,52 @@ import { type EmployeeLoan, type Semester } from "~/types";
 const loansStore = useLoansStore();
 const route = useRoute();
 const form = ref();
+const currentMonth = months.find((m) => m.value === new Date().getMonth() + 1);
 
 const schema = object({
   month_id: number().required("الشهر مطلوب"),
   semester_id: number().required("الفصل مطلوب"),
   amount: number().required("القيمة مطلوبة"),
   notes: string(),
-  created_at: date().required("تاريخ الدفعة مطلوب"),
+  date: date().required("تاريخ الدفعة مطلوب"),
 });
 const state = reactive<EmployeeLoan>({
   employee_id: String(route.params.id),
-  month_id: undefined,
-  semester_id: undefined,
+  month_id: currentMonth?.value,
+  semester_id: useGradsStore().semestersData[0]?.id,
+  date: new Date(),
   notes: undefined,
   amount: undefined,
-  created_at: undefined,
   status: "غير مدفوع",
 });
 
 const onSubmit = async () => {
   await loansStore.saveLoanReport(state);
-  // navigateTo({ name: "financial-employee-loans" });
+  navigateTo({ name: "financial-employee-loans" });
 };
 
 const date_string = computed({
   get() {
-    if (!state.created_at) return "";
-    if (typeof state.created_at === "string") {
+    if (!state.date) return "";
+    if (typeof state.date === "string") {
       // If already in YYYY-MM-DD format, return as is
-      if (/^\d{4}-\d{2}-\d{2}$/.test(state.created_at)) {
-        return state.created_at;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.date)) {
+        return state.date;
       }
       // Try to parse and format
-      const d = new Date(state.created_at);
+      const d = new Date(state.date);
       if (!isNaN(d.getTime())) {
         return d.toISOString().slice(0, 10);
       }
       return "";
     }
-    if (state.created_at instanceof Date) {
-      return state.created_at.toISOString().slice(0, 10);
+    if (state.date instanceof Date) {
+      return state.date.toISOString().slice(0, 10);
     }
     return "";
   },
   set(val: Date) {
-    state.created_at = val;
+    state.date = val;
   },
 });
 </script>
@@ -94,7 +95,7 @@ const date_string = computed({
           placeholder="اختر الفصل الدراسي"
         />
       </UFormField>
-      <UFormField label="تاريخ السلفة" name="created_at">
+      <UFormField label="تاريخ السلفة" name="date">
         <UInput
           type="date"
           v-model="date_string"

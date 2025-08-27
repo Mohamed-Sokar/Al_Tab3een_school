@@ -109,7 +109,7 @@ function getDropdownActions(
   return [
     [
       {
-        label: "Edit",
+        label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
           // console.log("Edit action for user:", student);
@@ -117,7 +117,7 @@ function getDropdownActions(
         },
       },
       {
-        label: "Delete",
+        label: "حذف",
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {

@@ -97,11 +97,7 @@ const getStatusColor = (report: GradesReport) => {
 </script>
 
 <template>
-  <UModal
-    :title="modelTitle"
-    class="min-w-xl lg:min-w-3xl overflow-x-scroll"
-    v-model:open="isOpen"
-  >
+  <UModal :title="modelTitle" class="lg:min-w-3xl" v-model:open="isOpen">
     <template #body>
       <div v-if="selectedFlag === 'studentIssue'">
         <div v-if="selectedStudent?.behavioral_issues?.length">

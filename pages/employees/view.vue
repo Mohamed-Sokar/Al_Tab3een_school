@@ -1,36 +1,9 @@
-<template>
-  <div>
-    <BaseHeader
-      title="المعلمون"
-      description="إدارة بيانات المعلمون والمعلومات الأكاديمية"
-    >
-      <template #actions>
-        <UButton
-          icon="heroicons-plus-circle-20-solid"
-          size="lg"
-          color="secondary"
-          class="bg-blue-600 px-3 py-2 font-bold"
-          variant="solid"
-          :to="{ name: 'employees-add' }"
-          >إضافة معلم</UButton
-        >
-      </template>
-    </BaseHeader>
-
-    <BaseTabs :links="links" />
-
-    <BaseFadeTransition>
-      <NuxtPage />
-    </BaseFadeTransition>
-  </div>
-</template>
-
 <script setup lang="ts">
 const route = useRoute();
 
 const links = [
   {
-    label: "المعلمون",
+    label: "الموظفون",
     icon: "i-lucide-user",
     to: "/employees/view",
   },
@@ -56,4 +29,29 @@ const wrraperLinksClasses = computed(() => {
 });
 </script>
 
-<style scoped></style>
+<template>
+  <div>
+    <BaseHeader
+      title="الموظفون"
+      description="إدارة بيانات الموظفين والمعلومات الأكاديمية"
+    >
+      <template #actions>
+        <UButton
+          icon="heroicons-plus-circle-20-solid"
+          size="lg"
+          color="secondary"
+          class="bg-blue-600 px-3 py-2 font-bold"
+          variant="solid"
+          :to="{ name: 'employees-add' }"
+          >إضافة معلم</UButton
+        >
+      </template>
+    </BaseHeader>
+
+    <BaseTabs :links="links" />
+
+    <BaseFadeTransition>
+      <NuxtPage />
+    </BaseFadeTransition>
+  </div>
+</template>

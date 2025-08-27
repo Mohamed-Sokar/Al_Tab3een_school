@@ -30,13 +30,13 @@ const columns: TableColumn<Employee>[] = [
     header: "الرقم",
   },
   {
-    accessorKey: "full_name",
+    accessorKey: "اسم الموظف",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
       return h(UButton, {
         color: "neutral",
         variant: "ghost",
-        label: "الاسم رباعي",
+        label: "اسم الموظف",
         icon: isSorted
           ? isSorted === "asc"
             ? "i-lucide-arrow-up-narrow-wide"
@@ -464,6 +464,7 @@ watch(pageNum, async () => {
   <div>
     <UModal
       v-model:open="showModal"
+      class="lg:min-w-3xl"
       :title="
         selectedArrayFlag === 'behavioral_issues'
           ? 'تفاصيل المخالفات'
@@ -480,7 +481,7 @@ watch(pageNum, async () => {
     >
       <template #body>
         <div v-if="selectedArrayFlag === 'behavioral_issues'">
-          <div v-if="selectedTeacher?.behavioral_issues?.length">
+          <div v-if="selectedTeacher?.administrative_issues?.length">
             <ul>
               <li
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2 place-items-center"
@@ -490,7 +491,7 @@ watch(pageNum, async () => {
                 <span class="font-bold">المخالفة</span>
               </li>
               <li
-                v-for="(issue, index) in selectedTeacher.behavioral_issues"
+                v-for="(issue, index) in selectedTeacher.administrative_issues"
                 :key="index"
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 place-items-center mb-2"
               >
@@ -506,7 +507,7 @@ watch(pageNum, async () => {
             <div class="pt-3">
               <span> المجموع: </span>
               <span class="font-bold">
-                {{ selectedTeacher.behavioral_issues.length }}
+                {{ selectedTeacher.administrative_issues.length }}
               </span>
             </div>
           </div>

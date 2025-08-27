@@ -375,6 +375,7 @@ function getDropdownActions(student: Student): DropdownMenuItem[][] {
         icon: "i-lucide-trash",
         color: "error",
         onSelect: () => {
+          if (!confirm("هل أنت متأكد من حذف هذا الطالب؟")) return;
           studentsStore.deleteStudent(
             typeof student.id === "string" ? student.id : ""
           );

@@ -135,7 +135,23 @@ onMounted(async () => {
     <div class="space-y-10" v-else>
       <!-- main info. -->
       <div class="border-b border-dashed border-accented pb-10">
-        <h2 class="text-xl mb-5 font-bold text-info">المعلومات الأساسية</h2>
+        <div class="flex justify-between items-center mb-5">
+          <h2 class="text-xl font-bold text-info">المعلومات الأساسية</h2>
+          <div class="flex gap-2">
+            <UButton
+              :to="{ name: 'students-id-edit', params: { id: studentId } }"
+              icon="heroicons-pencil"
+              variant="subtle"
+              color="secondary"
+            />
+            <UButton
+              :to="{ name: 'students-view' }"
+              icon="heroicons-arrow-left-16-solid"
+              variant="subtle"
+              color="secondary"
+            />
+          </div>
+        </div>
         <UCard>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <UFormField label="الاسم الأول" name="first_name">

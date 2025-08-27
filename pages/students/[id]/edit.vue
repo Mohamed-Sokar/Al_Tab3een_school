@@ -78,7 +78,7 @@ const updateStudent = async () => {
     state.father_identity_number
   );
   await studentsStore.editStudent(state);
-  navigateTo({ name: "students-view-students_table" });
+  navigateTo({ name: "students-view" });
 };
 
 const birth_date_string = computed({
@@ -109,226 +109,242 @@ const birth_date_string = computed({
 onMounted(async () => {
   const student = await studentsStore.fetchStudentById(studentId);
   Object.assign(state, student);
-  // console.log("Fetched student:", state);
 });
 </script>
 
 <template>
-  <UCard class="max-w-3xl mx-auto mt-15">
-    <UForm
-      ref="form"
-      :schema="schema"
-      :state="state"
-      class="grid grid-cols-1 lg:grid-cols-2 gap-4"
-      @submit="updateStudent"
-    >
-      <UFormField required label="الاسم الأول" name="first_name">
-        <UInput
-          v-model="state.first_name"
-          placeholder="الاسم الأول"
-          label="الاسم الأول"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="الاسم الثاني" name="second_name">
-        <UInput
-          v-model="state.second_name"
-          placeholder="الاسم الثاني"
-          label="الاسم الثاني"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="الاسم الثالث" name="third_name">
-        <UInput
-          v-model="state.third_name"
-          placeholder="الاسم الثالث"
-          label="الاسم الثالث"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="الاسم الرابع" name="last_name">
-        <UInput
-          v-model="state.last_name"
-          placeholder="الاسم الرابع"
-          label="الاسم الرابع"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="اسم ولي الأمر" name="guardian_name">
-        <UInput
-          v-model="state.guardian_name"
-          placeholder="اسم ولي الأمر"
-          label="اسم ولي الأمر"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField
-        required
-        label="صلة قرابة ولي الأمر"
-        name="guardian_name_kinship"
-      >
-        <USelect
-          :items="guardian_name_kinship_options"
-          v-model="state.guardian_name_kinship"
-          placeholder="صلة قرابة ولي الأمر"
-          label="صلة قرابة ولي الأمر"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="رقم الواتس" name="whatsapp_number">
-        <UInput
-          v-model="state.whatsapp_number"
-          type="number"
-          placeholder="97xxxxxxxxxx"
-          label="رقم الواتس"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="رقم الهوية" name="identity_number">
-        <UInput
-          v-model="state.identity_number"
-          placeholder="رقم الهوية"
-          label="رقم الهوية"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="رقم هوية الأب" name="father_identity_number">
-        <UInput
-          v-model="state.father_identity_number"
-          placeholder="رقم هوية الأب"
-          label="رقم هوية الأب"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="تاريخ الميلاد" name="birth_date">
-        <UInput
-          v-model="birth_date_string"
-          type="date"
-          class="w-full"
-          placeholder="تاريخ الميلاد"
-          icon="heroicons-calendar-days-solid"
-        />
-      </UFormField>
-      <UFormField required label="رقم الجوال" name="phone_number">
-        <UInput
-          v-model="state.phone_number"
-          placeholder="05xxxxxxxx"
-          label="رقم الجوال"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="العنوان" name="address">
-        <UInput
-          v-model="state.address"
-          placeholder="العنوان"
-          label="العنوان"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="المسجد" name="masjed">
-        <UInput
-          v-model="state.masjed"
-          placeholder="المسجد"
-          label="المسجد"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="المستوى الدراسي" name="level_id">
-        <USelect
-          v-model="state.level_id"
-          :items="
-            useLevelsStore().levelsData.map((level) => ({
-              label: level.title,
-              value: level.id,
-            }))
-          "
-          type="text"
-          class="w-full"
-          placeholder="المستوى الدراسي"
-        />
-      </UFormField>
-      <UFormField required label="الشعبة الدراسية" name="academic_class_id">
-        <USelect
-          class="w-full"
-          icon="i-heroicons-presentation-chart-bar"
-          v-model="state.academic_class_id"
-          :items="[
-            { label: 'الكل', value: undefined },
-            ...useAcademicClassesStore().classesData.map((c) => ({
-              label: `${c.title} - شعبة ${c.group}`,
-              value: c.id,
-            })),
-          ]"
-          placeholder="اختر الشعبة الدراسية"
-        />
-      </UFormField>
-      <UFormField required label="الشعبة القرآنية" name="quran_class_id">
-        <USelect
-          class="w-full"
-          icon="i-lucide-book-open"
-          v-model="state.quran_class_id"
-          :items="[
-            { label: 'الكل', value: undefined },
-            ...useQuranClassesStore().classesData.map((c) => ({
-              label: `${c.title} - شعبة ${c.group}`,
-              value: c.id,
-            })),
-          ]"
-          placeholder="اختر الشعبة القرآنية"
-        />
-      </UFormField>
-      <UFormField required label="حالة الحفظ" name="memorization_status">
-        <USelect
-          v-model="state.memorization_status"
-          :items="memorization_status_options"
-          type="text"
-          class="w-full"
-          placeholder="حالة الحفظ"
-        />
-      </UFormField>
-      <UFormField required label="الأجزاء المحفوظة" name="memorized_juz">
-        <USelect
-          :items="
-            Array.from({ length: 30 }, (_, i) => ({
-              label: `${i + 1} جزء`,
-              value: i + 1,
-            }))
-          "
-          v-model="state.memorized_juz"
-          type="number"
-          placeholder="الأجزاء المحفوظة"
-          label="الأجزاء المحفوظة"
-          class="w-full"
-        />
-      </UFormField>
-      <UFormField required label="التسميع اليومي" name="daily_recitation">
-        <USelect
-          :items="daily_recitation_options"
-          v-model="state.daily_recitation"
-          placeholder="التسميع اليومي"
-          label="التسميع اليومي"
-          class="w-full"
-        />
-      </UFormField>
-
-      <div class="lg:col-span-2 flex gap-2 mt-5">
+  <div class="max-w-3xl mx-auto mt-15">
+    <div class="flex justify-between items-center mb-5">
+      <h2 class="text-xl font-bold text-info">المعلومات الأساسية</h2>
+      <div>
         <UButton
-          type="submit"
-          class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
+          :to="{ name: 'students-view' }"
+          icon="heroicons-arrow-left-16-solid"
+          variant="subtle"
           color="secondary"
-          label="تعديل"
-          :loading="studentsStore.loading"
-        />
-        <UButton
-          variant="soft"
-          class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
-          color="secondary"
-          @click="navigateTo('/students/view')"
-          label="إلغاء"
         />
       </div>
-    </UForm>
-  </UCard>
+    </div>
+    <UCard>
+      <UForm
+        ref="form"
+        :schema="schema"
+        :state="state"
+        class="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        @submit="updateStudent"
+      >
+        <UFormField required label="الاسم الأول" name="first_name">
+          <UInput
+            v-model="state.first_name"
+            placeholder="الاسم الأول"
+            label="الاسم الأول"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="الاسم الثاني" name="second_name">
+          <UInput
+            v-model="state.second_name"
+            placeholder="الاسم الثاني"
+            label="الاسم الثاني"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="الاسم الثالث" name="third_name">
+          <UInput
+            v-model="state.third_name"
+            placeholder="الاسم الثالث"
+            label="الاسم الثالث"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="الاسم الرابع" name="last_name">
+          <UInput
+            v-model="state.last_name"
+            placeholder="الاسم الرابع"
+            label="الاسم الرابع"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="اسم ولي الأمر" name="guardian_name">
+          <UInput
+            v-model="state.guardian_name"
+            placeholder="اسم ولي الأمر"
+            label="اسم ولي الأمر"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField
+          required
+          label="صلة قرابة ولي الأمر"
+          name="guardian_name_kinship"
+        >
+          <USelect
+            :items="guardian_name_kinship_options"
+            v-model="state.guardian_name_kinship"
+            placeholder="صلة قرابة ولي الأمر"
+            label="صلة قرابة ولي الأمر"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="رقم الواتس" name="whatsapp_number">
+          <UInput
+            v-model="state.whatsapp_number"
+            type="number"
+            placeholder="97xxxxxxxxxx"
+            label="رقم الواتس"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="رقم الهوية" name="identity_number">
+          <UInput
+            v-model="state.identity_number"
+            placeholder="رقم الهوية"
+            label="رقم الهوية"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField
+          required
+          label="رقم هوية الأب"
+          name="father_identity_number"
+        >
+          <UInput
+            v-model="state.father_identity_number"
+            placeholder="رقم هوية الأب"
+            label="رقم هوية الأب"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="تاريخ الميلاد" name="birth_date">
+          <UInput
+            v-model="birth_date_string"
+            type="date"
+            class="w-full"
+            placeholder="تاريخ الميلاد"
+            icon="heroicons-calendar-days-solid"
+          />
+        </UFormField>
+        <UFormField required label="رقم الجوال" name="phone_number">
+          <UInput
+            v-model="state.phone_number"
+            placeholder="05xxxxxxxx"
+            label="رقم الجوال"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="العنوان" name="address">
+          <UInput
+            v-model="state.address"
+            placeholder="العنوان"
+            label="العنوان"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="المسجد" name="masjed">
+          <UInput
+            v-model="state.masjed"
+            placeholder="المسجد"
+            label="المسجد"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="المستوى الدراسي" name="level_id">
+          <USelect
+            v-model="state.level_id"
+            :items="
+              useLevelsStore().levelsData.map((level) => ({
+                label: level.title,
+                value: level.id,
+              }))
+            "
+            type="text"
+            class="w-full"
+            placeholder="المستوى الدراسي"
+          />
+        </UFormField>
+        <UFormField required label="الشعبة الدراسية" name="academic_class_id">
+          <USelect
+            class="w-full"
+            icon="i-heroicons-presentation-chart-bar"
+            v-model="state.academic_class_id"
+            :items="[
+              { label: 'الكل', value: undefined },
+              ...useAcademicClassesStore().classesData.map((c) => ({
+                label: `${c.title} - شعبة ${c.group}`,
+                value: c.id,
+              })),
+            ]"
+            placeholder="اختر الشعبة الدراسية"
+          />
+        </UFormField>
+        <UFormField required label="الشعبة القرآنية" name="quran_class_id">
+          <USelect
+            class="w-full"
+            icon="i-lucide-book-open"
+            v-model="state.quran_class_id"
+            :items="[
+              { label: 'الكل', value: undefined },
+              ...useQuranClassesStore().classesData.map((c) => ({
+                label: `${c.title} - شعبة ${c.group}`,
+                value: c.id,
+              })),
+            ]"
+            placeholder="اختر الشعبة القرآنية"
+          />
+        </UFormField>
+        <UFormField required label="حالة الحفظ" name="memorization_status">
+          <USelect
+            v-model="state.memorization_status"
+            :items="memorization_status_options"
+            type="text"
+            class="w-full"
+            placeholder="حالة الحفظ"
+          />
+        </UFormField>
+        <UFormField required label="الأجزاء المحفوظة" name="memorized_juz">
+          <USelect
+            :items="
+              Array.from({ length: 30 }, (_, i) => ({
+                label: `${i + 1} جزء`,
+                value: i + 1,
+              }))
+            "
+            v-model="state.memorized_juz"
+            type="number"
+            placeholder="الأجزاء المحفوظة"
+            label="الأجزاء المحفوظة"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField required label="التسميع اليومي" name="daily_recitation">
+          <USelect
+            :items="daily_recitation_options"
+            v-model="state.daily_recitation"
+            placeholder="التسميع اليومي"
+            label="التسميع اليومي"
+            class="w-full"
+          />
+        </UFormField>
+
+        <div class="lg:col-span-2 flex gap-2 mt-5">
+          <UButton
+            type="submit"
+            class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
+            color="secondary"
+            label="تعديل"
+            :loading="studentsStore.loading"
+          />
+          <UButton
+            variant="soft"
+            class="flex w-20 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
+            color="secondary"
+            @click="navigateTo('/students/view')"
+            label="إلغاء"
+          />
+        </div>
+      </UForm>
+    </UCard>
+  </div>
 </template>
 
 <style scoped></style>

@@ -165,6 +165,36 @@ export const useEmployeesStore = defineStore("employees", () => {
       loading.value = false;
     }
   };
+  const fetchEmployeeById = async (employeeId: string) => {
+    try {
+      loading.value = true;
+      const { data, error } = await client
+        .from("employees")
+        .select(
+          `*, behavioral_issues:employees_administrative_issues(id, description,created_at),
+      loans:employees_loans(id,amount,created_at),
+      absence:employees_absence(id, date, reason, excuse_status),
+      academic_classes:teachers_academic_classes(class:academic_classes(id,title, group)),
+      supervisory_visits:employees_supervisory_visits(notes,date,supervisor,type),
+      salaries:employee_salaries(*)
+      `
+        )
+        .eq("id", employeeId)
+        .single();
+
+      if (error) {
+        throw Error("حدثت مشكلة أثناء جلب بيانات الموظف");
+      }
+      return data;
+    } catch (err) {
+      toastError({
+        title: "حدثت مشكلة أثناء جلب بيانات الموظف",
+      });
+      throw Error(err instanceof Error ? err.message : String(err));
+    } finally {
+      loading.value = false;
+    }
+  };
   const getEmployeesCount = async () => {
     try {
       loading.value = true;
@@ -831,6 +861,7 @@ export const useEmployeesStore = defineStore("employees", () => {
     loading,
     // Actions
     fetchEmployees,
+    fetchEmployeeById,
     getEmployeesCount,
     addEmployee,
     updateEmployee,

@@ -1,152 +1,118 @@
 <script setup lang="ts">
-import { courses_options } from "~/constants";
+import {
+  courses_options,
+  job_title_options,
+  marital_status_options,
+} from "~/constants";
 import { type Employee } from "~/types";
-// import { useemployeesStore } from "@/stores/teachers";
 
+// init
 const employeesStore = useEmployeesStore();
+const { getArabicDayName, getDate } = useDateUtils();
 
-const teacherState = reactive<Employee>({
+// Data
+const route = useRoute();
+const employeeId = Array.isArray(route.params.id)
+  ? route.params.id[0]
+  : route.params.id;
+
+const state = reactive<Employee>({
   first_name: undefined,
   second_name: undefined,
   third_name: undefined,
   last_name: undefined,
-  whatsapp_number: undefined,
   identity_number: undefined,
   phone_number: undefined,
-  marital_status: undefined,
-  enrollment_date: undefined,
-  subject: undefined,
   birth_date: undefined,
-  address: undefined,
-  created_at: undefined,
-  masjed: undefined,
+  enrollment_date: undefined,
   job_title: undefined,
+  subject: undefined,
+  masjed: undefined,
+  whatsapp_number: undefined,
+  children_count: undefined,
+  marital_status: undefined,
+  address: undefined,
+  salary: undefined,
 });
 
-const route = useRoute();
-const teacherId = Array.isArray(route.params.id)
-  ? route.params.id[0]
-  : route.params.id;
-
-const targetedTeacher = ref<Employee | undefined>(
-  employeesStore.getSpesificTeacher(teacherId)
-);
-
-watchEffect(() => {
-  // if (employeesStore.sortedTeachers.length > 0) {
-  //   targetedTeacher.value = employeesStore.getSpesificTeacher(teacherId);
-  //   Object.assign(teacherState, targetedTeacher.value);
-  // }
-  if (employeesStore.sortedTeachers.length > 0) {
-    targetedTeacher.value = employeesStore.getSpesificTeacher(teacherId);
-
-    const teacherData = { ...targetedTeacher.value };
-
-    // ✅ تأكد أن subject يتحول من نص إلى مصفوفة
-    if (typeof teacherData.subject === "string") {
-      try {
-        teacherData.subject = JSON.parse(teacherData.subject);
-      } catch (e) {
-        teacherData.subject = [];
-      }
-    }
-
-    Object.assign(teacherState, teacherData);
-  }
-});
-const { getArabicDayName, getDate } = useDateUtils();
-
-const createdAtString = computed({
-  get() {
-    if (!teacherState.created_at) return "";
-    if (typeof teacherState.created_at === "string") {
-      // If already in YYYY-MM-DD format, return as is
-      if (/^\d{4}-\d{2}-\d{2}$/.test(teacherState.created_at)) {
-        return teacherState.created_at;
-      }
-      // Try to parse and format
-      const d = new Date(teacherState.created_at);
-      if (!isNaN(d.getTime())) {
-        return d.toISOString().slice(0, 10);
-      }
-      return "";
-    }
-    if (teacherState.created_at instanceof Date) {
-      return teacherState.created_at.toISOString().slice(0, 10);
-    }
-    return "";
-  },
-  set(val: string) {
-    teacherState.created_at = val;
-  },
-});
+// Computed Properties
 const birth_date_string = computed({
   get() {
-    if (!teacherState.birth_date) return "";
-    if (typeof teacherState.birth_date === "string") {
+    if (!state.birth_date) return "";
+    if (typeof state.birth_date === "string") {
       // If already in YYYY-MM-DD format, return as is
-      if (/^\d{4}-\d{2}-\d{2}$/.test(teacherState.birth_date)) {
-        return teacherState.birth_date;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(state.birth_date)) {
+        return state.birth_date;
       }
       // Try to parse and format
-      const d = new Date(teacherState.birth_date);
+      const d = new Date(state.birth_date);
       if (!isNaN(d.getTime())) {
         return d.toISOString().slice(0, 10);
       }
       return "";
     }
-    if (teacherState.birth_date instanceof Date) {
-      return teacherState.birth_date.toISOString().slice(0, 10);
+    if (state.birth_date instanceof Date) {
+      return state.birth_date.toISOString().slice(0, 10);
     }
     return "";
   },
   set(val: Date) {
-    teacherState.birth_date = val;
+    state.birth_date = val;
   },
 });
 const enrollment_date_string = computed(() => {
-  if (!targetedTeacher.value?.enrollment_date) return "";
-  if (typeof targetedTeacher.value?.enrollment_date === "string") {
+  if (!state?.enrollment_date) return "";
+  if (typeof state?.enrollment_date === "string") {
     // If already in YYYY-MM-DD format, return as is
-    if (/^\d{4}-\d{2}-\d{2}$/.test(targetedTeacher.value.enrollment_date)) {
-      return targetedTeacher.value.enrollment_date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(state.enrollment_date)) {
+      return state.enrollment_date;
     }
     // Try to parse and format
-    const d = new Date(targetedTeacher.value.enrollment_date);
+    const d = new Date(state.enrollment_date);
     if (!isNaN(d.getTime())) {
       return d.toISOString().slice(0, 10);
     }
     return "";
   }
-  if (targetedTeacher.value?.enrollment_date instanceof Date) {
-    return targetedTeacher.value.enrollment_date.toISOString().slice(0, 10);
+  if (state?.enrollment_date instanceof Date) {
+    return state.enrollment_date.toISOString().slice(0, 10);
   }
   return "";
+});
+
+onMounted(async () => {
+  const employee = await employeesStore.fetchEmployeeById(employeeId);
+  Object.assign(state, employee);
 });
 </script>
 
 <template>
   <div class="max-w-3xl mx-auto space-y-10 mt-10">
+    <div class="flex justify-between items-center mb-5">
+      <h2 class="text-xl font-bold text-info">المعلومات الأساسية</h2>
+      <div class="flex gap-2">
+        <UButton
+          :to="{ name: 'employees-id-edit', params: { id: employeeId } }"
+          icon="heroicons-pencil"
+          variant="subtle"
+          color="secondary"
+        />
+        <UButton
+          :to="{ name: 'employees-view' }"
+          icon="heroicons-arrow-left-16-solid"
+          variant="subtle"
+          color="secondary"
+        />
+      </div>
+    </div>
     <!-- main info. -->
     <div class="border-b border-dashed border-accented pb-10">
-      <div class="flex justify-between items-center mb-5">
-        <h2 class="text-xl mb-5 font-bold text-info">المعلومات الأساسية</h2>
-        <div>
-          <UButton
-            :to="`/teachers/${teacherId}/edit_teacher`"
-            class="bg-secondary text-white hover:bg-primary-dark"
-          >
-            تعديل
-          </UButton>
-        </div>
-      </div>
-
       <UCard>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <UFormField label="الاسم الأول" name="first_name">
             <UInput
               disabled
-              v-model="teacherState.first_name"
+              v-model="state.first_name"
               placeholder="الاسم الأول"
               label="الاسم الأول"
               class="w-full"
@@ -155,7 +121,7 @@ const enrollment_date_string = computed(() => {
           <UFormField label="الاسم الثاني" name="second_name">
             <UInput
               disabled
-              v-model="teacherState.second_name"
+              v-model="state.second_name"
               placeholder="الاسم الثاني"
               label="الاسم الثاني"
               class="w-full"
@@ -164,7 +130,7 @@ const enrollment_date_string = computed(() => {
           <UFormField label="الاسم الثالث" name="third_name">
             <UInput
               disabled
-              v-model="teacherState.third_name"
+              v-model="state.third_name"
               placeholder="الاسم الثالث"
               label="الاسم الثالث"
               class="w-full"
@@ -173,7 +139,7 @@ const enrollment_date_string = computed(() => {
           <UFormField label="الاسم الرابع" name="last_name">
             <UInput
               disabled
-              v-model="teacherState.last_name"
+              v-model="state.last_name"
               placeholder="الاسم الرابع"
               label="الاسم الرابع"
               class="w-full"
@@ -182,7 +148,7 @@ const enrollment_date_string = computed(() => {
           <UFormField label="رقم الهوية" name="identity_number">
             <UInput
               disabled
-              v-model="teacherState.identity_number"
+              v-model.number="state.identity_number"
               placeholder="رقم الهوية"
               label="رقم الهوية"
               class="w-full"
@@ -191,7 +157,7 @@ const enrollment_date_string = computed(() => {
           <UFormField label="رقم الجوال" name="phone_number">
             <UInput
               disabled
-              v-model="teacherState.phone_number"
+              v-model="state.phone_number"
               placeholder="05xxxxxxxx"
               label="رقم الجوال"
               class="w-full"
@@ -200,8 +166,7 @@ const enrollment_date_string = computed(() => {
           <UFormField label="رقم الواتس" name="whatsapp_number">
             <UInput
               disabled
-              v-model="teacherState.whatsapp_number"
-              type="number"
+              v-model="state.whatsapp_number"
               placeholder="97xxxxxxxxxx"
               label="رقم الواتس"
               class="w-full"
@@ -210,15 +175,16 @@ const enrollment_date_string = computed(() => {
           <UFormField label="تاريخ الميلاد" name="birth_date">
             <UInput
               disabled
-              v-model="birth_date_string"
               type="date"
+              v-model="birth_date_string"
               class="w-full"
               placeholder="تاريخ الميلاد"
               icon="heroicons-calendar-days-solid"
             />
           </UFormField>
-          <UFormField label="تاريخ التسجيل" name="enrollment_date">
+          <UFormField label="تاريخ التسجيل في المدرسة" name="enrollment_date">
             <UInput
+              disabled
               type="date"
               v-model="enrollment_date_string"
               class="w-full"
@@ -226,43 +192,71 @@ const enrollment_date_string = computed(() => {
               icon="heroicons-calendar-days-solid"
             />
           </UFormField>
-          <UFormField label="المادة" name="subject">
-            <USelect
-              multiple
-              disabled
-              v-model="teacherState.subject"
-              :items="courses_options"
-              type="text"
-              class="w-full"
-              placeholder="المواد التي يتم تدريسها"
-            />
-          </UFormField>
           <UFormField label="الحالة الاجتماعية" name="marital_status">
             <USelect
               disabled
-              v-model="teacherState.marital_status"
-              :options="['أعزب', 'متزوج', 'مطلق', 'أرمل']"
+              v-model="state.marital_status"
+              :items="marital_status_options"
               placeholder="الحالة الاجتماعية"
               label="الحالة الاجتماعية"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="المسمى الوظيفي" name="job_title">
+            <USelect
+              disabled
+              v-model="state.job_title"
+              :items="job_title_options"
+              placeholder="المسمى الوظيفي"
+              label="المسمى الوظيفي"
               class="w-full"
             />
           </UFormField>
           <UFormField label="العنوان" name="address">
             <UInput
               disabled
-              v-model="teacherState.address"
+              v-model="state.address"
               placeholder="العنوان"
               label="العنوان"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="المسجد" name="masjed">
+            <UInput
+              disabled
+              v-model="state.masjed"
+              placeholder="المسجد"
+              label="المسجد"
               class="w-full"
             />
           </UFormField>
           <UFormField label="عدد الأطفال" name="children_count">
             <UInput
               disabled
-              v-model="teacherState.children_count"
+              v-model="state.children_count"
               placeholder="عدد الأطفال"
               label="عدد الأطفال"
               class="w-full"
+            />
+          </UFormField>
+          <UFormField label="المادة" name="subject">
+            <USelect
+              disabled
+              :disabled="state.job_title !== 'معلم'"
+              multiple
+              v-model="state.subject"
+              :items="courses_options"
+              type="text"
+              class="w-full"
+              placeholder="المواد التي يتم تدريسها"
+            />
+          </UFormField>
+          <UFormField label="الراتب" name="salary">
+            <UInput
+              disabled
+              v-model="state.salary"
+              class="w-full"
+              placeholder="الراتب"
             />
           </UFormField>
         </div>
@@ -274,7 +268,7 @@ const enrollment_date_string = computed(() => {
       <h2 class="text-xl mb-5 font-bold text-info">المخالفات السلوكية</h2>
       <UCard>
         <div>
-          <div v-if="targetedTeacher?.behavioral_issues?.length">
+          <div v-if="state?.administrative_issues?.length">
             <ul>
               <li
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b py-2"
@@ -284,7 +278,7 @@ const enrollment_date_string = computed(() => {
                 <span class="font-bold">المخالفة</span>
               </li>
               <li
-                v-for="(issue, index) in targetedTeacher.behavioral_issues"
+                v-for="(issue, index) in state.administrative_issues"
                 :key="index"
                 class="grid grid-cols-3 justify-between items-center gap-2 border-b border-dashed border-gray-200 py-2 mb-2"
               >
@@ -300,7 +294,7 @@ const enrollment_date_string = computed(() => {
             <div class="pt-3">
               <span> المجموع: </span>
               <span class="font-bold">
-                {{ targetedTeacher.behavioral_issues.length }}
+                {{ state?.administrative_issues?.length }}
               </span>
             </div>
           </div>

@@ -1,4 +1,3 @@
-import { date } from "zod/v4";
 import type { EmployeeLoan, Filters } from "~/types";
 
 import { defineStore } from "pinia";
@@ -8,7 +7,7 @@ export const useLoansStore = defineStore("loans", () => {
   // init
   const client = useSupabaseClient();
   const { toastSuccess, toastError } = useAppToast();
-
+  const employeesStore = useEmployeesStore();
   // state
   const reports = ref<EmployeeLoan[]>([]);
   const reportsCount = ref(0);
@@ -162,6 +161,7 @@ export const useLoansStore = defineStore("loans", () => {
   //     loading.value = false;
   //   }
   // };
+
   const getSpesificReport = (reportId: number) => {
     return reports.value?.find((report) => report.id === reportId);
   };
@@ -178,6 +178,18 @@ export const useLoansStore = defineStore("loans", () => {
       } else {
         newReport = report;
       }
+
+      // Extract date part only (YYYY-MM-DD)
+      // let reportToSend: EmployeeLoan = { ...report };
+
+      // if (reportToSend.date) {
+      //   const date = new Date(reportToSend.date);
+      //   const year = date.getFullYear();
+      //   const month = String(date.getMonth() + 1).padStart(2, "0");
+      //   const day = String(date.getDate()).padStart(2, "0");
+
+      //   reportToSend.date = new Date(`${year}-${month}-${day}`);
+      // }
 
       const { data, error } = await client
         .from("employees_loans")

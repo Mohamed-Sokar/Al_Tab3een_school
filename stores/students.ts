@@ -1,6 +1,6 @@
 import type {
   Student,
-  BehavioralIssue,
+  StudentBehavioralIssue,
   QuranAchievementReport,
   Filters,
 } from "~/types";
@@ -15,7 +15,7 @@ export const useStudentStore = defineStore("students", () => {
 
   // state
   const studentsData = ref<Student[]>([]);
-  const behavioralIssuesStudentData = ref<BehavioralIssue[]>([]);
+  const StudentBehavioralIssuesStudentData = ref<StudentBehavioralIssue[]>([]);
   const loading = ref(false);
   const studentsCount = ref(0);
   const tableKey = ref(Math.random());
@@ -28,7 +28,7 @@ export const useStudentStore = defineStore("students", () => {
     );
   });
   const sortedIssues = computed(() => {
-    return [...(behavioralIssuesStudentData.value ?? [])].sort((a, b) =>
+    return [...(StudentBehavioralIssuesStudentData.value ?? [])].sort((a, b) =>
       (a.student?.first_name ?? "").localeCompare(b.student?.first_name ?? "")
     );
   });
@@ -231,7 +231,7 @@ export const useStudentStore = defineStore("students", () => {
       loading.value = true;
       const { data } = await api.delete(`students/${studentId}`);
       toastSuccess({
-        title: `:تم حذف الطالب ( ${data[0].full_name} ) بنجاح`,
+        title: `:تم حذف الطالب ( ${data[0].first_name} ${data[0].last_name} ) بنجاح`,
       });
       // delete student locally
       const studentIndex = getSpesificStudentIndex(studentId);
@@ -717,7 +717,7 @@ export const useStudentStore = defineStore("students", () => {
     // state
     studentsData,
     loading,
-    behavioralIssuesStudentData,
+    StudentBehavioralIssuesStudentData,
     tableKey,
 
     // Getters
