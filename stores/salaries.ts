@@ -71,7 +71,7 @@ export const useSalariesStore = defineStore("salaries", () => {
         .from("employee_salaries")
         .select(
           `id, employee_id, semester_id, amount, notes,status, created_at,
-          employee:employees(id, first_name, second_name, third_name, last_name, identity_number, salary),
+          employee:employees(id, first_name, second_name, third_name, last_name, identity_number, salary, loans:employees_loans(amount, month:months(id,name))),
           month:months(id, name)
           `
         )
@@ -124,9 +124,8 @@ export const useSalariesStore = defineStore("salaries", () => {
         );
         // set reports data
         reports.value = [...reports.value, ...newData];
-
-        toastSuccess({ title: "" });
       }
+      console.log(reports.value);
     } catch (err) {
       toastError({
         title: "خطأ في جلب التقارير",

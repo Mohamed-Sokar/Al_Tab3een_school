@@ -124,7 +124,7 @@ function getDropdownActions(
         label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
-          navigateTo(`/teachers/${visit.id}/edit_supervisory_visit`);
+          navigateTo(`/employees/${visit.id}/edit-supervisory-visit`);
         },
       },
       {

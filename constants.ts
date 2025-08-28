@@ -1,10 +1,13 @@
 import type {
-  BehavioralIssue,
-  BehavioralIssueEmployee,
   GradesReport,
   EmployeeLoan,
   EmployeeAbsenceReport,
 } from "./types";
+
+export const PAGINATION = {
+  DEFAULT_PAGE_SIZE: 10,
+  PAGE_SIZES: [10, 25, 50, 100],
+};
 
 export const memorization_status_options = [
   "حافظ قوي",

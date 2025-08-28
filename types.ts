@@ -114,7 +114,7 @@ interface Employee {
   subject: string[] | undefined;
   created_at?: string | undefined | Date;
 
-  administrative_issues?: Array<AdministrativeIssueEmployee> | undefined;
+  administrative_issues?: Array<EmployeeAdministrativeIssue> | undefined;
   supervisory_visits?: Array<EmployeeSupervisoryVisit> | undefined;
   loans?: Array<EmployeeLoan> | undefined;
   absence?: Array<EmployeeAbsenceReport> | undefined;
@@ -194,6 +194,9 @@ interface EmployeeSalaryReport {
   updated_at?: Date;
   notes?: string;
   status?: string;
+  currentMonthLoans?: number;
+  deservedSalary?: number;
+  paidSalary?: number;
 }
 interface FeesReport {
   id?: number | undefined;
@@ -231,8 +234,8 @@ interface StudentBehavioralIssue {
   description: string | undefined;
 }
 
-interface AdministrativeIssueEmployee {
-  id: number | undefined;
+interface EmployeeAdministrativeIssue {
+  id?: number | undefined;
   employee_id: string | undefined;
   employee?: Employee;
   description?: string | undefined;
@@ -355,7 +358,7 @@ export type {
   MonthlyPlan,
   SelectOption,
   StudentBehavioralIssue,
-  AdministrativeIssueEmployee,
+  EmployeeAdministrativeIssue,
   EmployeeSupervisoryVisit,
   GradesReport,
   Payment,

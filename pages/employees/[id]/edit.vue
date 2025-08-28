@@ -131,9 +131,17 @@ const enrollment_date_string = computed({
   },
 });
 
+watch(state, () => {
+  if (state.job_title !== "معلم") {
+    state.subject = [];
+  }
+});
+
 onMounted(async () => {
-  const employee = await employeesStore.fetchEmployeeById(employeeId);
+  const employee: Employee = await employeesStore.fetchEmployeeById(employeeId);
   Object.assign(state, employee);
+  // Parse subject from string to array
+  state.subject = JSON.parse(String(employee.subject));
 });
 </script>
 

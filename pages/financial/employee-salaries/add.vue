@@ -40,6 +40,24 @@ const employeesCount = ref(0);
 const reports = ref<EmployeeSalaryReport[]>([]);
 const pageErrors = ref<string[]>([]);
 
+const getCurrentMonthLoans = (row: Employee) => {
+  return (
+    row?.loans?.reduce((sum, loan) => {
+      return (
+        sum + (loan.month?.id === filters.monthFilter ? Number(loan.amount) : 0)
+      );
+    }, 0) || 0
+  );
+};
+const getStatus = (employee: Employee) => {
+  const deservedSalary =
+    Number(employee.salary) - getCurrentMonthLoans(employee);
+  const paidSalary = Number(employee.salary) - getCurrentMonthLoans(employee);
+
+  if (paidSalary >= deservedSalary) return "مدفوع";
+  if (paidSalary < deservedSalary && paidSalary > 0) return "غير مكتمل";
+  return "غير مدفوع";
+};
 // search for employee
 const search = async () => {
   if (!filters.semesterFilter || !filters.monthFilter) {
@@ -54,10 +72,10 @@ const search = async () => {
     employeesCount.value = Number(await employeesStore.getEmployeesCount());
 
     // Bring employees
-    await employeesStore.fetchEmployees(filters, true);
+    await employeesStore.fetchEmployees(1, employeesCount.value, filters, true);
     employees.value = employeesStore.employeesData;
 
-    // prepare reports array
+    // Prepare reports array
     reports.value = employees.value.map((employee: Employee) => {
       return {
         employee_id: employee.id,
@@ -65,13 +83,17 @@ const search = async () => {
         month_id: filters.monthFilter,
         amount: 0,
         notes: "",
-        status: "غير مدفوع",
-        salary: employee.salary,
+        salary: Number(employee.salary),
+        currentMonthLoans: getCurrentMonthLoans(employee),
+        deservedSalary:
+          Number(employee.salary) - getCurrentMonthLoans(employee),
+        paidSalary: Number(employee.salary) - getCurrentMonthLoans(employee),
         updated_at: new Date(),
+        status: getStatus(employee),
       };
     });
 
-    // prepare errors array
+    // Prepare errors array
     pageErrors.value = employees.value.map(() => "");
   } finally {
     isLoading.value = false;
@@ -79,21 +101,23 @@ const search = async () => {
 };
 
 const validateSalary = (index: number) => {
-  const amount = Number(reports.value[index].amount);
-  const salary = Number(reports.value[index].salary);
+  const paidSalary = Number(reports.value[index].paidSalary) || 0;
+  const deservedSalary = Number(reports.value[index].deservedSalary) || 0;
 
-  if (isNaN(amount) || amount < 0) {
+  if (isNaN(paidSalary) || paidSalary < 0) {
     pageErrors.value[index] = "قيمة الراتب غير صالح";
-  } else if (amount > salary) {
+  } else if (paidSalary > deservedSalary) {
     pageErrors.value[index] =
       "يجب أن يكون الراتب المدخل أقل أو يساوي الراتب المستحق";
   } else {
     pageErrors.value[index] = "";
 
+    reports.value[index].amount = paidSalary;
+
     reports.value[index].status =
-      amount >= salary
+      paidSalary >= deservedSalary
         ? "مدفوع"
-        : amount < salary && amount > 0
+        : paidSalary < deservedSalary && paidSalary > 0
         ? "غير مكتمل"
         : "غير مدفوع";
   }
@@ -123,7 +147,7 @@ const saveReports = async () => {
       });
       return;
     }
-    // remove reports that doesn't contain fees amount
+    // Remove reports that doesn't contain fees amount
     const filteredReport = reports.value.filter((r) => r.amount !== 0);
     const newReports = filteredReport.map((report) => {
       const { salary, ...rest } = report;
@@ -150,7 +174,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto mt-15">
+  <div class="max-w-5xl mx-auto mt-15">
     <UCard>
       <template #header>
         <div class="flex justify-between">
@@ -164,7 +188,7 @@ onMounted(async () => {
           </div>
           <div>
             <UButton
-              icon="i-heroicons-arrow-left"
+              icon="heroicons-arrow-left-16-solid"
               color="secondary"
               size="sm"
               class="w-10 flex justify-center items-center hover:cursor-pointer"
@@ -247,13 +271,20 @@ onMounted(async () => {
             </span>
           </div>
         </div>
-        <!-- جدول الطلاب -->
+
+        <!-- student table -->
         <table class="w-full">
           <thead>
             <tr
-              class="grid grid-cols-5 font-bold bg-secondary text-white place-items-center border-t border-b border-accented"
+              class="grid grid-cols-7 font-bold bg-secondary text-white place-items-center border-t border-b border-accented text-sm"
             >
               <th class="border-x border-accented p-2 w-full">الاسم رباعي</th>
+              <th class="border-x border-accented p-2 w-full">
+                الراتب الأساسي
+              </th>
+              <th class="border-x border-accented p-2 w-full">
+                سلف الشهر الحالي
+              </th>
               <th class="border-x border-accented p-2 w-full">
                 الراتب المستحق
               </th>
@@ -267,7 +298,7 @@ onMounted(async () => {
           <tbody v-if="!isLoading">
             <tr
               v-if="employees.length"
-              class="grid grid-cols-5 place-items-center"
+              class="grid grid-cols-7 place-items-center"
               v-for="(employee, index) in employees"
               :key="employee.id"
             >
@@ -298,9 +329,23 @@ onMounted(async () => {
                 class="w-full h-full p-2 border-x border-b border-accented flex flex-col justify-center"
               >
                 <UInput
+                  disabled
+                  :model-value="reports[index].currentMonthLoans"
+                  type="number"
+                />
+              </td>
+              <td
+                class="w-full h-full p-2 border-x border-b border-accented flex flex-col justify-center"
+              >
+                <UInput disabled :model-value="reports[index].deservedSalary" />
+              </td>
+              <td
+                class="w-full h-full p-2 border-x border-b border-accented flex flex-col justify-center"
+              >
+                <UInput
                   :color="pageErrors[index] ? 'error' : 'secondary'"
                   :highlight="pageErrors[index] ? true : false"
-                  v-model.number="reports[index].amount"
+                  v-model="reports[index].paidSalary"
                   @update:model-value="validateSalary(index)"
                   @input="validateSalary(index)"
                   type="number"

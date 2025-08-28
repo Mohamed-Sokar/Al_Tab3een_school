@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from "@nuxt/ui";
-import type { AdministrativeIssueEmployee, Filters } from "~/types";
-import { months } from "~/constants";
+import type { EmployeeAdministrativeIssue, Filters } from "~/types";
 
 // SEO
 useHead({ title: "المخالفات الإدارية" });
@@ -13,8 +12,7 @@ const { getDate } = useDateUtils();
 const { exportToExcel } = useExportToExcel();
 
 // data
-const currentMonthIndex = new Date().getMonth();
-const columns: TableColumn<AdministrativeIssueEmployee>[] = [
+const columns: TableColumn<EmployeeAdministrativeIssue>[] = [
   {
     accessorKey: "rowNumber",
     header: "الرقم",
@@ -104,7 +102,7 @@ const updateRows = async () => {
   await issuesStore.fetchReports(pageNum.value, pageSize.value, filters);
 };
 function getDropdownActions(
-  issue: AdministrativeIssueEmployee
+  issue: EmployeeAdministrativeIssue
 ): DropdownMenuItem[] {
   return [
     [
@@ -158,8 +156,8 @@ const rows = computed(() => {
   return numberedIssues.value.slice(start, end);
 });
 const numberedIssues = computed(() =>
-  (issuesStore.reportsData as AdministrativeIssueEmployee[]).map(
-    (issue: AdministrativeIssueEmployee, index: number) => ({
+  (issuesStore.reportsData as EmployeeAdministrativeIssue[]).map(
+    (issue: EmployeeAdministrativeIssue, index: number) => ({
       ...issue,
       rowNumber: index + 1,
     })

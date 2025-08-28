@@ -415,9 +415,10 @@ export const usePlansStore = defineStore("plans", () => {
 
       let { data, error } = await client
         .from("plans")
-        .select(
-          "*, months_plans(id, month_id, month:months(id, name), pages, plan_id)"
-        )
+        // .select(
+        //   "*, months_plans(id, month_id, month:months(id, name), pages, plan_id)"
+        // )
+        .select()
         .eq("id", Number(planId));
 
       if (error) {

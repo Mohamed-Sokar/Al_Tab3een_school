@@ -34,6 +34,7 @@ const onSubmit = async () => {
 
 const fetchPlan = async () => {
   const plan = await plansStore.getPlanById(Number(planId));
+  // const { months_plans, ...rest } = plan as Plan;
   console.log(plan);
   Object.assign(state, plan);
 };

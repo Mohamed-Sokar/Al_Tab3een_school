@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { object, string } from "yup";
-// import { useemployeesStore } from "@/stores/teachers";
+import type { EmployeeAdministrativeIssue } from "~/types";
 
-const employeesStore = useEmployeesStore();
+const issuesStore = useEmployeeAdministrativeIssues();
 
 const route = useRoute();
 const form = ref();
@@ -11,22 +11,21 @@ const schema = object({
   description: string().required("وصف المخالفة السلوكية مطلوب"),
 });
 
-const targetedIssue = employeesStore.getSpesificAdministrativeIssue(
-  +route.params.id
-);
-
-const state = reactive({
-  description: targetedIssue?.description,
+const state = reactive<Partial<EmployeeAdministrativeIssue>>({
+  description: undefined,
 });
 
 const onSubmit = async () => {
   // add issue to database
-  await employeesStore.editAdministrativeIssue(
-    +route.params.id,
-    state.description + ""
-  );
-  navigateTo({ name: "teachers-view-behavioral_issues" });
+  await issuesStore.saveEmployeeAdministrativeIssue(state);
+  navigateTo({ name: "employees-view-behavioral-issues" });
 };
+
+onMounted(async () => {
+  const issue = await issuesStore.getReportById(Number(route.params.id));
+  console.log(issue);
+  Object.assign(state, issue);
+});
 </script>
 
 <template>
@@ -54,7 +53,7 @@ const onSubmit = async () => {
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="employeesStore.loading"
+          :loading="issuesStore.loading"
         />
         <UButton
           variant="soft"

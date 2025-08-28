@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { object, string, date } from "yup";
-// import { useemployeesStore } from "@/stores/teachers";
-import type { SupervisoryVisitTeacher } from "~/types";
+import type { EmployeeSupervisoryVisit } from "~/types";
 
-const employeesStore = useEmployeesStore();
-// const { getDate } = useDateUtils();
+const visitsStore = useEmployeeSupervisoryVisits();
+
 const route = useRoute();
 const form = ref();
-const teacherId = Array.isArray(route.params.id)
+const employeeId = Array.isArray(route.params.id)
   ? route.params.id[0]
   : route.params.id ?? "";
 
@@ -18,15 +17,16 @@ const schema = object({
   type: string().required("نوع الزيارة مطلوبة"),
 });
 
-const state = reactive<SupervisoryVisitTeacher>({
+const state = reactive<EmployeeSupervisoryVisit>({
+  employee_id: employeeId,
   notes: undefined,
   date: new Date(),
   type: undefined,
   supervisor: undefined,
 });
-
+s;
 const onSubmit = async () => {
-  await employeesStore.addSupervisoryVisit(teacherId, state);
+  await visitsStore.saveEmployeeSupervisoryVisit(state);
   // navigateTo({ name: "employees-view-supervisory_visits" });
 };
 
@@ -100,7 +100,7 @@ const date_string = computed({
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
-          :loading="employeesStore.loading"
+          :loading="visitsStore.loading"
         />
         <UButton
           variant="soft"

@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { object, string, date } from "yup";
-// import { useemployeesStore } from "@/stores/teachers";
-import type { SupervisoryVisitTeacher } from "~/types";
+import type { EmployeeSupervisoryVisit } from "~/types";
 
-const employeesStore = useEmployeesStore();
-// const { getDate } = useDateUtils();
+// init
+const visitsStore = useEmployeeSupervisoryVisits();
 const route = useRoute();
-const form = ref();
 
+// Data
 const visitId = Array.isArray(route.params.id)
   ? route.params.id[0]
   : route.params.id ?? "";
-
 const schema = object({
   notes: string().required("الملاحظات مطلوبة"),
   date: date().required("التاريخ مطلوب"),
@@ -19,32 +17,24 @@ const schema = object({
   type: string().required("نوع الزيارة مطلوبة"),
 });
 
-const state = reactive<SupervisoryVisitTeacher>({
+// State
+const form = ref();
+const state = reactive<EmployeeSupervisoryVisit>({
+  id: undefined,
   notes: undefined,
   date: new Date(),
   type: undefined,
   supervisor: undefined,
 });
 
-const targetedVisit = ref<SupervisoryVisitTeacher | undefined>(
-  employeesStore.getSpesificSupervisorVisit(+route.params.id)
-);
-
-watchEffect(() => {
-  if (employeesStore.supervisoryVisits.length > 0) {
-    targetedVisit.value = employeesStore.getSpesificSupervisorVisit(
-      +route.params.id
-    );
-    console.log(targetedVisit.value);
-  }
-  Object.assign(state, targetedVisit.value);
-});
-
+// Actions
 const onSubmit = async () => {
-  await employeesStore.editSupervisorVisits(+visitId, state);
-  navigateTo({ name: "employees-view-supervisory-visits" });
+  console.log(state);
+  await visitsStore.saveEmployeeSupervisoryVisit(state);
+  // navigateTo({ name: "employees-view-supervisory-visits" });
 };
 
+// Computed
 const date_string = computed({
   get() {
     if (!state.date) return "";
@@ -68,6 +58,12 @@ const date_string = computed({
   set(val: Date) {
     state.date = val;
   },
+});
+
+// Fetch report data on component mount
+onMounted(async () => {
+  const report = await visitsStore.fetchReportById(+visitId);
+  Object.assign(state, report);
 });
 </script>
 
@@ -115,7 +111,7 @@ const date_string = computed({
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="employeesStore.loading"
+          :loading="visitsStore.loading"
         />
         <UButton
           variant="soft"

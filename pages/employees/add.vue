@@ -44,7 +44,7 @@ const schema = object({
     ),
   enrollment_date: date().required("تاريخ التسجيل مطلوب"),
   birth_date: date().required("تاريخ الميلاد مطلوب"),
-  subject: array(),
+  subject: array().nullable(),
   masjed: string().required("المسجد مطلوب"),
   address: string().required("العنوان مطلوب"),
   job_title: string().required("المسمى الوظيفي مطلوب"),

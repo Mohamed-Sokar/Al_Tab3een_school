@@ -125,8 +125,9 @@ export const useEmployeeAbsenceReport = defineStore(
 
         let { data, error } = await client
           .from("employees_absence")
-          .select("id, description")
-          .eq("id", Number(reportId));
+          .select()
+          .eq("id", Number(reportId))
+          .single();
 
         if (error) {
           toastError({
@@ -135,9 +136,7 @@ export const useEmployeeAbsenceReport = defineStore(
           throw Error("مشكلة في السيرفر");
         }
 
-        return data && data.length > 0
-          ? (data[0] as EmployeeAbsenceReport)
-          : null;
+        return data;
 
         // toastSuccess({
         //   title: `:تم جلب الخطة بنجاح`,

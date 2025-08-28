@@ -118,15 +118,16 @@ export const useEmployeeSupervisoryVisits = defineStore(
         loading.value = false;
       }
     };
-    const getReportById = async (reportId: number) => {
+    const fetchReportById = async (reportId: number) => {
       try {
         loading.value = true;
         // const { data, status } = await api.get(`students/behavioral-issues/${reportId}`);
 
         let { data, error } = await client
-          .from("teachers_supervisory_visits")
-          .select("id, description")
-          .eq("id", Number(reportId));
+          .from("employees_supervisory_visits")
+          .select()
+          .eq("id", Number(reportId))
+          .single();
 
         if (error) {
           toastError({
@@ -134,10 +135,8 @@ export const useEmployeeSupervisoryVisits = defineStore(
           });
           throw Error("مشكلة في السيرفر");
         }
-
-        return data && data.length > 0
-          ? (data[0] as EmployeeSupervisoryVisit)
-          : null;
+        console.log(data);
+        return data;
 
         // toastSuccess({
         //   title: `:تم جلب الخطة بنجاح`,
@@ -163,7 +162,7 @@ export const useEmployeeSupervisoryVisits = defineStore(
         loading.value = true;
 
         const { data, error } = await client
-          .from("teachers_supervisory_visits")
+          .from("employees_supervisory_visits")
           .upsert(report as any, { onConflict: "id" })
           .select();
 
@@ -196,7 +195,7 @@ export const useEmployeeSupervisoryVisits = defineStore(
         loading.value = true;
 
         const { error } = await client
-          .from("teachers_supervisory_visits")
+          .from("employees_supervisory_visits")
           .delete()
           .eq("id", reportId);
 
@@ -228,7 +227,7 @@ export const useEmployeeSupervisoryVisits = defineStore(
 
       // reports operations
       fetchReports,
-      getReportById,
+      fetchReportById,
 
       saveEmployeeSupervisoryVisit,
       deleteReport,

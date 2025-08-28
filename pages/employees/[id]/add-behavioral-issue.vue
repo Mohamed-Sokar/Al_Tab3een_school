@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { object, string } from "yup";
-// import { useemployeesStore } from "@/stores/teachers";
+import type { EmployeeAdministrativeIssue } from "~/types";
 
-const employeesStore = useEmployeesStore();
+const issuesStore = useEmployeeAdministrativeIssues();
 
 const route = useRoute();
 const form = ref();
@@ -14,16 +14,14 @@ const schema = object({
   description: string().required("وصف المخالفة الإدارية مطلوب"),
 });
 
-const state = reactive({
+const state = reactive<EmployeeAdministrativeIssue>({
+  employee_id: employeeId,
   description: undefined,
 });
 
 const onSubmit = async () => {
-  // add issue to database
-  await employeesStore.addAdministrativeIssue(
-    employeeId,
-    state.description + ""
-  );
+  // add issue to databases
+  await issuesStore.saveEmployeeAdministrativeIssue(state);
   // navigateTo({ name: "employees-view-behavioral-issues" });
 };
 </script>
@@ -53,7 +51,7 @@ const onSubmit = async () => {
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="إضافة"
-          :loading="employeesStore.loading"
+          :loading="issuesStore.loading"
         />
         <UButton
           variant="soft"

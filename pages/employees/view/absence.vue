@@ -98,7 +98,10 @@ function getDropdownActions(report: EmployeeAbsenceReport): DropdownMenuItem[] {
         label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
-          navigateTo(`/teachers/${report.id}/edit_absence_report`);
+          navigateTo({
+            name: "employees-id-edit-absence-report",
+            params: { id: report.id },
+          });
         },
       },
       {

@@ -1,4 +1,4 @@
-import type { AdministrativeIssueEmployee, Filters } from "~/types";
+import type { EmployeeAdministrativeIssue, Filters } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
 
@@ -10,7 +10,7 @@ export const useEmployeeAdministrativeIssues = defineStore(
     const { toastSuccess, toastError } = useAppToast();
 
     // state
-    const reports = ref<AdministrativeIssueEmployee[]>([]);
+    const reports = ref<EmployeeAdministrativeIssue[]>([]);
     const reportsCount = ref(0);
     const loading = ref(false);
 
@@ -98,11 +98,11 @@ export const useEmployeeAdministrativeIssues = defineStore(
         }
 
         if (forceRefresh) {
-          reports.value = data as AdministrativeIssueEmployee[];
+          reports.value = data as EmployeeAdministrativeIssue[];
         } else {
           // دمج البيانات الجديدة مع القديمة (تجنب التكرار باستخدام id)
           const existingIds = new Set(reports.value.map((report) => report.id));
-          const newData = (data as AdministrativeIssueEmployee[]).filter(
+          const newData = (data as EmployeeAdministrativeIssue[]).filter(
             (report) => !existingIds.has(report.id)
           );
           // set reports data
@@ -136,7 +136,7 @@ export const useEmployeeAdministrativeIssues = defineStore(
         }
 
         return data && data.length > 0
-          ? (data[0] as AdministrativeIssueEmployee)
+          ? (data[0] as EmployeeAdministrativeIssue)
           : null;
 
         // toastSuccess({
@@ -156,8 +156,8 @@ export const useEmployeeAdministrativeIssues = defineStore(
     const getSpesificReportIndex = (reportId: number) => {
       return reports.value?.findIndex((report) => report.id === reportId);
     };
-    const saveAdministrativeIssueEmployee = async (
-      report: AdministrativeIssueEmployee
+    const saveEmployeeAdministrativeIssue = async (
+      report: EmployeeAdministrativeIssue
     ) => {
       try {
         loading.value = true;
@@ -176,7 +176,7 @@ export const useEmployeeAdministrativeIssues = defineStore(
         if (reportIdx !== -1) {
           reports.value[reportIdx] = {
             ...reports.value[reportIdx],
-            ...(data[0] as AdministrativeIssueEmployee),
+            ...(data[0] as EmployeeAdministrativeIssue),
           };
         }
 
@@ -230,7 +230,7 @@ export const useEmployeeAdministrativeIssues = defineStore(
       fetchReports,
       getReportById,
 
-      saveAdministrativeIssueEmployee,
+      saveEmployeeAdministrativeIssue,
       deleteReport,
 
       getSpesificReport,

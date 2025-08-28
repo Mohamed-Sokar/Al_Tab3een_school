@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { object, string, date } from "yup";
-// import { useemployeesStore } from "@/stores/teachers";
 import type { EmployeeAbsenceReport } from "~/types";
 
-const employeesStore = useEmployeesStore();
+const absenceReportsStore = useEmployeeAbsenceReport();
 
 const route = useRoute();
 const form = ref();
@@ -19,16 +18,15 @@ const schema = object({
   excuse_status: string().required("حالة العذر مطلوبة"),
 });
 
-const targetedReport = employeesStore.getSpesificAbsenceReport(+reportId);
-
 const state = reactive<EmployeeAbsenceReport>({
-  reason: targetedReport?.reason,
-  date: targetedReport?.date,
-  excuse_status: targetedReport?.excuse_status,
+  id: undefined,
+  reason: undefined,
+  date: undefined,
+  excuse_status: undefined,
 });
 
 const onSubmit = async () => {
-  await employeesStore.editAbsenceReport(+reportId, state);
+  await absenceReportsStore.saveEmployeeAbsenceReport(state);
   navigateTo({ name: "employees-view-absence" });
 };
 
@@ -55,6 +53,14 @@ const date_string = computed({
   set(val: Date) {
     state.date = val;
   },
+});
+س;
+
+onMounted(async () => {
+  const report = await absenceReportsStore.getReportById(+reportId);
+  if (report) {
+    Object.assign(state, report);
+  }
 });
 </script>
 
@@ -101,7 +107,7 @@ const date_string = computed({
           class="flex w-40 py-2 justify-center font-bold lg:col-span-2 hover:cursor-pointer"
           color="secondary"
           label="تعديل"
-          :loading="employeesStore.loading"
+          :loading="absenceReportsStore.loading"
         />
         <UButton
           variant="soft"

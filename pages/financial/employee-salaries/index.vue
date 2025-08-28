@@ -12,7 +12,6 @@ useHead({ title: "تقارير رواتب المدرسين" });
 // init
 const salariesStore = useSalariesStore();
 const { exportToExcel } = useExportToExcel();
-// const { getDate } = useDateUtils();
 
 // state
 const isLoading = ref(false);
@@ -34,6 +33,15 @@ const sorting = ref([
 ]);
 const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
+
+const getCurrentMonthLoans = (row: EmployeeSalaryReport) => {
+  return (
+    row.employee?.loans?.reduce((sum, loan) => {
+      return sum + (loan.month?.id === row.month?.id ? Number(loan.amount) : 0);
+    }, 0) || 0
+  );
+};
+
 const columns: TableColumn<EmployeeSalaryReport>[] = [
   {
     accessorKey: "rowNumber",
@@ -68,11 +76,11 @@ const columns: TableColumn<EmployeeSalaryReport>[] = [
         .join(" ");
     },
   },
-  {
-    accessorKey: "identity_number",
-    header: "هوية الموظف",
-    cell: ({ row }) => row.original?.employee?.identity_number || "غير متوفر",
-  },
+  // {
+  //   accessorKey: "identity_number",
+  //   header: "هوية الموظف",
+  //   cell: ({ row }) => row.original?.employee?.identity_number || "غير متوفر",
+  // },
   {
     accessorKey: "month",
     header: "الشهر",
@@ -82,8 +90,8 @@ const columns: TableColumn<EmployeeSalaryReport>[] = [
         : "غير متوفر",
   },
   {
-    accessorKey: "الراتب المستحق",
-    header: "الراتب المستحق",
+    accessorKey: "الراتب الأساسي",
+    header: "الراتب الأساسي",
     cell: ({ row }) => {
       return h(
         UBadge,
@@ -96,35 +104,72 @@ const columns: TableColumn<EmployeeSalaryReport>[] = [
     },
   },
   {
-    accessorKey: "الراتب المدفوع",
-    header: "الراتب المدفوع",
+    accessorKey: "السلف لهذا الشهر",
+    header: "السلف لهذا الشهر",
     cell: ({ row }) => {
+      const loansThisMonth = getCurrentMonthLoans(row.original);
+      return h(
+        UBadge,
+        {
+          color: `${loansThisMonth === 0 ? "success" : "error"}`,
+          variant: "soft",
+          class: `${loansThisMonth > 0 ? "font-bold" : ""}`,
+        },
+        () => loansThisMonth
+      );
+    },
+  },
+  {
+    accessorKey: "الراتب المستحق",
+    header: "الراتب المستحق",
+    cell: ({ row }) => {
+      const loansThisMonth = getCurrentMonthLoans(row.original);
+      const salary = Number(row.original.employee?.salary);
+      const remainingSalary = salary - loansThisMonth;
+      // const remainingSalary = salary - paidSalary - loansThisMonth;
+
       return h(
         UBadge,
         {
           color: "neutral",
           variant: "soft",
         },
-        () => row.original.amount
+        () => remainingSalary
       );
     },
   },
   {
-    accessorKey: "المتبقي",
-    header: "المتبقي",
+    accessorKey: "الراتب المدفوع",
+    header: "الراتب المدفوع",
     cell: ({ row }) => {
-      const remain =
-        Number(row.original.employee?.salary) - Number(row.original.amount);
-      if (remain === 0) return "لا يوجد باقي";
+      const paidSalary = Number(row.original.amount);
+
       return h(
         UBadge,
         {
-          color: `${remain === 0 ? "success" : "error"}`,
+          color: "neutral",
+          variant: "soft",
         },
-        () => remain
+        () => paidSalary
       );
     },
   },
+  // {
+  //   accessorKey: "المتبقي",
+  //   header: "المتبقي",
+  //   cell: ({ row }) => {
+  //     const remain =
+  //       Number(row.original.employee?.salary) - Number(row.original.amount);
+  //     if (remain === 0) return "لا يوجد باقي";
+  //     return h(
+  //       UBadge,
+  //       {
+  //         color: `${remain === 0 ? "success" : "error"}`,
+  //       },
+  //       () => remain
+  //     );
+  //   },
+  // },
   {
     accessorKey: "status",
     header: "الحالة",
@@ -237,7 +282,7 @@ const exportReports = () => {
     })`,
   });
 };
-// refetch reports when filtering
+// refresh reports when filtering
 const applyFilters = async () => {
   await salariesStore.getReportsCount(filters);
   await fetchReports(true);

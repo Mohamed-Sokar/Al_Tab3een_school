@@ -1,10 +1,9 @@
 import type {
   Employee,
   EmployeeAbsenceReport,
-  EmployeeLoan,
   EmployeeSupervisoryVisit,
   Filters,
-  AdministrativeIssueEmployee,
+  EmployeeAdministrativeIssue,
 } from "~/types";
 import { defineStore } from "pinia";
 import { useAppToast } from "@/composables/useAppToast";
@@ -15,7 +14,7 @@ export const useEmployeesStore = defineStore("employees", () => {
   const employees = ref<Employee[]>([]);
   const employeesCount = ref(0);
   const loading = ref(false);
-  const behavioralIssues = ref<AdministrativeIssueEmployee[]>([]);
+  const behavioralIssues = ref<EmployeeAdministrativeIssue[]>([]);
   const supervisoryVisits = ref<EmployeeSupervisoryVisit[]>([]);
   // const loans = ref<EmployeeLoan[]>([]);
   const absenceReports = ref<EmployeeAbsenceReport[]>([]);
@@ -95,8 +94,8 @@ export const useEmployeesStore = defineStore("employees", () => {
       let query = client
         .from("employees")
         .select(
-          `*, behavioral_issues:employees_administrative_issues(id, description,created_at),
-      loans:employees_loans(id,amount,created_at),
+          `*, administrative_issues:employees_administrative_issues(id, description,created_at),
+      loans:employees_loans(id,amount,created_at, month_id, month:months(id, name)),
       absence:employees_absence(id, date, reason, excuse_status),
       academic_classes:teachers_academic_classes(class:academic_classes(id,title, group)),
       supervisory_visits:employees_supervisory_visits(notes,date,supervisor,type),
@@ -170,13 +169,24 @@ export const useEmployeesStore = defineStore("employees", () => {
       loading.value = true;
       const { data, error } = await client
         .from("employees")
+        // .select(
+        //   `*, behavioral_issues:employees_administrative_issues(id, description,created_at),
+        // loans:employees_loans(id,amount,created_at),
+        // absence:employees_absence(id, date, reason, excuse_status),
+        // academic_classes:teachers_academic_classes(class:academic_classes(id,title, group)),
+        // supervisory_visits:employees_supervisory_visits(*),
+        // salaries:employee_salaries(*)
+        // `
+        // )
         .select(
-          `*, behavioral_issues:employees_administrative_issues(id, description,created_at),
-      loans:employees_loans(id,amount,created_at),
-      absence:employees_absence(id, date, reason, excuse_status),
-      academic_classes:teachers_academic_classes(class:academic_classes(id,title, group)),
-      supervisory_visits:employees_supervisory_visits(notes,date,supervisor,type),
-      salaries:employee_salaries(*)
+          `
+        *,
+        loans:employees_loans(id, amount, created_at),
+        absence:employees_absence(id, date, reason, excuse_status),
+        academic_classes:teachers_academic_classes(class:academic_classes(id, title, group)),
+        salaries:employee_salaries(*),
+        supervisory_visits:employees_supervisory_visits(*),
+        administrative_issues:employees_administrative_issues(id, description, created_at)
       `
         )
         .eq("id", employeeId)
@@ -185,6 +195,7 @@ export const useEmployeesStore = defineStore("employees", () => {
       if (error) {
         throw Error("حدثت مشكلة أثناء جلب بيانات الموظف");
       }
+      console.log(data);
       return data;
     } catch (err) {
       toastError({

@@ -115,7 +115,7 @@ function getDropdownActions(plan: Plan): DropdownMenuItem[][] {
         label: "تعديل",
         icon: "i-lucide-edit",
         onSelect: () => {
-          navigateTo({ name: "plans-id-edit", query: { id: plan.id } });
+          navigateTo({ name: "plans-id-edit", params: { id: plan.id } });
         },
       },
       {
