@@ -169,18 +169,8 @@ export const useEmployeesStore = defineStore("employees", () => {
       loading.value = true;
       const { data, error } = await client
         .from("employees")
-        // .select(
-        //   `*, behavioral_issues:employees_administrative_issues(id, description,created_at),
-        // loans:employees_loans(id,amount,created_at),
-        // absence:employees_absence(id, date, reason, excuse_status),
-        // academic_classes:teachers_academic_classes(class:academic_classes(id,title, group)),
-        // supervisory_visits:employees_supervisory_visits(*),
-        // salaries:employee_salaries(*)
-        // `
-        // )
         .select(
-          `
-        *,
+          `*,
         loans:employees_loans(id, amount, created_at),
         absence:employees_absence(id, date, reason, excuse_status),
         academic_classes:teachers_academic_classes(class:academic_classes(id, title, group)),
@@ -195,7 +185,7 @@ export const useEmployeesStore = defineStore("employees", () => {
       if (error) {
         throw Error("حدثت مشكلة أثناء جلب بيانات الموظف");
       }
-      console.log(data);
+
       return data;
     } catch (err) {
       toastError({
@@ -844,6 +834,7 @@ export const useEmployeesStore = defineStore("employees", () => {
       "second_name",
       "third_name",
       "last_name",
+      "gender",
       "identity_number",
       "phone_number",
       "whatsapp_number",

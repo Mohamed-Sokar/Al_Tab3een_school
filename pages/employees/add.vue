@@ -2,6 +2,7 @@
 import { array, date, object, string } from "yup";
 import {
   courses_options,
+  gender_options,
   job_title_options,
   marital_status_options,
 } from "~/constants";
@@ -52,6 +53,7 @@ const schema = object({
     .required("عدد الأطفال مطلوب")
     .matches(/^[0-9٠-٩]/, "يجب إدخال أرقام عربية أو إنجليزية"),
   marital_status: string().required("الحالة الاجتماعية مطلوبة"),
+  gender: string().required("الجنس مطلوب"),
 });
 
 const state = reactive<Employee>({
@@ -71,6 +73,7 @@ const state = reactive<Employee>({
   marital_status: undefined,
   address: undefined,
   salary: undefined,
+  gender: undefined,
 });
 
 const createTeacher = async () => {
@@ -186,6 +189,15 @@ const enrollment_date_string = computed({
             v-model="state.last_name"
             placeholder="الاسم الرابع"
             label="الاسم الرابع"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField label="الجنس" name="gender">
+          <USelect
+            v-model="state.gender"
+            :items="gender_options"
+            placeholder="الجنس"
+            label="الجنس"
             class="w-full"
           />
         </UFormField>

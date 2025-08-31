@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   courses_options,
+  gender_options,
   job_title_options,
   marital_status_options,
 } from "~/constants";
@@ -33,6 +34,7 @@ const state = reactive<Employee>({
   marital_status: undefined,
   address: undefined,
   salary: undefined,
+  gender: undefined,
 });
 
 // Computed Properties
@@ -80,7 +82,7 @@ const enrollment_date_string = computed(() => {
   return "";
 });
 
-onMounted(async () => {
+watchEffect(async () => {
   const employee = await employeesStore.fetchEmployeeById(employeeId);
   Object.assign(state, employee);
 });
@@ -142,6 +144,16 @@ onMounted(async () => {
               v-model="state.last_name"
               placeholder="الاسم الرابع"
               label="الاسم الرابع"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="الجنس" name="gender">
+            <USelect
+              disabled
+              v-model="state.gender"
+              :items="gender_options"
+              placeholder="الجنس"
+              label="الجنس"
               class="w-full"
             />
           </UFormField>
@@ -241,7 +253,6 @@ onMounted(async () => {
           </UFormField>
           <UFormField label="المادة" name="subject">
             <USelect
-              disabled
               :disabled="state.job_title !== 'معلم'"
               multiple
               v-model="state.subject"

@@ -9,6 +9,8 @@ export const PAGINATION = {
   PAGE_SIZES: [10, 25, 50, 100],
 };
 
+export const gender_options = ["ذكر", "أنثى"];
+
 export const memorization_status_options = [
   "حافظ قوي",
   "حافظ ضعيف",

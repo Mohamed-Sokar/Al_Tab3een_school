@@ -100,6 +100,7 @@ interface Employee {
   second_name: string | undefined;
   third_name: string | undefined;
   last_name: string | undefined;
+  gender: "ذكر" | "أنثى" | undefined;
   identity_number: string | undefined;
   phone_number: string | undefined;
   address: string | undefined;
