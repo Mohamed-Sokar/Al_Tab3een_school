@@ -13,35 +13,10 @@ useHead({ title: "تقارير رواتب المدرسين" });
 const salariesStore = useSalariesStore();
 const { exportToExcel } = useExportToExcel();
 
-// state
-const isLoading = ref(false);
+// Data
 const pageCountOptions = [1, 2, 5, 10, 20, 50];
-const table = ref();
-const rowSelection = ref({});
-const pageNum = ref(1);
-const pageSize = ref(5);
-const tableKey = ref(Math.random());
-const filters = reactive({
-  monthFilter: undefined,
-  semesterFilter: undefined,
-});
-const sorting = ref([
-  {
-    id: "id",
-    desc: false,
-  },
-]);
 const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
-
-const getCurrentMonthLoans = (row: EmployeeSalaryReport) => {
-  return (
-    row.employee?.loans?.reduce((sum, loan) => {
-      return sum + (loan.month?.id === row.month?.id ? Number(loan.amount) : 0);
-    }, 0) || 0
-  );
-};
-
 const columns: TableColumn<EmployeeSalaryReport>[] = [
   {
     accessorKey: "rowNumber",
@@ -89,6 +64,39 @@ const columns: TableColumn<EmployeeSalaryReport>[] = [
         ? `${row.original.month.name} ( ${row.original.month.id} )`
         : "غير متوفر",
   },
+
+  {
+    accessorKey: "السلف لهذا الشهر",
+    header: "السلف لهذا الشهر",
+    cell: ({ row }) => {
+      const loansThisMonth = getCurrentMonthLoans(row.original);
+      return h(
+        UBadge,
+        {
+          color: `${loansThisMonth > 0 ? "error" : ""}`,
+          variant: "soft",
+          class: `${loansThisMonth > 0 ? "font-bold" : ""}`,
+        },
+        () => loansThisMonth
+      );
+    },
+  },
+  {
+    accessorKey: "الراتب الإضافي",
+    header: "الراتب الإضافي",
+    cell: ({ row }) => {
+      const overTimeSalary = row.original.over_time_salary || 0;
+      return h(
+        UBadge,
+        {
+          color: `${overTimeSalary > 0 ? "success" : ""}`,
+          variant: "soft",
+          class: `${overTimeSalary > 0 ? "font-bold" : ""}`,
+        },
+        () => overTimeSalary
+      );
+    },
+  },
   {
     accessorKey: "الراتب الأساسي",
     header: "الراتب الأساسي",
@@ -104,29 +112,10 @@ const columns: TableColumn<EmployeeSalaryReport>[] = [
     },
   },
   {
-    accessorKey: "السلف لهذا الشهر",
-    header: "السلف لهذا الشهر",
-    cell: ({ row }) => {
-      const loansThisMonth = getCurrentMonthLoans(row.original);
-      return h(
-        UBadge,
-        {
-          color: `${loansThisMonth === 0 ? "success" : "error"}`,
-          variant: "soft",
-          class: `${loansThisMonth > 0 ? "font-bold" : ""}`,
-        },
-        () => loansThisMonth
-      );
-    },
-  },
-  {
     accessorKey: "الراتب المستحق",
     header: "الراتب المستحق",
     cell: ({ row }) => {
-      const loansThisMonth = getCurrentMonthLoans(row.original);
-      const salary = Number(row.original.employee?.salary);
-      const remainingSalary = salary - loansThisMonth;
-      // const remainingSalary = salary - paidSalary - loansThisMonth;
+      const deservedSalary = getDeservedSalary(row.original);
 
       return h(
         UBadge,
@@ -134,7 +123,7 @@ const columns: TableColumn<EmployeeSalaryReport>[] = [
           color: "neutral",
           variant: "soft",
         },
-        () => remainingSalary
+        () => deservedSalary
       );
     },
   },
@@ -154,22 +143,21 @@ const columns: TableColumn<EmployeeSalaryReport>[] = [
       );
     },
   },
-  // {
-  //   accessorKey: "المتبقي",
-  //   header: "المتبقي",
-  //   cell: ({ row }) => {
-  //     const remain =
-  //       Number(row.original.employee?.salary) - Number(row.original.amount);
-  //     if (remain === 0) return "لا يوجد باقي";
-  //     return h(
-  //       UBadge,
-  //       {
-  //         color: `${remain === 0 ? "success" : "error"}`,
-  //       },
-  //       () => remain
-  //     );
-  //   },
-  // },
+  {
+    accessorKey: "المتبقي",
+    header: "المتبقي",
+    cell: ({ row }) => {
+      const remain = getRemainSalary(row.original);
+      if (remain === 0) return "لا يوجد باقي";
+      return h(
+        UBadge,
+        {
+          color: `${remain === 0 ? "success" : "error"}`,
+        },
+        () => remain
+      );
+    },
+  },
   {
     accessorKey: "status",
     header: "الحالة",
@@ -214,6 +202,24 @@ const columns: TableColumn<EmployeeSalaryReport>[] = [
     id: "action",
   },
 ];
+
+// state
+const isLoading = ref(false);
+const table = ref();
+const rowSelection = ref({});
+const pageNum = ref(1);
+const pageSize = ref(5);
+const tableKey = ref(Math.random());
+const filters = reactive({
+  monthFilter: undefined,
+  semesterFilter: undefined,
+});
+const sorting = ref([
+  {
+    id: "id",
+    desc: false,
+  },
+]);
 
 // Actions
 const fetchReports = async (forceRefresh: boolean = false) => {
@@ -291,6 +297,24 @@ const applyFilters = async () => {
 const updateRows = async () => {
   await salariesStore.fetchReports(pageNum.value, pageSize.value, filters);
 };
+const getCurrentMonthLoans = (row: EmployeeSalaryReport) => {
+  return (
+    row.employee?.loans?.reduce((sum, loan) => {
+      return sum + (loan.month?.id === row.month?.id ? Number(loan.amount) : 0);
+    }, 0) || 0
+  );
+};
+const getDeservedSalary = (row: EmployeeSalaryReport) => {
+  const loansThisMonth = getCurrentMonthLoans(row);
+  const salary = Number(row.employee?.salary);
+  const overTimeSalary = Number(row.over_time_salary);
+  return salary - loansThisMonth + overTimeSalary;
+};
+const getRemainSalary = (row: EmployeeSalaryReport) => {
+  const deservedSalary = getDeservedSalary(row);
+  const paidSalary = Number(row.amount);
+  return deservedSalary - paidSalary;
+};
 
 onMounted(async () => {
   await Promise.all([useGradsStore().fetchSemesters()]);
@@ -305,7 +329,6 @@ const numberedReports = computed(() =>
     };
   })
 );
-// pagination rows
 const rows = computed(() => {
   const start = (pageNum.value - 1) * pageSize.value;
   const end = start + pageSize.value;
@@ -366,12 +389,7 @@ watch(pageNum, async () => {
       <div class="mb-5">
         <UForm :state="filters" @submit="applyFilters" class="">
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 items-end mb-2">
-            <UFormField
-              label="الفصل الدراسي"
-              required
-              name="semester_id"
-              size="md"
-            >
+            <UFormField label="الفصل الدراسي" name="semester_id" size="md">
               <USelect
                 class="w-full"
                 v-model="filters.semesterFilter"
@@ -384,7 +402,7 @@ watch(pageNum, async () => {
                 placeholder="اختر الفصل الدراسي"
               />
             </UFormField>
-            <UFormField label="الشهر" required name="month_id" size="md">
+            <UFormField label="الشهر" name="month_id" size="md">
               <USelect
                 class="w-full"
                 v-model="filters.monthFilter"

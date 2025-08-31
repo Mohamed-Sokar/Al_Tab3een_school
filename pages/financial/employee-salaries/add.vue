@@ -49,14 +49,40 @@ const getCurrentMonthLoans = (row: Employee) => {
     }, 0) || 0
   );
 };
-const getStatus = (employee: Employee) => {
-  const deservedSalary =
-    Number(employee.salary) - getCurrentMonthLoans(employee);
-  const paidSalary = Number(employee.salary) - getCurrentMonthLoans(employee);
 
+const getStatus = (
+  // employee: Employee,
+  deservedSalary: number,
+  paidSalary: number
+) => {
   if (paidSalary >= deservedSalary) return "مدفوع";
   if (paidSalary < deservedSalary && paidSalary > 0) return "غير مكتمل";
   return "غير مدفوع";
+};
+
+const getDeservedSalary = (employee: Employee) => {
+  return Number(employee.salary) - getCurrentMonthLoans(employee);
+};
+
+const handleOverTimeSalaryChange = (index: number, value: number) => {
+  reports.value[index].over_time_salary = value;
+
+  // Recalculate deservedSalary automatically
+  const baseSalary = Number(reports.value[index].salary);
+  const currentMonthLoans = Number(reports.value[index].currentMonthLoans);
+  reports.value[index].deservedSalary = baseSalary + value - currentMonthLoans;
+
+  // Auto-adjust paidSalary to match new deservedSalary
+  reports.value[index].paidSalary = reports.value[index].deservedSalary;
+
+  // Update status
+  reports.value[index].status = getStatus(
+    reports.value[index].deservedSalary,
+    reports.value[index].paidSalary
+  );
+
+  // Validate the salary
+  validateSalary(index);
 };
 // search for employee
 const search = async () => {
@@ -65,6 +91,14 @@ const search = async () => {
     return;
   }
 
+  const count = await salariesStore.checkReportsExist(filters);
+  if (count && count > 0) {
+    toastError({
+      title: "تقارير رواتب هذا الشهر موجودة بالفعل",
+      description: "لا يمكن إضافة تقارير رواتب لنفس الشهر والفصل الدراسي",
+    });
+    return;
+  }
   try {
     isLoading.value = true;
 
@@ -77,19 +111,25 @@ const search = async () => {
 
     // Prepare reports array
     reports.value = employees.value.map((employee: Employee) => {
+      const baseSalary = Number(employee.salary) || 0;
+      const currentMonthLoans = getCurrentMonthLoans(employee);
+      const paidSalary = baseSalary - currentMonthLoans;
+      const deservedSalary = getDeservedSalary(employee);
+
       return {
         employee_id: employee.id,
         semester_id: filters.semesterFilter,
         month_id: filters.monthFilter,
+        over_time_salary: 0,
         amount: 0,
         notes: "",
-        salary: Number(employee.salary),
-        currentMonthLoans: getCurrentMonthLoans(employee),
-        deservedSalary:
-          Number(employee.salary) - getCurrentMonthLoans(employee),
-        paidSalary: Number(employee.salary) - getCurrentMonthLoans(employee),
+        salary: baseSalary,
+        currentMonthLoans: currentMonthLoans,
+        deservedSalary: deservedSalary,
+        paidSalary: paidSalary,
+        remainingSalary: deservedSalary - paidSalary,
         updated_at: new Date(),
-        status: getStatus(employee),
+        status: getStatus(deservedSalary, paidSalary),
       };
     });
 
@@ -104,23 +144,26 @@ const validateSalary = (index: number) => {
   const paidSalary = Number(reports.value[index].paidSalary) || 0;
   const deservedSalary = Number(reports.value[index].deservedSalary) || 0;
 
-  if (isNaN(paidSalary) || paidSalary < 0) {
+  if (isNaN(paidSalary) || paidSalary <= 0) {
     pageErrors.value[index] = "قيمة الراتب غير صالح";
   } else if (paidSalary > deservedSalary) {
     pageErrors.value[index] =
       "يجب أن يكون الراتب المدخل أقل أو يساوي الراتب المستحق";
   } else {
     pageErrors.value[index] = "";
-
     reports.value[index].amount = paidSalary;
-
-    reports.value[index].status =
-      paidSalary >= deservedSalary
-        ? "مدفوع"
-        : paidSalary < deservedSalary && paidSalary > 0
-        ? "غير مكتمل"
-        : "غير مدفوع";
   }
+  // update remainingSalary
+  updateRemainingSalary(index);
+};
+const updateRemainingSalary = (index: number) => {
+  const paidSalary = Number(reports.value[index].paidSalary) || 0;
+  const deservedSalary = Number(reports.value[index].deservedSalary) || 0;
+
+  // Update status
+  reports.value[index].status = getStatus(deservedSalary, paidSalary);
+  // Update remainingSalary
+  reports.value[index].remainingSalary = deservedSalary - paidSalary;
 };
 // check page inputs
 const checkPageInputs = () => {
@@ -150,14 +193,18 @@ const saveReports = async () => {
     // Remove reports that doesn't contain fees amount
     const filteredReport = reports.value.filter((r) => r.amount !== 0);
     const newReports = filteredReport.map((report) => {
-      const { salary, ...rest } = report;
+      const {
+        salary,
+        currentMonthLoans,
+        deservedSalary,
+        paidSalary,
+        remainingSalary,
+        ...rest
+      } = report;
       return rest;
     });
-    console.log(newReports);
     // save reports in DB
     await salariesStore.saveSalaryReports(newReports);
-
-    toastSuccess({ title: "تم حفظ تقارير الرواتب بنجاح" });
     // navigateTo({ name: "financial-employee-salaries" });
 
     // reset arrays
@@ -174,7 +221,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto mt-15">
+  <div class="mx-auto mt-15">
     <UCard>
       <template #header>
         <div class="flex justify-between">
@@ -276,7 +323,7 @@ onMounted(async () => {
         <table class="w-full">
           <thead>
             <tr
-              class="grid grid-cols-7 font-bold bg-secondary text-white place-items-center border-t border-b border-accented text-sm"
+              class="grid grid-cols-9 font-bold bg-secondary text-white place-items-center border-t border-b border-accented text-sm"
             >
               <th class="border-x border-accented p-2 w-full">الاسم رباعي</th>
               <th class="border-x border-accented p-2 w-full">
@@ -285,12 +332,14 @@ onMounted(async () => {
               <th class="border-x border-accented p-2 w-full">
                 سلف الشهر الحالي
               </th>
+              <th class="border-x border-accented p-2 w-full">راتب إضافي</th>
               <th class="border-x border-accented p-2 w-full">
                 الراتب المستحق
               </th>
               <th class="border-x border-accented p-2 w-full">
                 الراتب المدفوع
               </th>
+              <th class="border-x border-accented p-2 w-full">المتبقي</th>
               <th class="border-x border-accented p-2 w-full">الحالة</th>
               <th class="border-x border-accented p-2 w-full">ملاحظات</th>
             </tr>
@@ -298,7 +347,7 @@ onMounted(async () => {
           <tbody v-if="!isLoading">
             <tr
               v-if="employees.length"
-              class="grid grid-cols-7 place-items-center"
+              class="grid grid-cols-9 place-items-center"
               v-for="(employee, index) in employees"
               :key="employee.id"
             >
@@ -337,6 +386,17 @@ onMounted(async () => {
               <td
                 class="w-full h-full p-2 border-x border-b border-accented flex flex-col justify-center"
               >
+                <UInput
+                  v-model="reports[index].over_time_salary"
+                  @update:model-value="
+                    (val) => handleOverTimeSalaryChange(index, Number(val))
+                  "
+                  type="number"
+                />
+              </td>
+              <td
+                class="w-full h-full p-2 border-x border-b border-accented flex flex-col justify-center"
+              >
                 <UInput disabled :model-value="reports[index].deservedSalary" />
               </td>
               <td
@@ -347,12 +407,20 @@ onMounted(async () => {
                   :highlight="pageErrors[index] ? true : false"
                   v-model="reports[index].paidSalary"
                   @update:model-value="validateSalary(index)"
-                  @input="validateSalary(index)"
                   type="number"
                 />
                 <p v-if="pageErrors[index]" class="text-error text-xs mt-1">
                   {{ pageErrors[index] }}
                 </p>
+              </td>
+              <td
+                class="w-full h-full p-2 border-x border-b border-accented flex flex-col justify-center"
+              >
+                <UInput
+                  disabled
+                  v-model="reports[index].remainingSalary"
+                  type="number"
+                />
               </td>
               <td
                 class="w-full h-full p-2 text-center border-x border-b border-accented flex justify-center items-center"

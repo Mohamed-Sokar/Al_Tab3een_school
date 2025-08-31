@@ -855,6 +855,7 @@ export const useEmployeesStore = defineStore("employees", () => {
       "job_title",
       "masjed",
       "address",
+      "salary",
       "created_at",
     ];
 

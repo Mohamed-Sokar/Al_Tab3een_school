@@ -70,36 +70,13 @@ export const useSalariesStore = defineStore("salaries", () => {
       let query = client
         .from("employee_salaries")
         .select(
-          `id, employee_id, semester_id, amount, notes,status, created_at,
+          `id, employee_id, semester_id, amount, over_time_salary, notes, status, created_at,
           employee:employees(id, first_name, second_name, third_name, last_name, identity_number, salary, loans:employees_loans(amount, month:months(id,name))),
           month:months(id, name)
           `
         )
         .range(start, end)
         .order("id", { ascending: false });
-
-      // Apply filtering based on academic_class_id
-      // if (filters.academicClassFilter) {
-      //   const { data: studentIds, error: studentError } = await client
-      //     .from("students")
-      //     .select("id")
-      //     .eq("academic_class_id", filters.academicClassFilter);
-
-      //   if (studentError) {
-      //     throw new Error(studentError.message);
-      //   }
-
-      //   const validStudentIds = studentIds.map(
-      //     (student: Student) => student.id
-      //   );
-      //   if (validStudentIds.length > 0) {
-      //     query = query.in("student_id", validStudentIds);
-      //   } else {
-      //     reports.value = [];
-      //     loading.value = false;
-      //     return;
-      //   }
-      // }
 
       // Apply filtering based on monthly_plan_id
       if (filters.monthFilter) {
@@ -238,6 +215,36 @@ export const useSalariesStore = defineStore("salaries", () => {
   const getSpesificReportIndex = (reportId: number) => {
     return reports.value?.findIndex((report) => report.id === reportId);
   };
+  const checkReportsExist = async (filters: Filters) => {
+    try {
+      // Check if employee salaries is exist for this month based on month_id and semester_id
+      let query = client
+        .from("employee_salaries")
+        .select("id", { count: "exact" });
+      if (filters.monthFilter) {
+        query = query.eq("month_id", filters?.monthFilter);
+      }
+      if (filters.semesterFilter) {
+        query = query.eq("semester_id", filters?.semesterFilter);
+      }
+      const { count, error: countError } = await query;
+      // const { data, error } = await query;
+      if (countError) {
+        throw createError({ statusCode: 500, message: countError.message });
+      }
+      // if (error) {
+      //   throw createError({ statusCode: 500, message: error.message });
+      // }
+
+      // return { data: data, count: count };
+      return count;
+    } catch (err) {
+      toastError({
+        title: "خطأ في إضافة تقارير الرواتب",
+        description: (err as Error).message || "حدث خطأ غير متوقع",
+      });
+    }
+  };
   const saveSalaryReports = async (newReports: EmployeeSalaryReport[]) => {
     try {
       const { error } = await client
@@ -328,6 +335,7 @@ export const useSalariesStore = defineStore("salaries", () => {
 
     // reports operations
     fetchReports,
+    checkReportsExist,
     // fetchStudentsByAcademicClassIdAndMonthId,
     getReportsCount,
 

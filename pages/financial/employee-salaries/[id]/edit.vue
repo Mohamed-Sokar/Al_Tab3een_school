@@ -21,6 +21,20 @@ const schema = object({
       "amount-not-greater-than-salary",
       "الراتب المدفوع يجب ألا يتجاوز الراتب المستحق",
       function (value) {
+        return (
+          value <=
+          Number(state.salary) + Number(state?.report?.over_time_salary)
+        );
+      }
+    ),
+  over_time_salary: number()
+    .typeError("يجب أن تدخل رقما")
+    .required("الراتب الإضافي مطلوب")
+    .min(0, "الراتب الإضافي يجب ألا يكون قيمة سالبة")
+    .test(
+      "over-time-salary-not-greater-than-salary",
+      "الراتب الإضافي يجب ألا يتجاوز الراتب المستحق",
+      function (value) {
         return value <= (state.salary ?? 0);
       }
     ),
@@ -28,20 +42,25 @@ const schema = object({
   semester_id: number().required("الفصل الدراسي مطلوب"),
 });
 
-// state
+// State
 const state = reactive<{
   report: EmployeeSalaryReport | null;
   employee_name: string;
   salary: number | undefined;
   identity_number: string;
+  over_time_salary: number | undefined;
+  remaining: number | undefined;
 }>({
   report: null,
   employee_name: "",
   salary: undefined,
   identity_number: "",
+  over_time_salary: undefined,
+  remaining: undefined,
 });
 const isLoading = ref(false);
 
+// Actions
 const fetchReport = async () => {
   const reportId = Number(route.params.id);
 
@@ -57,14 +76,13 @@ const fetchReport = async () => {
     const { data: report, error: reportError } = await client
       .from("employee_salaries")
       .select(
-        `id, employee_id, amount, status, notes, created_at, month_id, semester_id,
+        `id, employee_id, amount, over_time_salary, status, notes, created_at, month_id, semester_id,
           employee:employees(id, first_name, second_name, third_name, last_name, identity_number, salary),
           month:months(id)
           `
       )
       .eq("id", reportId)
       .single();
-
     if (reportError) {
       throw new Error(reportError.message);
     }
@@ -74,10 +92,8 @@ const fetchReport = async () => {
     }
 
     const targetedReport = report as EmployeeSalaryReport;
-    // const targetedReport = feesStore.getSpesificReport(reportId) as FeesReport;
-    // console.log("targetedReport: ", targetedReport);
 
-    state.salary = targetedReport.employee?.salary;
+    state.salary = Number(targetedReport.employee?.salary);
 
     state.report = {
       id: targetedReport.id,
@@ -85,6 +101,7 @@ const fetchReport = async () => {
       month_id: targetedReport.month_id,
       semester_id: targetedReport.semester_id,
       amount: targetedReport.amount,
+      over_time_salary: targetedReport.over_time_salary,
       status: targetedReport.status,
       updated_at: new Date(),
     };
@@ -112,11 +129,11 @@ const fetchReport = async () => {
     isLoading.value = false;
   }
 };
-
 const saveReport = async () => {
   if (!state.report) return;
 
   try {
+    console.log(state.report);
     isLoading.value = true;
     await salariesStore.updateSalaryReport(state.report);
     state.report = null;
@@ -130,18 +147,24 @@ const saveReport = async () => {
     isLoading.value = false;
   }
 };
-
 const assignReportStatus = () => {
-  const amount = Number(state.report?.amount);
-  const salary = Number(state.salary);
+  const paidSalary = Number(state.report?.amount);
+  const over_time_salary = Number(state.report?.over_time_salary);
+  const baseSalary = Number(state.salary);
+  const deservedSalary = over_time_salary + baseSalary;
 
-  if (state.report) {
-    // check if amount and salary were grater than 0
-    if (amount && salary) {
+  console.log("baseSalary", baseSalary);
+  console.log("over_time_salary", over_time_salary);
+  console.log("paidSalary", paidSalary);
+  console.log("deservedSalary", deservedSalary);
+  console.log("-------------------");
+
+  if (!!state.report) {
+    if (paidSalary && baseSalary) {
       state.report.status =
-        amount >= salary
+        paidSalary >= deservedSalary
           ? "مدفوع"
-          : amount < salary && amount > 0
+          : paidSalary <= deservedSalary
           ? "غير مكتمل"
           : "غير مدفوع";
     } else {
@@ -150,9 +173,15 @@ const assignReportStatus = () => {
   }
 };
 
-// watch state to assign report status
+// Watch state to assign report status
 watch(state, () => {
   assignReportStatus();
+  if (state) {
+    state.remaining =
+      Number(state.salary) +
+      Number(state.report?.over_time_salary) -
+      Number(state.report?.amount);
+  }
 });
 
 onMounted(async () => {
@@ -210,16 +239,17 @@ onMounted(async () => {
                 />
               </UFormField>
             </div>
-            <!-- salary and status -->
+            <!-- deservedSalary and status -->
             <div class="flex flex-wrap gap-2 mb-5">
               <div class="p-3 bg-secondary/15 rounded-md flex gap-3">
                 <span class="font-bold">الراتب المستحق</span>
                 <UBadge color="secondary" size="lg">
-                  {{ state.salary }}
+                  {{
+                    Number(state.salary) + Number(state.report.over_time_salary)
+                  }}
                 </UBadge>
               </div>
               <UBadge
-                :label="state.report.status"
                 class="font-bold text-xl flex justify-center items-center"
                 :color="
                   state.report.status === 'مدفوع'
@@ -228,10 +258,29 @@ onMounted(async () => {
                     ? 'warning'
                     : 'error'
                 "
-              />
+              >
+                {{ state.report.status }}
+              </UBadge>
             </div>
             <!-- salary and amount -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <UFormField label="الراتب الأساسي" required size="md">
+                <UInput
+                  disabled
+                  v-model.number="state.salary"
+                  class="w-full"
+                  type="number"
+                  color="secondary"
+                />
+              </UFormField>
+              <UFormField label="الراتب الإضافي" required size="md">
+                <UInput
+                  v-model.number="state.report.over_time_salary"
+                  class="w-full"
+                  type="number"
+                  color="secondary"
+                />
+              </UFormField>
               <UFormField
                 label="الراتب المدفوع"
                 required
@@ -240,6 +289,15 @@ onMounted(async () => {
               >
                 <UInput
                   v-model.number="state.report.amount"
+                  class="w-full"
+                  type="number"
+                  color="secondary"
+                />
+              </UFormField>
+              <UFormField label="المتبقي" required name="remaining" size="md">
+                <UInput
+                  disabled
+                  v-model.number="state.remaining"
                   class="w-full"
                   type="number"
                   color="secondary"

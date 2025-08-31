@@ -197,6 +197,8 @@ interface EmployeeSalaryReport {
   currentMonthLoans?: number;
   deservedSalary?: number;
   paidSalary?: number;
+  remainingSalary?: number;
+  over_time_salary?: number;
 }
 interface FeesReport {
   id?: number | undefined;

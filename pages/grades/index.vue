@@ -9,7 +9,7 @@ import type {
 } from "~/types";
 import { object, number } from "yup";
 
-// seo
+// SEO
 useHead({ title: "الدرجات" });
 useSeoMeta({
   title: "الدرجات",
@@ -24,7 +24,7 @@ useSeoMeta({
 const gradsReportsStore = useGradsStore();
 const { exportToExcel } = useExportToExcel();
 
-// schema
+// Schema
 const schema = object({
   semester: number().required("السنة الدراسية مطلوبة"),
   exam_type: number().nullable(),
@@ -32,7 +32,7 @@ const schema = object({
   subject: number().nullable(),
 });
 
-// data
+// Data
 const globalFilter = ref("");
 const rowSelection = ref({});
 const tableKey = ref(Math.random());
@@ -88,7 +88,7 @@ const columns: TableColumn<AvgScoreResult>[] = [
   },
 ];
 
-// state
+// State
 const state = reactive({
   semester: gradsReportsStore.semestersData[0]?.id,
   exam_type: undefined,
@@ -96,7 +96,7 @@ const state = reactive({
   subject: undefined,
 });
 
-// computed properties
+// Computed properties
 const numberedReports = computed(() => {
   return gradsReportsStore.avgScoresByClassData.map((report, index) => ({
     ...report,
