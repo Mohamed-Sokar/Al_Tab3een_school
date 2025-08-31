@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { array, date, object, string } from "yup";
+import { array, date, object, string, boolean } from "yup";
 import {
   courses_options,
   gender_options,
@@ -50,6 +50,7 @@ const schema = object({
     .matches(/^[0-9٠-٩]/, "يجب إدخال أرقام عربية أو إنجليزية"),
   marital_status: string().required("الحالة الاجتماعية مطلوبة"),
   gender: string().required("الجنس مطلوب"),
+  isShared: boolean().required("تحديد إذا كان الموظف مشترك أم لا مطلوب"),
 });
 
 const state = reactive<Employee>({
@@ -70,6 +71,7 @@ const state = reactive<Employee>({
   address: undefined,
   salary: undefined,
   gender: undefined,
+  isShared: undefined,
 });
 
 const route = useRoute();
@@ -83,7 +85,6 @@ const updateEmployee = async () => {
   await employeesStore.updateEmployee(employeeId, state);
   navigateTo({ name: "employees-view" });
 };
-
 const birth_date_string = computed({
   get() {
     if (!state.birth_date) return "";
@@ -304,6 +305,18 @@ watchEffect(async () => {
         </UFormField>
         <UFormField required label="الراتب" name="salary">
           <UInput v-model="state.salary" class="w-full" placeholder="الراتب" />
+        </UFormField>
+        <UFormField label="هل الموظف مشترك؟" name="isShared">
+          <USelect
+            v-model="state.isShared"
+            :items="[
+              { label: 'نعم', value: true },
+              { label: 'لا', value: false },
+            ]"
+            placeholder="هل الموظف مشترك؟"
+            label="هل الموظف مشترك؟"
+            class="w-full"
+          />
         </UFormField>
 
         <div class="col-span-2 flex gap-2 mt-5">

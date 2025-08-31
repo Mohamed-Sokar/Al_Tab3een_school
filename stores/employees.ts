@@ -848,6 +848,7 @@ export const useEmployeesStore = defineStore("employees", () => {
       "address",
       "salary",
       "created_at",
+      "isShared",
     ];
 
     return Object.fromEntries(

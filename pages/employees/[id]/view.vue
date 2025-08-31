@@ -35,6 +35,7 @@ const state = reactive<Employee>({
   address: undefined,
   salary: undefined,
   gender: undefined,
+  isShared: undefined,
 });
 
 // Computed Properties
@@ -268,6 +269,18 @@ watchEffect(async () => {
               v-model="state.salary"
               class="w-full"
               placeholder="الراتب"
+            />
+          </UFormField>
+          <UFormField label="هل الموظف مشترك؟" name="isShared">
+            <USelect
+              v-model="state.isShared"
+              :items="[
+                { label: 'نعم', value: true },
+                { label: 'لا', value: false },
+              ]"
+              placeholder="هل الموظف مشترك؟"
+              label="هل الموظف مشترك؟"
+              class="w-full"
             />
           </UFormField>
         </div>

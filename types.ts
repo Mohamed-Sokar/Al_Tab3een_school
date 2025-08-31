@@ -114,6 +114,7 @@ interface Employee {
   birth_date: Date | undefined;
   subject: string[] | undefined;
   created_at?: string | undefined | Date;
+  isShared: boolean | undefined;
 
   administrative_issues?: Array<EmployeeAdministrativeIssue> | undefined;
   supervisory_visits?: Array<EmployeeSupervisoryVisit> | undefined;
