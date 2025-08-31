@@ -37,7 +37,6 @@ interface Student {
   exam_results?: GradesReport[] | undefined; // Added for student exam results
   months_fees?: FeesReport[] | undefined;
 }
-
 export interface Filters {
   monthFilter?: number | undefined;
   dateFilter?: Date | undefined;

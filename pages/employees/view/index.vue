@@ -62,6 +62,22 @@ const columns: TableColumn<Employee>[] = [
     header: "المسمى الوظيفي",
   },
   {
+    accessorKey: "حالة المشاركة",
+    header: "حالة المشاركة",
+    cell: ({ row }) => {
+      const status = row.original.isShared ? "مشترك" : "غير مشترك";
+      return h(
+        UBadge,
+        {
+          class: `capitalize`,
+          variant: "solid",
+          color: row.original.isShared ? "success" : "error",
+        },
+        () => status
+      );
+    },
+  },
+  {
     accessorKey: "subject",
     header: "المادة",
     cell: ({ row }) => {
